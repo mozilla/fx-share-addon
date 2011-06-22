@@ -160,6 +160,7 @@ function installOverlay(win) {
 
   let key = document.createElementNS(NS_XUL, 'key');
   key.setAttribute('id', 'key_ffshare');
+  key.setAttribute('keycode', 'VK_F1');
   key.setAttribute('command', 'cmd_toggleSharePanel');
   document.getElementById('mainKeyset').appendChild(key);
   unloaders.push(function() {
