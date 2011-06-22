@@ -1,0 +1,15 @@
+/* ----- SHARE BUTTON ----- */
+
+radio[pane=paneShare] {
+  list-style-image: url("resource://ffshare/chrome/skin/pinstripe/Options-share.png");
+}
+
+/* ----- SHARE PREFPANE ----- */
+
+#BrowserPreferences[animated="true"] #share-prefs-browser {
+  height: 25em;
+}
+
+#BrowserPreferences[animated="false"] #share-prefs-browser {
+  -moz-box-flex: 1;
+}

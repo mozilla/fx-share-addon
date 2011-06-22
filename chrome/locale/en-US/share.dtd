@@ -1,0 +1,6 @@
+<!ENTITY sharePageCmd.label           "Share PageÉ">
+<!ENTITY sharePageCmd.accesskey       "S">
+<!ENTITY shareNetworkDown.label "Sorry, the Share service is not available at the moment. Please try again later.">
+<!ENTITY  paneShare.title         "Share">
+<!ENTITY bookmarking.label "Bookmark the links that I share">
+<!ENTITY bookmarking.accesskey "B">

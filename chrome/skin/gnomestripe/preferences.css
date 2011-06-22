@@ -1,0 +1,12 @@
+radio[pane=paneShare] {
+  list-style-image: url("resource://ffshare/chrome/skin/gnomestripe/Options-share.png") !important;
+}
+
+/* Share Pane */
+#BrowserPreferences[animated="true"] #share-prefs-browser {
+  height: 25em;
+}
+
+#BrowserPreferences[animated="false"] #share-prefs-browser {
+  -moz-box-flex: 1;
+}

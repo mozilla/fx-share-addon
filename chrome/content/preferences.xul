@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<!DOCTYPE overlay [
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+%shareDTD;
+]>
+
+<overlay id="SharePaneOverlay"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+         xmlns:html="http://www.w3.org/1999/xhtml">
+
+  <prefpane id="paneShare"
+            helpTopic="prefs-share"
+            onpaneload="initSharePane()">
+
+    <script type="application/javascript">
+    function initSharePane() {
+      let ns = {};
+      Components.utils.import("resource://ffshare/modules/panel.js", ns);
+      new ns.SharePrefsPane(window);
+    }
+    </script>
+
+    <preferences>
+      <preference id="share-bookmarking"
+                  name="services.share.bookmarking"
+                  type="bool"/>
+    </preferences>
+
+    <vbox flex="1">
+      <browser id="share-prefs-browser"
+               type="content"
+               src="about:blank"
+               disablehistory="true"
+               contextmenu="contentAreaContextMenu"/>
+      <separator/>
+      <checkbox label="Bookmark the links that I share"
+                accesskey="B"
+                preference="share-bookmarking"/>
+    </vbox>
+
+  </prefpane>
+
+</overlay>

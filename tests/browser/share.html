@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Share Panel Mock</title>
+  </head>
+
+  <body>
+    <h1>Share Panel Mock</h1>
+    <script>
+
+/**
+ * Post a message to the window to make it look like it came from the
+ * panel (we check for event.origin).
+ */
+function relayMessage(message) {
+  var origin = window.location.protocol + "//" + window.location.host;
+  window.postMessage(JSON.stringify(message), origin);
+}
+
+  </script>
+  </body>
+</html>
