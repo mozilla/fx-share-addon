@@ -1,0 +1,6 @@
+This repo contains the revised code originally meant for landing into fx5.  It
+has been reverted to a restartless addon but based on work from
+https://hg.mozilla.org/users/pweitershausen_mozilla.com/fx-share/
+
+This currently requires the use of the server-share repo, but will move towards
+an OWA client-side only addon.
