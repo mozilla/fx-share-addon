@@ -37,74 +37,32 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-const self = require("self");
-const unload = require("unload");
+const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
-const {Cc, Ci, Cm, Cu, components} = require("chrome");
-
-let tmp = {};
-Cu.import("resource://gre/modules/Services.jsm", tmp);
-Cu.import("resource://gre/modules/XPCOMUtils.jsm", tmp);
-let {Services, XPCOMUtils} = tmp;
-
-let {installOverlay} = require("overlay");
-let {getString} = require("addonutils");
-let jetpackOptions;
-
-let unloaders = [];
+Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://ffshare/modules/panel.js");
 
 const NS_XUL = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 const SHARE_PANEL_ID = "cmd_toggleSharePanel";
 const SHARE_BUTTON_ID = "share-button";
 
+const EXPORTED_SYMBOLS = ["FFShare", "installFFShareIntoWindow"];
+
 function installFFShareIntoWindow(win) {
     win.ffshare = new FFShare(win);
     let unloaders = [];
-    /* By the time the unloader is called, win.ffshare is already undefined
     unloaders.push(function () {
         win.ffshare.unload();
         win.ffshare = null;
     });
-    */
     return unloaders;
 }
 
 function error(msg) {
-  console.error(msg);
   dump(msg+"\n");
   Cu.reportError('.' + msg); // avoid clearing on empty log
 }
-
-function createMediator() {
-  let win = Services.wm.getMostRecentWindow("navigator:browser");
-  let ffshare = new FFShare(win);
-  let {SharePanel, PageOptionsBuilder} = require("panel");
-  // create our 'helper' object - we will pass it the iframe once we
-  // get the onshow callback.
-  let panelHelper = new SharePanel(win, ffshare);
-  return {
-    url: Services.prefs.getCharPref("services.share.shareURL"),
-    anchor: win.document.getElementById('share-button'),
-    updateargs: function(contentargs) {
-      let optBuilder = new PageOptionsBuilder(win.gBrowser);
-      return optBuilder.getOptions(contentargs);
-    },
-    onshow: function(iframe) {
-      panelHelper.browser = iframe;
-      panelHelper.panelShown();
-    },
-    onhide: function(iframe) {
-      panelHelper.panelHidden();
-      panelHelper.browser = null;
-    },
-    // a generic callback used whenever the content (ie, share panel) makes
-    // any kind of notification back to OWA.
-    onresult: function(req) {
-      return panelHelper.onMediatorCallback(req);
-    }
-  };
-}
-
 
 function FFShare(win) {
   this.window = win;
@@ -120,44 +78,26 @@ function FFShare(win) {
   }
   checkWindow();
 }
-
 FFShare.prototype = {
   togglePanel: function(event) {
-    try {
-      this._togglePanel(event);
-    } catch (ex) {
-      console.error("failed to invoke service", ex, ex.stack);
-    }
-  },
-
-  _togglePanel: function(event) {
-    // now a misnomer - just opens the panel.
     if (event) {
       event.stopPropagation();
       if ((event.type == "click" && event.button != 0) ||
           (event.type == "keypress" && event.keyCode != KeyEvent.DOM_VK_F1))
         return; // Left click or F1 only
     }
-/*
-    XXX - markh tried rolling this into the OWA services code just before the
-    call to panel.openPopup, but it doesn't seem to have any effect (ie,
-    clicking on the F1 button when the panel is visible causes it to vanish
-    and immediately re-open).
 
     let popup = this.sharePanel.panel;
+
     // Tell the popup to consume dismiss clicks, to avoid bug 395314
     popup.popupBoxObject
          .setConsumeRollupEvent(Ci.nsIPopupBoxObject.ROLLUP_CONSUME);
-*/
-  // invoke the service.
-  let options = {};
-  this.services.invoke(this.window, "link.send", options,
-          function() {
-            console.log("send was success");
-          },
-          function(err) {
-            console.error("Failed to invoke share service", err);
-          });
+
+    if (popup.state == 'open') {
+      this.sharePanel.close();
+    } else {
+      this.sharePanel.show();
+    }
   },
 
   canShareURI: function (aURI) {
@@ -179,6 +119,7 @@ FFShare.prototype = {
   },
 
   init: function() {
+    this.sharePanel = new SharePanel(this.window, this);
     this.window.gBrowser.addProgressListener(this);
 
     // Initialize share button for current tab (it might not be shareable).
@@ -191,13 +132,9 @@ FFShare.prototype = {
     this.window.document.getElementById("contentAreaContextMenu")
         .addEventListener("popupshowing", this.onContextMenuItemShowing, false);
 
-    // tell OWA that we want to handle the link.send service
-    // (this need be done only once, but multiple times doesn't hurt - yet!)
-    let {serviceInvocationHandler} = require("services");
-    this.services = new serviceInvocationHandler(this.window);
-    this.services.registerMediator("link.send", function() {
-        return createMediator();
-    });
+    // Events triggered by TabView (panorama)
+    this.tabViewShowListener = function() { self.onTabViewShow(); };
+    this.window.addEventListener('tabviewshow', this.tabViewShowListener, false);
   },
 
   _onContextMenuItemShowing: function (e) {
@@ -221,6 +158,13 @@ FFShare.prototype = {
     } catch (e) {}
   },
 
+  onTabViewShow: function (event) {
+    // Triggered by TabView (panorama). Always hide it if being shown.
+    if (this.sharePanel.panel.state === 'open') {
+      this.sharePanel.hide();
+    }
+  },
+
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIWebProgressListener,
                                          Ci.nsISupportsWeakReference]),
 
@@ -233,81 +177,3 @@ FFShare.prototype = {
   onSecurityChange: function (aWebProgress, aRequest, aState) {},
   onStatusChange: function (aWebProgress, aRequest, aStatus, aMessage) {}
 };
-
-function loadIntoWindow(win) {
-  try {
-    console.log("install addon\n");
-    unloaders = installOverlay(win);
-    unloaders.push.apply(unloaders, installFFShareIntoWindow(win));
-  } catch(e) {
-    console.log("load error "+e+"\n"+e.stack+"\n");
-  }
-}
-
-function overlayPrefs(win) {
-  try {
-    console.log("overlayPrefs\n");
-    unloaders = installPrefsOverlay(win);
-    //unloaders.push.apply(unloaders, installFFShareIntoWindow(win));
-  } catch(e) {
-    console.log("load error "+e+"\n"+e.stack+"\n");
-  }
-}
-
-function eachWindow(callback) {
-  let enumerator = Services.wm.getEnumerator("navigator:browser");
-  while (enumerator.hasMoreElements()) {
-    let win = enumerator.getNext();
-    if (win.document.readyState === "complete") {
-      callback(win);
-    } else {
-      runOnEvent("load", win, callback);
-    }
-  }
-}
-
-function runOnEvent(evt, window, callback) {
-  window.addEventListener(evt, function onLoad() {
-    window.removeEventListener(evt, onLoad, false);
-    callback(window);
-  }, false);
-}
-
-function windowWatcher(subject, topic) {
-  if (topic !== "domwindowopened") {
-    return;
-  }
-  let win = subject.QueryInterface(Ci.nsIDOMWindow);
-  // We don't know the type of the window at this point yet, only when
-  // the load event has been fired.
-  runOnEvent("load", win, function (win) {
-    let doc = win.document.documentElement;
-    if (doc.getAttribute("windowtype") == "navigator:browser") {
-      loadIntoWindow(win);
-    }
-    if (doc.getAttribute("windowtype") == "Browser:Preferences") {
-      overlayPrefs(win);
-    }
-  });
-}
-
-exports.main = function(options, callbacks) {
-  unload.when(shutdown);
-  jetpackOptions = options;
-  // just the 'require' of this module boostraps the world.
-  let owa = require("openwebapps/main");
-
-  /* Setup l10n, getString is loaded from addonutils */
-  getString.init();
-
-  eachWindow(loadIntoWindow);
-
-  Services.ww.registerNotification(windowWatcher);
-  unloaders.push(function() Services.ww.unregisterNotification(windowWatcher));
-};
-
-function shutdown(reason) {
-  // variable why is one of 'uninstall', 'disable', 'shutdown', 'upgrade' or
-  // 'downgrade'. doesn't matter now, but might later
-  unloaders.forEach(function(unload) unload && unload());
-}

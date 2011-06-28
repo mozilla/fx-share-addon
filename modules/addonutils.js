@@ -36,14 +36,14 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-const {Cc, Ci, Cm, Cu} = require("chrome");
+const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
-let tmp = {}
-Cu.import("resource://gre/modules/Services.jsm", tmp);
-let {Services} = tmp;
+Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/AddonManager.jsm");
 
-function loadStylesheet(win, uritail) {
-    var uri = require("self").data.url(uritail);
+const EXPORTED_SYMBOLS = ["loadStylesheet", "getString"];
+
+function loadStylesheet(win, uri) {
     let document = win.document;
     let pi = document.createProcessingInstruction(
       "xml-stylesheet", "href=\"" + uri + "\" type=\"text/css\"");
@@ -69,15 +69,15 @@ function getString(name, args, plural) {
     }
     return str;
 }
-getString.init = function(getAlternate) {
+getString.init = function(addon, getAlternate) {
     if (typeof getAlternate != "function")
         getAlternate = function() "en-US";
 
     function getBundle(locale) {
-        let propertyPath = "locale/" + locale + ".properties";
-        let propertyFile = require("self").data.url(propertyPath);
+        let propertyPath = "chrome/locale/" + locale + ".properties";
+        let propertyFile = addon.getResourceURI(propertyPath);
         try {
-            let uniqueFileSpec = propertyFile + "#" + Math.random();
+            let uniqueFileSpec = propertyFile.spec + "#" + Math.random();
             let bundle = Services.strings.createBundle(uniqueFileSpec);
             bundle.getSimpleEnumeration();
             return bundle;
@@ -90,6 +90,3 @@ getString.init = function(getAlternate) {
     getString.bundle = getBundle(locale) || getBundle(getAlternate(locale));
     getString.fallback = getBundle("en-US");
 }
-
-exports.loadStylesheet = loadStylesheet;
-exports.getString = getString;

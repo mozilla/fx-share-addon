@@ -1,8 +1,0 @@
-{
-    "name": "ffshare",
-    "id": "ffshare@mozilla.org",
-    "description": "Share things",
-    "author": "Mozilla",
-    "version": "0.001",
-    "dependencies": ["api-utils", "addon-kit", "openwebapps"]
-}

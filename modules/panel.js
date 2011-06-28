@@ -37,13 +37,11 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-const {Cc, Ci, Cm, Cu, components} = require("chrome");
-
-let tmp = {};
-Cu.import("resource://gre/modules/Services.jsm", tmp);
-Cu.import("resource://gre/modules/PlacesUtils.jsm", tmp);
-Cu.import("resource://gre/modules/XPCOMUtils.jsm", tmp);
-let {Services, PlacesUtils, XPCOMUtils} = tmp;
+const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
+Cu.import("resource://ffshare/modules/store.js");
+Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/PlacesUtils.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 const PANEL_MESSAGE_TOPICS = ["panelReady",
                               "sizeToContent",
@@ -53,8 +51,6 @@ const PANEL_MESSAGE_TOPICS = ["panelReady",
                               "success",
                               "getShareState",
                               "generateBase64Preview",
-                              "installApp",
-                              "result",
                               "storeGet",
                               "storeSet",
                               "storeRemove",
@@ -73,14 +69,16 @@ const SHARE_FINISHED = 3;
 const IDLE_TIMEOUT = 1; // seconds
 
 const NS_XUL = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
-const PANEL_NETWORK_DOWN_PAGE = "resource://ffshare-at-mozilla-dot-org-ffshare-data/content/shareNetworkDown.xhtml";
-const PREFS_NETWORK_DOWN_PAGE = "resource://ffshare-at-mozilla-dot-org-ffshare-data/content/shareNetworkDown.xhtml";
+const PANEL_NETWORK_DOWN_PAGE = "resource://ffshare/chrome/content/shareNetworkDown.xhtml";
+const PREFS_NETWORK_DOWN_PAGE = "resource://ffshare/chrome/content/shareNetworkDown.xhtml";
 
 const STORE_KEY_CHANGED_TOPIC = "services:share:store:key-changed";
 const STORE_CLEARED_TOPIC     = "services:share:store:cleared";
 const PREFPANE_LOADED_TOPIC   = "services:share:prefpane:loaded";
 const WINDOWS_RESTORED_TOPIC  = "sessionstore-windows-restored";
 const IDLE_TOPIC              = "idle";
+
+const EXPORTED_SYMBOLS = ["SharePanel", "SharePrefsPane", "validateURL"];
 
 function mixin(target, source, override) {
   //TODO: consider ES5 getters and setters in here.
@@ -324,18 +322,17 @@ KeyValueStoreDispatcher.prototype = {
  * tab when the panel is closed.
  */
 function SharePanel(window, ffshare) {
-//  KeyValueStoreDispatcher.call(this, window);
-  this.window = window;
+  KeyValueStoreDispatcher.call(this, window);
 
   this.gBrowser = window.gBrowser;
   this.ffshare = ffshare;
 
-  this.button = window.document.getElementById('share-button');
+  this.button = this.document.getElementById('share-button');
+  this.panel = this.document.getElementById('share-popup');
   
   this.init();
 }
 SharePanel.prototype = {
-/***  
   __proto__: KeyValueStoreDispatcher.prototype,
 
   // Define bits for PostMessageRPCDispatcher
@@ -345,8 +342,7 @@ SharePanel.prototype = {
     return Services.prefs.getCharPref("services.share.shareURL");
   },
   networkDownPage: PANEL_NETWORK_DOWN_PAGE,
-***/
-
+  
   /**
    * shareState cache
    *
@@ -361,10 +357,16 @@ SharePanel.prototype = {
   shareState: {},
   
   init: function () {
-/***    
+    // Always ensure the button is checked if the panel is open
+    this.panel.addEventListener('popupshown', this.panelShown.bind(this),
+                                false);
+    this.panel.addEventListener('popuphidden', this.panelHidden.bind(this),
+                                false);    
+    this.gBrowser.tabContainer.addEventListener("TabClose",
+                                this.tabCloseListener.bind(this), true);
     this.browser.addEventListener("load",
                                   this.browserLoadListener.bind(this), true);
-***/
+
     // Set the browser src to load at first idle moment, if the user has
     // previously configured sharing accounts.
     idleService.addIdleObserver(this, IDLE_TIMEOUT);
@@ -380,7 +382,6 @@ SharePanel.prototype = {
   },
 
   observe: function (subject, topic, data) {
-/*** preload still relevant??    
     let self = this;
     switch (topic) {
       case IDLE_TOPIC:
@@ -392,11 +393,10 @@ SharePanel.prototype = {
         });
         return;
     }
-***/
+
     KeyValueStoreDispatcher.prototype.observe.apply(this, arguments);
   },
 
-/***
   preloadPanel: function() {
     let url = Services.prefs.getCharPref("services.share.shareURL");
     if (this.browser.getAttribute("src") == url) {
@@ -404,12 +404,19 @@ SharePanel.prototype = {
     }
     this.browser.setAttribute('src', url);
   },
-***/
 
   browserLoadListener: function(event) {
     let self = this;
     this.window.setTimeout(function () {
       self.sizeToContent();
+    }, 0);
+  },
+
+  // ensure the panel is closed if the tab is removed
+  tabCloseListener: function(event) {
+    let self = this;
+    this.window.setTimeout(function () {
+      self.close();
     }, 0);
   },
 
@@ -422,25 +429,12 @@ SharePanel.prototype = {
   },
 
   /**
-   * APIs called (indirectly) by the share panel.
+   * PostMessage APIs
    */
-  onMediatorCallback: function(message) {
-    // Bail if this isn't a valid message topic.
-    if (!message.cmd||
-        PANEL_MESSAGE_TOPICS.indexOf(message.cmd) == -1) {
-      console.log("ignoring mediator message", message.cmd);
-      return message;
-    }
-    try {
-      return this[message.cmd](message);
-    } catch (ex) {
-      console.error("Handler of OWA command", message.cmd, "failed:", ex, ex.stack);
-      return message;
-    }
-  },
 
   /**
-   * Sent when the share succeeds.
+   * Sent when the share succeeds. Closes the panel and updates the shareState
+   * for that tab.
    * 
    * Properties on the data object:
    * @param domain
@@ -457,28 +451,22 @@ SharePanel.prototype = {
    * The domain, username and userid taken together form a unique identifier
    * for which account on which service was used to do the share.
    */
-  result: function (message) {
-    let data = message.data;
-    let url = data.link;
-    let title = data.title;
-    this.updateStatus([SHARE_DONE,,,url], true);
+  success: function (data) {
+    this.updateStatus([SHARE_DONE,,,data.url], true);
+    this.close();
 
     // XXX we should work out a better bookmarking system
     // https:// github.com/mozilla/f1/issues/66
     if (Services.prefs.getBoolPref("services.share.bookmarking")) {
-      let nsiuri = Services.io.newURI(url, null, null);
+      let nsiuri = Services.io.newURI(data.url, null, null);
       if (!bookmarksService.isBookmarked(nsiuri)) {
           bookmarksService.insertBookmark(
               bookmarksService.unfiledBookmarksFolder, nsiuri,
-              bookmarksService.DEFAULT_INDEX, title.trim()
+              bookmarksService.DEFAULT_INDEX, this.getPageTitle().trim()
           );
       }
-      // Ack - we don't have the concept of a 'service' in an OWA...
-      // PlacesUtils.tagging.tagURI(nsiuri, [data.service]);
+      PlacesUtils.tagging.tagURI(nsiuri, [data.service]);
     }
-    // and we want this message to also be processed by OWA itself, which will
-    // close the panel.
-    return message;
   },
 
   /**
@@ -512,6 +500,12 @@ SharePanel.prototype = {
 
     this.getShareState();
 
+    // We have to do this after the first time the panel is loaded and NOT
+    // before so we know the postMessage hookups are all in place and the
+    // content can react properly.
+    this.panel.addEventListener('popupshown', this.getShareState.bind(this),
+                                false);
+
     // we replace panelReady to only do a getShareState call, and never add
     // another event listener again.  Content MAY call panelReady again without
     // a negative side effect.
@@ -519,19 +513,14 @@ SharePanel.prototype = {
   },
 
   sizeToContent: function () {
-    if (!this.browser) {
+    if (this.panel.state !== 'open') {
       // if the panel is not open and visible we will not get the correct
       // size for the panel content.  This happens when the idle observer
       // first sets src on the browser.
       return;
     }
     let doc = this.browser.contentDocument;
-    // XXX - use of wrapper seems problematic here, especially with the
-    // dynamic DOM work done in the panel - just size to the body for now
-    // (which is still problematic, but works slightly better until we sort
-    // this out)
-//    let wrapper = doc && doc.getElementById('wrapper');
-    let wrapper = doc.body;
+    let wrapper = doc && doc.getElementById('wrapper');
     if (!wrapper) {
       return;
     }
@@ -544,7 +533,6 @@ SharePanel.prototype = {
    * information.  This can only happen with the current selected tab, so we
    * rely on the uri from the tab to delete status if necessary.
    */
-/***
   close: function () {
     let contentBrowser = this.gBrowser.getBrowserForTab(this.gBrowser.selectedTab),
         tabURI = contentBrowser.currentURI,
@@ -557,16 +545,15 @@ SharePanel.prototype = {
       delete this.shareState[tabUrl];
     }
   },
-***/
+
   /**
    * Called when we only want to hide the panel and preserve the shareState
    * information.
    */
-/***
   hide: function () {
     this.panel.hidePopup();
   },
-***/
+
   /**
    * Updates the state of the toolbar button during a share activity or
    * afterward when a share error is received.
@@ -697,138 +684,10 @@ SharePanel.prototype = {
    * End of postMessage handlers. Helpers below.
    */
 
-
-  escapeHtml: function (text) {
-    return text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  },
-
-  getBrowserTabForUrl: function(url) {
-    if (!url)
-      return null;
-    if (this.gBrowser.getBrowserForTab(this.gBrowser.selectedTab).currentURI.spec == url)
-      return this.gBrowser.selectedTab;
-    var numTabs = this.gBrowser.browsers.length;
-    for (var index = 0; index < numTabs; index++) {
-      var currentBrowser = this.gBrowser.getBrowserAtIndex(index);
-      if (url == currentBrowser.currentURI.spec) {
-        return this.gBrowser.tabs[index];
-      }
-    }
-    return null;
-  },
-
-  installApp: function(message) {
-    let manifestUrl = message.app;
-    let self = this;
-    let {FFRepoImplService} = require("api");
-    var args = {
-      url: manifestUrl,
-      hidePostInstallPrompt: true, // don't want the app panel to appear.
-      onerror: function(errob) {
-        // TODO: should probably consider notifying the content of the error
-        // so it can do something useful.
-        console.log("Failed to install " + manifestUrl + ": " + errob.code + ": " + errob.message);
-      },
-      onsuccess: function() {
-        // Note the app being installed will have triggered the
-        // 'openwebapp-installed' observer, which will in-turn cause a
-        // 'reconfigure' event to be handled by OWA.
-        console.log("successful install of", manifestUrl);
-      }
-    };
-    // Hrmph - need to use an installOrigin of the hard-coded OWA app store
-    console.log("requesting install of", manifestUrl);
-    FFRepoImplService.install('http://localhost:8420',
-                              args,
-                              undefined); // the window is only used if a prompt is shown.
-  }
-
-/****
-  show: function (options) {
-    let contentBrowser = this.gBrowser.getBrowserForTab(this.gBrowser.selectedTab),
-        tabURI = contentBrowser.currentURI,
-        tabUrl = tabURI.spec,
-        nBox = this.gBrowser.getNotificationBox(contentBrowser),
-        notification = nBox.getNotificationWithValue("mozilla-f1-share-error");
-
-    if (!this.ffshare.isValidURI(tabURI)) {
-      return;
-    }
-
-    if (notification) {
-      nBox.removeNotification(notification);
-    }
-    let currentState = this.shareState[tabUrl];
-    options = this.getOptions(options);
-
-    this.shareState[tabUrl] = {
-      options: options,
-      status: currentState ? currentState.status : 0
-    };
-
-    let url = Services.prefs.getCharPref("services.share.shareURL");
-    if (this.forceReload) {
-      // first time load, just set the src, otherwise force a real reload
-      if (this.browser.getAttribute('src') !== url) {
-        this.browser.setAttribute('src', url);
-      } else {
-        this.browser.loadURI(url);
-      }
-      this.forceReload = false;
-    } else {
-      this.browser.setAttribute('src', url);
-    }
-
-    if (this.panel.state === 'open') {
-      this.getShareState();
-    } else {
-      let position = 'bottomcenter topleft';
-      if (this.window.getComputedStyle(this.window.gNavToolbox,
-                                       "").direction === "rtl") {
-        position = 'bottomcenter topright';
-      }
-      this.panel.openPopup(this.button, position, 0, 0, false, false);
-    }
-  }
-****/  
-};
-
-
-function SharePrefsPane(window) {
-  KeyValueStoreDispatcher.call(this, window);
-
-  let url = Services.prefs.getCharPref("services.share.settingsURL");
-  this.browser.setAttribute("src", url);
-
-  Services.obs.notifyObservers(window, PREFPANE_LOADED_TOPIC, null);
-}
-SharePrefsPane.prototype = {
-  __proto__: KeyValueStoreDispatcher.prototype,
-
-  // Define bits for PostMessageRPCDispatcher
-  browserID: "share-prefs-browser",
-  allowedMessageTopics: PREFS_MESSAGE_TOPICS,
-  getAllowedMessageOrigin: function getAllowedMessageOrigin() {
-    return Services.prefs.getCharPref("services.share.settingsURL");
-  },
-  networkDownPage: PREFS_NETWORK_DOWN_PAGE
-
-};
-
-function PageOptionsBuilder(browser)
-{
-  this.gBrowser = browser;
-};
-
-PageOptionsBuilder.prototype = {
   getOptions: function (options) {
     options = options || {};
     mixin(options, {
-//      version: this.ffshare.version,
+      version: this.ffshare.version,
       title: this.getPageTitle(),
       description: this.getPageDescription(),
       medium: this.getPageMedium(),
@@ -1125,10 +984,97 @@ PageOptionsBuilder.prototype = {
       }
     );
     return previews;
+  },
+
+  escapeHtml: function (text) {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  },
+
+  getBrowserTabForUrl: function(url) {
+    if (!url)
+      return null;
+    if (this.gBrowser.getBrowserForTab(this.gBrowser.selectedTab).currentURI.spec == url)
+      return this.gBrowser.selectedTab;
+    var numTabs = this.gBrowser.browsers.length;
+    for (var index = 0; index < numTabs; index++) {
+      var currentBrowser = this.gBrowser.getBrowserAtIndex(index);
+      if (url == currentBrowser.currentURI.spec) {
+        return this.gBrowser.tabs[index];
+      }
+    }
+    return null;
+  },
+
+  show: function (options) {
+    let contentBrowser = this.gBrowser.getBrowserForTab(this.gBrowser.selectedTab),
+        tabURI = contentBrowser.currentURI,
+        tabUrl = tabURI.spec,
+        nBox = this.gBrowser.getNotificationBox(contentBrowser),
+        notification = nBox.getNotificationWithValue("mozilla-f1-share-error");
+
+    if (!this.ffshare.isValidURI(tabURI)) {
+      return;
+    }
+
+    if (notification) {
+      nBox.removeNotification(notification);
+    }
+    let currentState = this.shareState[tabUrl];
+    options = this.getOptions(options);
+
+    this.shareState[tabUrl] = {
+      options: options,
+      status: currentState ? currentState.status : 0
+    };
+
+    let url = Services.prefs.getCharPref("services.share.shareURL");
+    if (this.forceReload) {
+      // first time load, just set the src, otherwise force a real reload
+      if (this.browser.getAttribute('src') !== url) {
+        this.browser.setAttribute('src', url);
+      } else {
+        this.browser.loadURI(url);
+      }
+      this.forceReload = false;
+    } else {
+      this.browser.setAttribute('src', url);
+    }
+
+    if (this.panel.state === 'open') {
+      this.getShareState();
+    } else {
+      let position = 'bottomcenter topleft';
+      if (this.window.getComputedStyle(this.window.gNavToolbox,
+                                       "").direction === "rtl") {
+        position = 'bottomcenter topright';
+      }
+      this.panel.openPopup(this.button, position, 0, 0, false, false);
+    }
   }
 };
 
-exports.SharePanel = SharePanel;
-exports.SharePrefsPane = SharePrefsPane;
-exports.validateURL = validateURL;
-exports.PageOptionsBuilder = PageOptionsBuilder;
+
+function SharePrefsPane(window) {
+  KeyValueStoreDispatcher.call(this, window);
+
+  let url = Services.prefs.getCharPref("services.share.settingsURL");
+  this.browser.setAttribute("src", url);
+
+  Services.obs.notifyObservers(window, PREFPANE_LOADED_TOPIC, null);
+}
+SharePrefsPane.prototype = {
+  __proto__: KeyValueStoreDispatcher.prototype,
+
+  // Define bits for PostMessageRPCDispatcher
+  browserID: "share-prefs-browser",
+  allowedMessageTopics: PREFS_MESSAGE_TOPICS,
+  getAllowedMessageOrigin: function getAllowedMessageOrigin() {
+    return Services.prefs.getCharPref("services.share.settingsURL");
+  },
+  networkDownPage: PREFS_NETWORK_DOWN_PAGE
+
+};

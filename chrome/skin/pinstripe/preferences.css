@@ -1,7 +1,7 @@
 /* ----- SHARE BUTTON ----- */
 
 radio[pane=paneShare] {
-  list-style-image: url("resource://ffshare-at-mozilla-dot-org-ffshare-data/skin/pinstripe/Options-share.png");
+  list-style-image: url("resource://ffshare/chrome/skin/pinstripe/Options-share.png");
 }
 
 /* ----- SHARE PREFPANE ----- */
