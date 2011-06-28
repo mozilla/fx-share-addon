@@ -6,20 +6,20 @@
 }
 
 #share-button {
-  list-style-image: url("resource://ffshare/chrome/skin/gnomestripe/share-button.png");
+  list-style-image: url("resource://ffshare-at-mozilla-dot-org-ffshare-data/skin/gnomestripe/share-button.png");
   width: auto;
   height: auto;
   padding: 1px;
 }
 
 #share-button[checked] {
-  list-style-image: url("resource://ffshare/chrome/skin/gnomestripe/share-button-active.png");
+  list-style-image: url("resource://ffshare-at-mozilla-dot-org-ffshare-data/gnomestripe/share-button-active.png");
 }
 
 #share-button[status="start"] {
-  list-style-image: url("resource://ffshare/chrome/skin/gnomestripe/share-button-sharing.png");
+  list-style-image: url("resource://ffshare-at-mozilla-dot-org-ffshare-data/skin/gnomestripe/share-button-sharing.png");
 }
 
 #share-button[status="finished"] {
-  list-style-image: url("resource://ffshare/chrome/skin/gnomestripe/share-button-shared.png");
+  list-style-image: url("resource://ffshare-at-mozilla-dot-org-ffshare-data/skin/gnomestripe/share-button-shared.png");
 }

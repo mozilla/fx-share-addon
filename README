@@ -2,10 +2,73 @@ This repo contains the revised code originally meant for landing into fx5.  It
 has been reverted to a restartless addon but based on work from
 https://hg.mozilla.org/users/pweitershausen_mozilla.com/fx-share/
 
-This currently requires the use of the server-share repo, but will move towards
-an OWA client-side only addon.
+The branch you are looking at is an effort towards getting fx-share working
+in the Open Web Apps infrastructure.  This requires:
 
-For development, you should change the settings:
+Setting up the share server:
+=============================
 
-services.share.settingsURL=http://linkdrop.caraveo.com:5001/dev/1/settings/
-services.share.shareURL=http://linkdrop.caraveo.com:5001/dev/1/share/panel/
+* Edit your 'hosts' file and add an entry for 'linkdrop.caraveo.com' pointing
+  at 127.0.0.1
+
+* Clone git@github.com:mhammond/server-share.git
+* Checkout the 'feature/webmod' branch.
+* Run 'make dev' - this will clone some "child" repos.
+* Change to the 'deps/client-share-web' directory.
+* Execute 'git remote add mhammond git@github.com:mhammond/client-share-web.git'
+* Execute 'git pull mhammond'
+* Execute 'git co git co mhammond/feature/webmod'
+* Change directory back to the root of the repo.
+* Execute 'bin/activate' (or Scripts/activate.bat on Windows)
+
+You should then be able to execute 'paster serve development.ini'.
+
+Visit http://linkdrop.caraveo.com:5000/1/apps/facebook.png in your browser -
+you should see the facebook logo.
+
+Setting up the addon:
+=====================
+
+Install the Open Web Apps addon.
+--------------------------------
+
+* In some directory, clone a clone of the OpenWebApps addon - git@github.com:mhammond/openwebapps.git
+* Switch to a 'mediator' branch - 'git co origin/mediator'
+
+Prepare your firefox profile.
+-----------------------------
+
+* You probably want a test firefox profile.
+* In the profile you will use, use about:config to set the following:
+  services.share.settingsURL=http://linkdrop.caraveo.com:5001/dev/1/settings/
+  services.share.shareURL=http://linkdrop.caraveo.com:5001/dev/1/share/panel/
+
+Setup Jetpack SDK.
+------------------
+
+* Install the jetpack SDK - the gibhub clone is probably better.
+* Apply the patch at https://bugzilla.mozilla.org/show_bug.cgi?id=665786
+* Activate the SDK by executing 'bin/activate'
+
+Run it!
+-------
+
+* Execute the command:
+  cfx run --pkgdir=path_to_fx_share_addon \
+          --package-path=path_to_owa_addon_root/addons/jetpack \
+          --profiledir=path_to_your_profile \
+          --binary-args=-console
+
+  Note:
+
+  * path_to_fx_share_addon is the root directory of the share addon (ie, the
+    directory holding this readme)
+
+  * path_to_owa_addon_root is the path to the root of the OWA addon clone.
+
+  * path_to_your_profile is the path to your Firefox dev profile (you can't
+    use the 'temp' profile facility in Jetpack as the above preferences need
+    to be adjusted before things will work.)
+
+  * You may want additional --binary-args - eg, -console, -purgecaches,
+    -chromebug etc.
