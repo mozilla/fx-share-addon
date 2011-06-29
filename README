@@ -16,10 +16,12 @@ Setting up the share server:
 * Run 'make dev' - this will clone some "child" repos.
 * Change to the 'deps/client-share-web' directory.
 * Execute 'git remote add mhammond git@github.com:mhammond/client-share-web.git'
-* Execute 'git pull mhammond'
-* Execute 'git co git co mhammond/feature/webmod'
+* Execute 'git fetch mhammond'
+* Execute 'git checkout -b mhammond/feature/webmod'
 * Change directory back to the root of the repo.
-* Execute 'bin/activate' (or Scripts/activate.bat on Windows)
+* Execute 'source bin/activate' (or Scripts/activate.bat on Windows)
+* Edit development.ini and make sure values for oauth_failure and oauth_success
+  have a base patch of /dev/1/oauth.html otherwise oauth authorization will fail
 
 You should then be able to execute 'paster serve development.ini'.
 
@@ -33,7 +35,7 @@ Install the Open Web Apps addon.
 --------------------------------
 
 * In some directory, clone a clone of the OpenWebApps addon - git@github.com:mhammond/openwebapps.git
-* Switch to a 'mediator' branch - 'git co origin/mediator'
+* Switch to a 'mediator' branch - 'git checkout origin/mediator'
 
 Prepare your firefox profile.
 -----------------------------
@@ -48,7 +50,7 @@ Setup Jetpack SDK.
 
 * Install the jetpack SDK - the gibhub clone is probably better.
 * Apply the patch at https://bugzilla.mozilla.org/show_bug.cgi?id=665786
-* Activate the SDK by executing 'bin/activate'
+* Activate the SDK by executing 'source bin/activate'
 
 Run it!
 -------
