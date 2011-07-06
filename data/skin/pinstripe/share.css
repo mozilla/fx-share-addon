@@ -1,3 +1,4 @@
+panel[type="arrow"].link_send browser,
 #share-browser {
   min-height: 124px;
   min-width: 426px;
@@ -5,6 +6,7 @@
   width: 426px;
   border-radius: 6px;
 }
+panel[type="arrow"].link_send .panel-arrowcontent,
 #share-popup .panel-arrowcontent {
   padding: 2px;
 }
