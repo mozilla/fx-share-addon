@@ -1,0 +1,18 @@
+{
+    "name":"Twitter via F1",
+    "developer": {
+        "name":"Mozilla Labs Demo",
+        "url":"http://mozillalabs.com"
+    },
+    "description":"Connects your browser's Firefox Share to Twitter",
+    "icons":{
+        "32":"/1/apps/twitter_newbird_blue.png"
+    },
+    "experimental": {
+      "services": {
+        "link.send": {
+          "endpoint": "/1/apps/twitter.html"
+        }
+      }
+    }
+}
