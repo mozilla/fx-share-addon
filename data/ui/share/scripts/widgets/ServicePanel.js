@@ -29,7 +29,7 @@ define([ 'blade/object', 'blade/Widget', 'jquery', 'text!./ServicePanel.html',
          'storage', 'module', 'dispatch', 'widgets/AccountPanel',
          'require', 'blade/fn', './jigFuncs'],
 function (object,         Widget,         $,        template,
-          storage, module,   dispatch, AccountPanel,
+          storage,   module,   dispatch,   AccountPanel,
           require,   fn,         jigFuncs) {
 
   var className = module.id.replace(/\//g, '-');
@@ -85,19 +85,24 @@ function (object,         Widget,         $,        template,
       serviceChanged: function () {
         // If either 'characteristics' or 'login' are null, we are waiting
         // for those methods to return.
+        $(".accountLoading", this.node).hide();
+        $(".accountLogin", this.node).show();
         var showPanel = false;
         if (!this.owaservice.characteristics || !this.owaservice.login) {
           // waiting for the app to load and respond.
-          $(".accountLoading", this.node).show();
-          $(".accountLogin", this.node).hide();
+dump("waiting for app to load and respond\n");
+          //$(".accountLoading", this.node).show();
+          //$(".accountLogin", this.node).hide();
         } else if (!this.owaservice.login.user) {
           // getLogin call has returned but no user logged in.
-          $(".accountLoading", this.node).hide();
-          $(".accountLogin", this.node).show();
+dump("getlogin returned no user\n");
+          //$(".accountLoading", this.node).hide();
+          //$(".accountLogin", this.node).show();
         } else {
           // logged in so can show the account panel.
-          $(".accountLoading", this.node).hide();
-          $(".accountLogin", this.node).hide();
+dump("logging into show account panel\n");
+          //$(".accountLoading", this.node).hide();
+          //$(".accountLogin", this.node).hide();
           showPanel = true;
         }
         var thisPanelDiv = $(".accountPanel", this.node);
@@ -133,13 +138,27 @@ function (object,         Widget,         $,        template,
       onLogin: function (evt) {
         // hrmph - tried to dispatch.pub back to the main panel but then
         // the popup was blocked.
+dump("onLogin called for "+this.owaservice.app.app+"\n");
         var store = storage(),
-            url = this.owaservice.app.app + this.owaservice.login.login.dialog,
+            app = this.owaservice.app;
+        if (app.manifest.experimental.oauth) {
+          dump("dispatch to oauthAuthorize\n");
+          try {
+            // XXX need to fix postmessage between the share panel and the webapps
+            dispatch.pub('oauthAuthorize', app.manifest.experimental.oauth);
+          } catch(e) {
+            dump(e+"\n");
+          }
+
+        } else
+        if (this.owaservice.login.login) {
+            var url = app.app + this.owaservice.login.login.dialog,
             win = window.open(url,
                   "ffshareOAuth",
                   "dialog=yes, modal=yes, width=900, height=500, scrollbars=yes");
-        store.set('lastSelection', this.owaservice.app.app);
-        win.focus();
+          store.set('lastSelection', app.app);
+          win.focus();
+        }
       },
 
       getRestoreState: function () {

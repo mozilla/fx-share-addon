@@ -2,13 +2,13 @@
 <html>
 <head>
     <title>Share</title>
-    <script src="/dev/1/scripts/requireplugins-jquery.js" charset="utf-8"></script>
+    <script src="../scripts/requireplugins-jquery.js" charset="utf-8"></script>
     <script>
       require({
-        baseUrl: '/dev/1/scripts',
+        baseUrl: '../scripts',
         paths: {
-          style: '../share/panel/style',
-          widgets: '../share/panel/scripts/widgets'
+          style: '../share/style',
+          widgets: '../share/scripts/widgets'
         }
       });
 
@@ -28,7 +28,7 @@
       require({
         priority: ['fakeStorage']
       });
-      require(['/dev/1/share/panel/index.js']);
+      require(['../share/index.js']);
     </script>
 </head>
 <body style="visibility: hidden">
@@ -61,7 +61,7 @@
     <table>
       <tr>
         <td>
-          <img src="/dev/1/share/panel/i/loader.gif"> sharing...
+          <img src="/share/i/loader.gif"> sharing...
         </td>
       </tr>
     </table>

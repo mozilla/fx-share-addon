@@ -62,6 +62,8 @@ define(['jquery'], function ($) {
             //Just ignore messages that are not JSON. There are some, like
             //the oauth_success messages
           }
+        } else {
+          dump("XXX unable to dispatch to "+evt.origin+" from "+targetOrigin+"\n");
         }
       };
 

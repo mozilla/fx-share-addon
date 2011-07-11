@@ -34,7 +34,7 @@
  * oauth failure in addAccount.js
 
 */
-
+dump("heya! from f1\n");
 define([ "require", "jquery", "blade/object", "blade/fn",
         "blade/jig", "blade/url", "dispatch",
          "storage",  "widgets/ServicePanel", "widgets/TabButton",
@@ -411,6 +411,7 @@ function (require,   $,        object,         fn,
               break;
             }
             // Add a tab button for the service.
+dump("adding tab for "+thisSvc.app.manifest.name+"\n");
             tabsDom.append(new TabButton({
               target: tabId,
               type: appid,
@@ -435,11 +436,34 @@ function (require,   $,        object,         fn,
       });
     });
   }
+  
+  //function doAuthorization(data) {
+  //  dump("attempt oauthAuthorization\n");
+  //  var svcRec = owaservicesbyid[data.appid];
+  //  var channel = svcRec.channel;
+  //  channel.call({
+  //    method: "oauthAuthorization",
+  //    params: data,
+  //    success: function() {
+  //      dump("got success callback from oauthAuthorization\n");
+  //    },
+  //    error: function(error, message) {
+  //    }
+  //  });
+  //  
+  //}
 
   // Set up initialization work for the first share state passing.
   function onFirstShareState() {
     // Wait until DOM ready to start the DOM work.
     $(function () {
+      dispatch.pub('oauthResponse', function(data) {
+        // pass back to the panel?
+      });
+      dispatch.sub('requestAuthorization', function(data) {
+        // from account panel, pass up to the addon
+        dispatch.pub('oauthAuthorize', data);
+      });
 
       //Listen to sendMessage events from the AccountPanels
       dispatch.sub('sendMessage', function (data) {
