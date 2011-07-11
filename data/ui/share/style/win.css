@@ -1,0 +1,27 @@
+@color: #454545;
+@background: white;
+
+@tabsBackgroundWebKit: #E1E9F6;
+@tabsBackground: #E1E9F6;
+@tabsBorderRight: 1px solid #BDCFE8;
+
+@tabButtonBorder: 1px solid #6490C5;
+@tabButtonColor: #688FC2;
+@tabButtonBackgroundWebKit: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #DEE9F8), color-stop(100%, #B6DCF9));
+@tabButtonBackground: -moz-linear-gradient(center top , #DEE9F8 0%, #B6DCF9 100%);
+
+@tabContentBackgroundWebKit: white;
+@tabContentBackground: white;
+
+@shareTypeSectionInputBackground: white;
+
+@accountPanelInputErrorBorder: 1px solid #FC0000;
+@accountPanelInputErrorBackground: white;
+@accountPanelErrorColor: #FC0000;
+
+@buttonShareBorder: 1px solid #1C92C2;
+@buttonShareColor: #252525;
+@buttonShareTextShadow: 0;
+@buttonShareBackgroundWebKit: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #EDF7F9), color-stop(100%, #9BDCF5));
+@buttonShareBackground: -moz-linear-gradient(center top , #EDF7F9 0%, #9BDCF5 100%);
+

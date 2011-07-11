@@ -1,0 +1,29 @@
+@color: #e2e2e2;
+@background: #505050;
+
+@tabsBackgroundWebKit: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #515151), color-stop(100%, #2b2b2b));
+@tabsBackground: -moz-linear-gradient(center top , #515151 0%, #2b2b2b 100%);
+@tabsBorderRight: 0;
+
+@tabButtonBorder: 1px solid #577894;
+@tabButtonColor: white;
+@tabButtonBackgroundWebKit: #303333;
+@tabButtonBackground: #303333;
+
+@tabContentBackgroundWebKit: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #6f6f6f), color-stop(100%, #444444));
+@tabContentBackground: -moz-linear-gradient(center top , #6f6f6f 0%, #444444 100%);
+
+@addAccountSelectBackgroundWebKit: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #767676), color-stop(100%, #545454));
+@addAccountSelectBackground: -moz-linear-gradient(center top , #767676 0%, #545454 100%);
+
+@shareTypeSectionInputBackground: #848484;
+
+@accountPanelInputErrorBorder: 1px solid #C26464;
+@accountPanelInputErrorBackground: #893232;
+@accountPanelErrorColor: #C26464;
+
+@buttonShareBorder: 1px solid #57BCFF;
+@buttonShareTextShadow: 0 1px 1px #47AFF8;
+@buttonShareColor: #005796;
+@buttonShareBackgroundWebKit: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #0097F1), color-stop(100%, #545454));
+@buttonShareBackground: -moz-linear-gradient(center top , #23AEFF 0%, #0097F1 100%);
