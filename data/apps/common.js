@@ -75,6 +75,7 @@ function (require,   $,       rdapi) {
     },
 
     getLogin: function(t, domain) {
+        dump("getLogin called for "+domain+"\n");
       var key = "ff-share-" + domain;
       var strval = window.localStorage.getItem(key);
       var result = {};
@@ -92,9 +93,9 @@ function (require,   $,       rdapi) {
         }
         result.user = retUser;
       } else {
-        var url = '/dev/1/auth.html?domain=' + encodeURIComponent(domain);
-        result.login = {dialog: url};
+        dump("XXX LOGIN NOT IMPLEMENTED, see ServicePanel.js for start towards oauth login\n");
       }
+        dump("getLogin returning "+JSON.stringify(result)+"\n");
       return result;
     },
 
