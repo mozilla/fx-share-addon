@@ -5,31 +5,19 @@ https://hg.mozilla.org/users/pweitershausen_mozilla.com/fx-share/
 The branch you are looking at is an effort towards getting fx-share working
 in the Open Web Apps infrastructure.  This requires:
 
-Setting up the share server:
-=============================
-
-* Edit your 'hosts' file and add an entry for 'linkdrop.caraveo.com' pointing
-  at 127.0.0.1
-
-* Clone git@github.com:mhammond/server-share.git
-* Checkout the 'feature/webmod' branch.
-* Run 'make dev' - this will clone some "child" repos.
-* Change to the 'deps/client-share-web' directory.
-* Execute 'git remote add mhammond git@github.com:mhammond/client-share-web.git'
-* Execute 'git fetch mhammond'
-* Execute 'git checkout -b mhammond/feature/webmod'
-* Change directory back to the root of the repo.
-* Execute 'source bin/activate' (or Scripts/activate.bat on Windows)
-* Edit development.ini and make sure values for oauth_failure and oauth_success
-  have a base patch of /dev/1/oauth.html otherwise oauth authorization will fail
-
-You should then be able to execute 'paster serve development.ini'.
-
-Visit http://linkdrop.caraveo.com:5000/1/apps/facebook.png in your browser -
-you should see the facebook logo.
-
 Setting up the addon:
 =====================
+
+Install the oauthorizer addon.
+------------------------------
+
+Until the webapps move to the primary domain providers responsibility, they will
+be client side oauth driven.  The oauthorizer addon is currently being used to
+quick-start the process.  Be sure to install it into the profile you will use
+for use with owa and f1.
+
+* git clone https://github.com/mozilla/oauthorizer
+* echo /path/to/oauthorizer > /path/to/firefox/profile/extensions/oauthorizer@mozillamessaging.com
 
 Install the Open Web Apps addon.
 --------------------------------
@@ -41,9 +29,6 @@ Prepare your firefox profile.
 -----------------------------
 
 * You probably want a test firefox profile.
-* In the profile you will use, use about:config to set the following:
-  services.share.settingsURL=http://linkdrop.caraveo.com:5001/dev/1/settings/
-  services.share.shareURL=http://linkdrop.caraveo.com:5001/dev/1/share/panel/
 
 Setup Jetpack SDK.
 ------------------
