@@ -25,8 +25,8 @@
 /*global define: false, location: true, window: false, alert: false,
   document: false, setTimeout: false, localStorage: false */
 "use strict";
-
-define([ "require", "jquery", "jschannel", "./common",
+dump("loading facebook.js\n");
+define([ "require", "jquery", "jschannel", "../common",
          "jquery-ui-1.8.6.custom.min"],
 
 function (require,   $,       jschannel,   common) {
@@ -35,14 +35,15 @@ function (require,   $,       jschannel,   common) {
   // Bind the OWA messages
   var chan = Channel.build({window: window.parent, origin: "*", scope: "openwebapps_conduit"});
   chan.bind("confirm", function(t, data) {
-    dump("channel.confirm with args: " + data + "!\n");
+    dump("facebook channel.confirm with args: " + data + "!\n");
     data.domain = domain;
     common.send(t, data);
   });
   chan.bind("link.send", function(t, args) {
-    dump("got link.send connection\n");
+    dump("facebook link.send connection\n");
   });
   chan.bind("link.send.getCharacteristics", function(t, args) {
+    dump("facebook link.send.getCharacteristics\n");
     // some if these need re-thinking.
     return {
       type: 'facebook', // XXX - should be able to nuke this.
@@ -79,9 +80,11 @@ function (require,   $,       jschannel,   common) {
     };
   });
   chan.bind("link.send.getLogin", function(t, args) {
+    dump("facebook link.send.getLogin\n");
     return common.getLogin(t, domain);
   });
   chan.bind("link.send.logout", function(t, args) {
+    dump("facebook link.send.logout\n");
     return common.logout(t, domain);
   });
 });

@@ -26,7 +26,7 @@
   document: false, setTimeout: false, localStorage: false */
 "use strict";
 
-define([ "require", "jquery", "jschannel", "./common",
+define([ "require", "jquery", "jschannel", "../common",
          "jquery-ui-1.8.6.custom.min"],
 
 function (require,   $,       jschannel,   common) {

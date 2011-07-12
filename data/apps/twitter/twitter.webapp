@@ -6,12 +6,12 @@
     },
     "description":"Connects your browser's Firefox Share to Twitter",
     "icons":{
-        "16":"/favicon.ico"
+        "32":"/twitter_newbird_blue.png"
     },
     "experimental": {
       "services": {
         "link.send": {
-          "endpoint": "/apps/twitter.html"
+          "endpoint": "/twitter.html"
         }
       }
     }

@@ -6,12 +6,12 @@
     },
     "description":"Connects your browser's Firefox Share to Facebook",
     "icons":{
-        "16":"/favicon.ico"
+        "32":"/facebook.png"
     },
     "experimental": {
       "services": {
         "link.send": {
-          "endpoint": "/apps/facebook.html"
+          "endpoint": "/facebook.html"
         }
       },
       "oauth": {
