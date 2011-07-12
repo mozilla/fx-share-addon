@@ -622,9 +622,11 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
 
     owaservices.forEach(function(svcRec, i) {
       try {
+        // XXX if it's a resource use a global so we can still work
+        var origin = svcRec.app.url.indexOf("resource://") == 0 ? "*" : svcRec.app.url;
         var chan = Channel.build({
             window: svcRec.iframe.contentWindow,
-            origin: svcRec.app.url,
+            origin: origin,
             scope: "openwebapps_conduit"
         });
 
