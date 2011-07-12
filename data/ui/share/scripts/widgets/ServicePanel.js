@@ -145,7 +145,10 @@ dump("onLogin called for "+this.owaservice.app.app+"\n");
           dump("dispatch to oauthAuthorize\n");
           try {
             // XXX need to fix postmessage between the share panel and the webapps
-            dispatch.pub('oauthAuthorize', app.manifest.experimental.oauth);
+            //dispatch.pub('oauthAuthorize', app.manifest.experimental.oauth);
+            var messageData = {app:app.manifest.experimental.oauth, cmd:"oauthAuthorize"};
+            sendOWAMessage(messageData);
+
           } catch(e) {
             dump(e+"\n");
           }
