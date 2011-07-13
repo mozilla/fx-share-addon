@@ -13,7 +13,7 @@
         <input type="hidden" name="medium" value="{options.medium}" />
         <input type="hidden" name="source" value="{options.source}" />
       {]}
-      <img class="avatar" src="{profilePic(svcAccount.photos)}">
+      <img class="avatar" src="{profilePic(svcAccount.photos)}" />
       <span class="username">{displayName}</span>
       <a class="remove" href="#">logout</a>
     </div>
@@ -25,7 +25,7 @@
             <input name="subject" placeholder="subject" type="text" value="{options.subject}" autocomplete="off"/>
           {]}
         {]}
-        <input type="hidden" name="shareType" value="{svc.shareTypes[0].type}">
+        <input type="hidden" name="shareType" value="{svc.shareTypes[0].type}" />
       {]}
       <textarea class="message compose" placeholder="Type your message here, and we'll attach the link when you send." name="message">{options.message}</textarea>
       {gt(svc.shareTypes.length, 1) [}
