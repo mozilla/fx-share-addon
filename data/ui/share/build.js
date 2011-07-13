@@ -1,10 +1,10 @@
 ({
-    baseUrl: "../../scripts/",
+    baseUrl: "../scripts/",
     paths: {
-        "index": "../share/panel/index",
-        "style": "../share/panel/style",
+        "index": "../share/index",
+        "style": "../share/style",
         "jquery": "jqueryStub",
-        "widgets": "../share/panel/scripts/widgets"
+        "widgets": "../share/scripts/widgets"
     },
     name: "index",
     include: ['widgets/AccountPanelLinkedIn', 'widgets/AccountPanelFaceBook',
