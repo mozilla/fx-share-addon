@@ -26,8 +26,8 @@
  localStorage: false, opener: false, setTimeout: false */
 'use strict';
 
-define([ 'storage', 'dispatch', 'rdapi'],
-function (storage,   dispatch,   rdapi ) {
+define([ 'storage', 'dispatch'],
+function (storage,   dispatch ) {
 
   function isCacheMatch(cache, domain, userid, username) {
     return cache.domain === domain &&

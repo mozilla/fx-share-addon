@@ -27,11 +27,11 @@
 
 define([ 'blade/object', 'blade/Widget', 'jquery', 'text!./AccountPanel.html',
          'TextCounter', 'module', 'dispatch', 'accounts',
-         'require', 'AutoComplete', 'rdapi', 'blade/fn', './jigFuncs', 'Select',
+         'require', 'AutoComplete', 'blade/fn', './jigFuncs', 'Select',
          'jquery.textOverflow'],
 function (object,         Widget,         $,        template,
           TextCounter,   module,   dispatch,   accounts,
-          require,   AutoComplete,   rdapi,   fn,         jigFuncs,     Select) {
+          require,   AutoComplete,   fn,         jigFuncs,     Select) {
 
   var className = module.id.replace(/\//g, '-');
 

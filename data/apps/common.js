@@ -26,9 +26,9 @@
   document: false, setTimeout: false, localStorage: false */
 "use strict";
 
-define([ "require", "jquery", "rdapi",
+define([ "require", "jquery",
          "jquery-ui-1.8.6.custom.min"],
-function (require,   $,       rdapi) {
+function (require,   $) {
 
   var common = function() {
     
@@ -43,11 +43,12 @@ function (require,   $,       rdapi) {
         data.account = strval;
       }
       // Do the send!
-      rdapi('send', {
+      $.ajax('/api/send', {
         type: 'POST',
         domain: data.domain,
         data: data,
-        success: function (json) {
+        dataType: 'json',
+        success: function (json, textStatus, jqXHR) {
           if (json.error && json.error.status) {
             var code = json.error.status;
             // XXX need to find out what error codes everyone uses

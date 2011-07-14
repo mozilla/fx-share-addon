@@ -25,8 +25,8 @@
 /*global require: false, define: false, window: false */
 "use strict";
 
-define([ 'jquery', 'blade/object', 'blade/fn', 'dispatch', 'rdapi', 'accounts'],
-function ($,        object,         fn,         dispatch,   rdapi,   accounts) {
+define([ 'jquery', 'blade/object', 'blade/fn', 'dispatch', 'accounts'],
+function ($,        object,         fn,         dispatch,   accounts) {
 
   var Contacts;
 
@@ -144,9 +144,10 @@ function ($,        object,         fn,         dispatch,   rdapi,   accounts) {
           data.pageData = JSON.stringify(pageData);
         }
 
-        rdapi('contacts/' + acct.domain, {
+        $.ajax('/api/contacts/' + acct.domain, {
           type: 'POST',
           data: data,
+          dataType: 'json',
           //Only wait for 10 seconds, then give up.
           timeout: 10000,
           success: fn.bind(this, function (json) {
