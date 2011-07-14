@@ -26,9 +26,9 @@
 "use strict";
 
 define([ 'blade/object', 'blade/fn', 'blade/Widget', 'module', 'Select',
-         'services', 'jquery', 'text!./TabButton.html'],
+         'jquery', 'text!./TabButton.html'],
 function (object,         fn,         Widget,         module,   Select,
-          services,   $,        template) {
+          $,        template) {
 
   var className = module.id.replace(/\//g, '-');
 
