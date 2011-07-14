@@ -47,26 +47,21 @@ function (require,   $,        object,         fn,
           AddAccount,           less,   osTheme) {
 
   var accountPanels = {},
-    accountPanelsRestoreState = {},
-    store = storage(),
-    SHARE_DONE = 0,
-    SHARE_START = 1,
-    SHARE_ERROR = 2,
-    okStatusIds = {
-      statusSettings: true,
-      statusSharing: true,
-      statusShared: true
-    },
-    // If it has been more than a day,
-    // refresh the UI, record a timestamp for it.
-    refreshStamp = (new Date()).getTime(),
-    //1 day.
-    refreshInterval = 1 * 24 * 60 * 60 * 1000,
+      accountPanelsRestoreState = {},
+      store = storage(),
+      SHARE_DONE = 0,
+      SHARE_START = 1,
+      SHARE_ERROR = 2,
+      okStatusIds = {
+        statusSettings: true,
+        statusSharing: true,
+        statusShared: true
+      },
+      options, bodyDom, sendData, tabButtonsDom,
+      servicePanelsDom,
+      owaservices = [], // A list of {app, iframe, channel, characteristics}
+      owaservicesbyid = {}; // A map version of the above
 
-    options, bodyDom, sendData, tabButtonsDom,
-    servicePanelsDom,
-    owaservices = [], // A list of {app, iframe, channel, characteristics}
-    owaservicesbyid = {}; // A map version of the above
 
   //Start processing of less files right away.
   require(['text!style/' + osTheme + '.css', 'text!style.css'],
