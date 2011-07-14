@@ -26,8 +26,7 @@
   document: false, setTimeout: false, localStorage: false */
 "use strict";
 dump("loading facebook.js\n");
-define([ "require", "jquery", "jschannel", "../common",
-         "jquery-ui-1.8.6.custom.min"],
+define([ "require", "jquery", "jschannel", "../common"],
 
 function (require,   $,       jschannel,   common) {
 
