@@ -27,7 +27,7 @@
 "use strict";
 
 define([ "require", "jquery",
-         "jquery-ui-1.8.6.custom.min"],
+         "jquery-ui-1.8.7.min"],
 function (require,   $) {
 
   var common = function() {
