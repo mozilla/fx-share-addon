@@ -374,7 +374,7 @@ function (object,         Widget,         $,        template,
         //Then collect the form values into the data object.
         var sendData = this.getFormData();
         // put the appid in the data so the caller can find us.
-        sendData.appid = this.owaservice.app.app;
+        sendData.appid = this.owaservice.app.origin;
 
         if (!this.validate(sendData)) {
           return;
@@ -397,7 +397,7 @@ function (object,         Widget,         $,        template,
 
       onRemove: function (evt) {
         // request a logout.
-        dispatch.pub('logout', this.owaservice.app.app);
+        dispatch.pub('logout', this.owaservice.app.origin);
       }
     };
   });

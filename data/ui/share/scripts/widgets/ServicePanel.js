@@ -63,7 +63,7 @@ function (object,         Widget,         $,        template,
       onCreate: function () {
         //Listen for changes to the service state and update the UI.
         this.serviceChangedSub = dispatch.sub('serviceChanged', fn.bind(this, function (which) {
-          if (which === this.owaservice.app.app) {
+          if (which === this.owaservice.app.origin) {
             this.serviceChanged();
           }
         }));
@@ -138,7 +138,7 @@ dump("logging into show account panel\n");
       onLogin: function (evt) {
         // hrmph - tried to dispatch.pub back to the main panel but then
         // the popup was blocked.
-dump("onLogin called for "+this.owaservice.app.app+"\n");
+dump("onLogin called for "+this.owaservice.app.origin+"\n");
         var store = storage(),
             app = this.owaservice.app;
         if (app.manifest.experimental.oauth) {
@@ -155,11 +155,11 @@ dump("onLogin called for "+this.owaservice.app.app+"\n");
 
         } else
         if (this.owaservice.login.login) {
-            var url = app.app + this.owaservice.login.login.dialog,
+            var url = app.origin + this.owaservice.login.login.dialog,
             win = window.open(url,
                   "ffshareOAuth",
                   "dialog=yes, modal=yes, width=900, height=500, scrollbars=yes");
-          store.set('lastSelection', app.app);
+          store.set('lastSelection', app.origin);
           win.focus();
         }
       },

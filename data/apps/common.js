@@ -26,16 +26,14 @@
   document: false, setTimeout: false, localStorage: false */
 "use strict";
 
-define([ "require", "jquery",
-         "jquery-ui-1.8.6.custom.min"],
+define([ "require", "jquery"],
 function (require,   $) {
 
   var common = function() {
     
   };
   common.prototype = {
-    send: function(t, data) {
-      t.delayReturn(true); // we finish in the async callback.
+    send: function(data, cb, cberr) {
       // first we need to "graft" the account data with the send data.
       var key = "ff-share-" + data.domain;
       var strval = window.localStorage.getItem(key);
@@ -66,16 +64,16 @@ function (require,   $) {
             t.error("error", json.error.message)
           } else {
             // it worked!
-            t.complete(json);
+            cb(json);
           }
         },
         error: function (xhr, textStatus, err) {
-          t.error("http_error", xhr.status);
+          cberr("http_error", xhr.status);
         }
       });
     },
 
-    getLogin: function(t, domain) {
+    getLogin: function(domain, args, cb, cberr) {
         dump("getLogin called for "+domain+"\n");
       var key = "ff-share-" + domain;
       var strval = window.localStorage.getItem(key);
@@ -97,12 +95,13 @@ function (require,   $) {
         dump("XXX LOGIN NOT IMPLEMENTED, see ServicePanel.js for start towards oauth login\n");
       }
         dump("getLogin returning "+JSON.stringify(result)+"\n");
-      return result;
+      cb(result);
     },
 
-    logout: function(t, domain) {
+    logout: function(domain, args, cb, cberr) {
       var key = "ff-share-" + domain;
       window.localStorage.removeItem(key);
+      cb({status: "ok"});
     }
   }
 

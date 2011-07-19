@@ -35,11 +35,12 @@
 
 */
 dump("heya! from f1\n");
+
 define([ "require", "jquery", "blade/object", "blade/fn",
         "blade/jig", "blade/url", "dispatch",
          "storage",  "widgets/ServicePanel", "widgets/TabButton",
          "widgets/AddAccount", "less", "osTheme", "jquery-ui-1.8.7.min",
-         "jquery.textOverflow", "jschannel",
+         "jquery.textOverflow"
          ],
 function (require,   $,        object,         fn,
           jig,         url,        dispatch,
@@ -65,7 +66,7 @@ function (require,   $,        object,         fn,
 
     options, bodyDom, sendData, tabButtonsDom,
     servicePanelsDom,
-    owaservices = [], // A list of {app, iframe, channel, characteristics}
+    owaservices = [], // A list of OWA service objects
     owaservicesbyid = {}; // A map version of the above
 
   //Start processing of less files right away.
@@ -206,11 +207,8 @@ function (require,   $,        object,         fn,
     // to the F1 backend implementation and not really suitable as a general
     // api.
     var svcRec = owaservicesbyid[sendData.appid];
-    var channel = svcRec.channel;
-    channel.call({
-      method: "confirm",
-      params: sendData,
-      success: function() {
+    svcRec.call("confirm", sendData,
+      function(result) {
         var prop;
         // {'message': u'Status is a duplicate.', 'provider': u'twitter.com'}
         store.set('lastSelection', sendData.appid);
@@ -226,7 +224,7 @@ function (require,   $,        object,         fn,
             sendOWAMessage({cmd: 'result', app: sendData.appid, data: "ok"});
           }, 1000);
       },
-      error: function(error, message) {
+      function(error, message) {
         var fatal = true; // false if we can automatically take corrective action.
         dump("SEND FAILURE: " + error + "/" + message + "\n");
         if (error === 'authentication') {
@@ -265,7 +263,7 @@ function (require,   $,        object,         fn,
             }, 1000);
         }
       }
-    });
+    );
   }
 
   function sendMessage(data) {
@@ -391,7 +389,7 @@ function (require,   $,        object,         fn,
 
         //Figure out what accounts we do have
         owaservices.forEach(function (thisSvc, index) {
-          var appid = thisSvc.app.app,
+          var appid = thisSvc.app.origin,
               tabId = "ServicePanel" + index,
               PanelCtor;
 
@@ -401,15 +399,10 @@ function (require,   $,        object,         fn,
           }
 
           if (accountPanels[appid]) {
-            dump("EEEK - no concept of multiple accts per service!\n");
             // accountPanels[appid].addService(thisSvc);
           } else {
             /// XXX - need the OWA icon helper!!
-            var icon;
-            for (var z in thisSvc.app.manifest.icons) {
-              icon = thisSvc.app.app + thisSvc.app.manifest.icons[z];
-              break;
-            }
+            var icon = thisSvc.getIconForSize(48); // XXX - what size should really be used???
             // Add a tab button for the service.
 dump("adding tab for "+thisSvc.app.manifest.name+"\n");
             tabsDom.append(new TabButton({
@@ -472,18 +465,17 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
 
       dispatch.sub('logout', function (appid) {
         var svcRec = owaservicesbyid[appid];
-        svcRec.channel.call({
-          method: "link.send.logout",
-          success: function(result) {
+        svcRec.call("logout", {},
+          function(result) {
             dump("logout worked\n");
             sendOWAMessage({cmd: "reconfigure"});
           },
-          error: function(err, message) {
+          function(err, message) {
             dump("failed to logout: " + err + ": " + message + "\n");
             // may as well update the accounts anyway incase it really did work!
             sendOWAMessage({cmd: "reconfigure"});
           }
-        });
+        );
       });
 
       // Listen for 503 errors, could be a retry call, but for
@@ -535,14 +527,13 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
         // just incase the service doesn't detect the logout automatically
         // (ie, incase it returns the stale user info), force a logout.
         var svcRec = owaservicesbyid[sendData.appid];
-        // apparently must create the window here, before we do the channel
-        // stuff to avoid it being blocked.
+        // apparently must create the window here, before we call the service
+        // to avoid it being blocked.
         var win = window.open("",
           "ffshareOAuth",
           "dialog=yes, modal=yes, width=900, height=500, scrollbars=yes");
-        svcRec.channel.call({
-          method: 'link.send.logout',
-          success: function() {
+        svcRec.call('logout', {},
+          function() {
             _fetchLoginInfo(svcRec, function() {
               if (!svcRec.login || !svcRec.login.login || !svcRec.login.login.dialog) {
                 dump("Eeek - didn't get a login URL back from the service\n");
@@ -550,17 +541,17 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
                 win.close();
                 return;
               }
-              var url = svcRec.app.app + svcRec.login.login.dialog;
+              var url = svcRec.app.origin + svcRec.login.login.dialog;
               win.location = url;
               win.focus();
             });
           },
-          error: function(err, message) {
+          function(err, message) {
             dump("Service logout failed: " + err + "/" + message + "\n");
             showStatus('statusOAuthFailed');
             win.close();
           }
-        });
+        );
         return false;
       });
 
@@ -582,26 +573,22 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
   };
 
   function _fetchLoginInfo(svcRec, callback) {
-    var ch = svcRec.channel;
-    ch.call({
-      method: "link.send.getLogin",
-      success: function(result) {
+    svcRec.call("getLogin", {},
+      function(result) {
         svcRec.login = result;
         callback();
       },
-      error: function(err, message) {
+      function(err, message) {
         dump("failed to get owa login info: " + err + ": " + message + "\n");
         svcRec.login = null;
         callback();
       }
-    });
+    );
   };
 
   function _deleteOldServices() {
-    // first the channels
     while (owaservices.length) {
       var svcRec = owaservices.pop();
-      svcRec.channel.destroy();
       if (svcRec.subAcctsChanged) {
         dispatch.unsub(svcRec.subAcctsChanged);
       }
@@ -616,53 +603,9 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
     accountPanels = {};
   };
 
-  function _createChannels(requestMethod, requestArguments) {
-    options = requestArguments;
-    onFirstShareState();
-
-    owaservices.forEach(function(svcRec, i) {
-      try {
-        // XXX if it's a resource use a global so we can still work
-        var origin = svcRec.app.url.indexOf("resource://") == 0 ? "*" : svcRec.app.url;
-        var chan = Channel.build({
-            window: svcRec.iframe.contentWindow,
-            origin: origin,
-            scope: "openwebapps_conduit"
-        });
-
-        chan.call({
-            method: requestMethod,
-            params: requestArguments,
-            success: function() {}, /* perhaps record the fact that it worked? */
-            error: (function() {return function(error, message) {
-              // XXX - what is this error handler trying to do???
-              var messageData = {cmd:"error", error:error, msg:message};
-              var msg = document.createEvent("MessageEvent");
-              msg.initMessageEvent("message", // type
-                                   true, true, // bubble, cancelable
-                                   JSON.stringify(messageData),  // data
-                                   "resource://openwebapps/service", "", window); // origin, source
-              document.dispatchEvent(msg);
-            }}())
-        });
-        svcRec.channel = chan;
-        // and listen for "Account changed" events coming back from it.
-        // (We do this once per app as each one may have a different origin)
-        svcRec.subAcctsChanged = dispatch.sub('accountsChanged',
-                                              function () {
-                                                sendOWAMessage({cmd: "reconfigure"});
-                                              },
-                                              window,
-                                              svcRec.app.app);
-
-      } catch (e) {
-        dump("Warning: unable to create channel to " + svcRec.app.url + ": " + e + "\n");
-      }
-    });
-  };
-
   function sendOWAMessage(messageData) {
     var msg = document.createEvent("MessageEvent");
+    dump("sending " + messageData.cmd + "\n");
     msg.initMessageEvent("message", // type
                          true, true, // bubble, cancelable
                          JSON.stringify(messageData),  // data
@@ -671,70 +614,30 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
   }
   window.sendOWAMessage = sendOWAMessage;
 
-
-  function handleOWAMessage(message) {
-    var topic, data;
-    try {
-      // Only some messages are valid JSON, only care about the ones
-      // that are.
-      message = JSON.parse(message);
-    } catch (e) {
-      dump("share panel ignoring non-json message\n");
-      return;
-    }
-    if (message.cmd === "init") {
+  window.navigator.apps.mediation.ready(
+    function(method, args, services) {
+      dump("invoke handler called\n");
+      options = args;
       // Sent by OWA before it creates the iframes etc.
       _deleteOldServices();
-    } else if (message.cmd === "setup") {
-      // Sent by OWA after it has created the iframes.
-      message.serviceList.forEach(function(svc, index) {
-        var svcRec = {app: svc,
-                      iframe: document.getElementById("svc-frame-" + index)
-        }
-        owaservices.push(svcRec);
-        owaservicesbyid[svc.app] = svcRec;
-      });
       displayAccounts();
-      var requestMethod = message.method;
-      var requestArgs = message.args;
-    /* XXX - strange - don't get the start_channels even though OWA's
-      services.js sends this immediately after 'setup'!!!
-    } else if (message.cmd === "start_channels") {
-    *****/
-      _createChannels(requestMethod, requestArgs);
-      // use the newly created channels to get the characteristics for
-      // each owa service.
-      owaservices.forEach(function(thisSvc) {
-        var ch = thisSvc.channel;
-        ch.call({
-          method: "link.send.getCharacteristics",
-          success: function(result) {
-            thisSvc.characteristics = result;
-            _fetchLoginInfo(thisSvc, function() {
-              dispatch.pub('serviceChanged', thisSvc.app.app);
+      owaservices = services;
+      for (var i = 0; i < services.length; i++) {
+        var svc = services[i];
+        document.getElementById("frame-garage").appendChild(svc.iframe);
+        // $("#frame-garage").append(svc.iframe);
+        owaservicesbyid[svc.app.origin] = svc;
+        svc.on("ready", function() {
+          dump("service ready!!\n");
+          svc.call("getCharacteristics", {}, function(chars) {
+            dump("got chars!\n");
+            svc.characteristics = chars;
+            _fetchLoginInfo(svc, function() {
+              dispatch.pub('serviceChanged', svc.app.origin);
             });
-          },
-          error: function(err) {
-            dump("failed to get owa characteristics: " + err + "\n");
-            _fetchLoginInfo(thisSvc, function() {
-              dispatch.pub('serviceChanged', thisSvc.app.app);
-            });
-          }
+          });
         });
-      });
+      }
     }
-  };
-  // currently hacks in the OWA code mean we must expose this function
-  window.handleAdminPostMessage = handleOWAMessage;
-
-/** Currently not used as OWA doesn't postMessage at the moment
-  window.addEventListener("message", function(evt) {
-    // Make sure we only act on messages from "ourself" (actually, they come
-    // from OWA, but it sets the origin to our window...)
-    if (window.location.href.indexOf(evt.origin) === 0) {
-      handleOWAMessage(evt.data);
-    }
-  }, false);
-
-***/
+  );
 });
