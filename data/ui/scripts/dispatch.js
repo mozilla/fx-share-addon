@@ -40,19 +40,19 @@ define(['jquery'], function ($) {
     sub: function (topic, callback, win, targetOrigin) {
       win = win || window;
       targetOrigin = targetOrigin || origin;
-
       var func = function (evt) {
         //Make sure message is from this page, or from the browser extension
         //that wants to communicate information back to the page.
-        if (evt.origin === targetOrigin || evt.origin === 'chrome://browser') {
+        if (evt.origin === targetOrigin || evt.origin === 'resource://openwebapps/service') {
           //Assume pub/sub has JSON data with properties named
           //'topic' and 'data'.
           try {
             var message = JSON.parse(evt.data),
-              pubTopic = message.topic;
+              pubTopic = message.topic || message.cmd;
             if (pubTopic && pubTopic === topic) {
               try {
                 callback(message.data);
+                dump("dispatch handled ["+pubTopic+"] with data "+evt.data+"\n");
               } catch (e) {
                 dump("Error in dispatch.sub callback for topic '" + pubTopic + "': " + e.toString() + "\n");
                 dump(e.stack);
@@ -62,8 +62,6 @@ define(['jquery'], function ($) {
             //Just ignore messages that are not JSON. There are some, like
             //the oauth_success messages
           }
-        } else {
-          dump("XXX unable to dispatch to "+evt.origin+" from "+targetOrigin+"\n");
         }
       };
 
@@ -88,27 +86,6 @@ define(['jquery'], function ($) {
 
       // Notify primary target.
       win.postMessage(text, origin);
-
-      // notify other windows too, can go away if settings work is done
-      // in share panel.
-      if (wins.length) {
-        for (i = 0; (otherWin = wins[i]); i++) {
-          if (otherWin.closed) {
-            wins.splice(i, 1);
-            i -= 1;
-          } else {
-            otherWin.postMessage(text, origin);
-          }
-        }
-      }
-    },
-
-    // Used by settings page so that it can get all the same disptaches as
-    // the share panel, important since data storage is primarily accessed and
-    // data update events triggred in the share panel window. This code can
-    // go away if the settings work is done in the share panel.
-    trackWindow: function (win) {
-      wins.push(win);
     }
   };
 });
