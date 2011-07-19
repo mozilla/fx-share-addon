@@ -67,6 +67,14 @@ function (object,         Widget,         $,        template,
             this.serviceChanged();
           }
         }));
+        this.authorizationSub = dispatch.sub('authorizationResponse', fn.bind(this, function (data) {
+          dump("authorizationSub: "+this.owaservice.app.app+"\n");
+          if (data.app === this.owaservice.app.app) {
+            // XXX
+            dump(JSON.stringify(data)+"\n");
+            //this.authorized();
+          }
+        }));
       },
 
       destroy: function () {
@@ -144,11 +152,9 @@ dump("onLogin called for "+this.owaservice.app.app+"\n");
         if (app.manifest.experimental.oauth) {
           dump("dispatch to oauthAuthorize\n");
           try {
-            // XXX need to fix postmessage between the share panel and the webapps
-            //dispatch.pub('oauthAuthorize', app.manifest.experimental.oauth);
-            var messageData = {app:app.manifest.experimental.oauth, cmd:"oauthAuthorize"};
-            sendOWAMessage(messageData);
-
+            var messageData = {app: this.owaservice.app.app,
+                               oauth: app.manifest.experimental.oauth};
+            dispatch.pub('oauthAuthorize', messageData);
           } catch(e) {
             dump(e+"\n");
           }
