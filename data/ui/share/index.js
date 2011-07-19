@@ -38,13 +38,13 @@ dump("heya! from f1\n");
 define([ "require", "jquery", "blade/object", "blade/fn",
         "blade/jig", "blade/url", "dispatch",
          "storage",  "widgets/ServicePanel", "widgets/TabButton",
-         "widgets/AddAccount", "less", "osTheme", "jquery-ui-1.8.7.min",
-         "jquery.textOverflow", "jschannel",
+         "widgets/AddAccount", "less", "osTheme", "mediator",
+         "jquery-ui-1.8.7.min", "jquery.textOverflow", "jschannel"
          ],
 function (require,   $,        object,         fn,
           jig,         url,        dispatch,
           storage,   ServicePanel,           TabButton,
-          AddAccount,           less,   osTheme) {
+          AddAccount,           less,   osTheme,   mediator) {
 
   var accountPanels = {},
       accountPanelsRestoreState = {},
@@ -57,7 +57,7 @@ function (require,   $,        object,         fn,
         statusSharing: true,
         statusShared: true
       },
-      options, bodyDom, sendData, tabButtonsDom,
+      options, sendData, tabButtonsDom,
       servicePanelsDom,
       owaservices = [], // A list of {app, iframe, channel, characteristics}
       owaservicesbyid = {}; // A map version of the above
@@ -81,43 +81,19 @@ function (require,   $,        object,         fn,
     });
   });
 
-  function checkBase64Preview() {
-    //Ask extension to generate base64 data if none available.
-    //Useful for sending previews in email.
-    var preview = options.previews && options.previews[0];
-    if (preview && preview.http_url && !preview.base64) {
-      dispatch.pub('generateBase64Preview', preview.http_url);
-    }
-  }
-
-  function hide() {
-    dispatch.pub('hide');
-  }
-  window.hideShare = hide;
-
-  function close() {
-    dispatch.pub('close');
-  }
   //For debug tab purpose, make it global.
-  window.closeShare = close;
+  window.closeShare = mediator.close;
 
   function updateChromeStatus(status, statusId, message) {
     var app = sendData.appid;
     var result = {status:status, statusId:statusId, message:message, url:options.url};
-    var messageData = {app:app, cmd:"updateStatus", result:result};
-    sendOWAMessage(messageData);
+    mediator.updateChromeStatus(app, result);
   }
-  window.updateChromeStatus = updateChromeStatus;
-
-  function sizePanelToContent() {
-    sendOWAMessage({cmd: 'sizeToContent'});
-  }
-  window.sizePanelToContent = sizePanelToContent;
 
   function _showStatus(statusId, shouldCloseOrMessage) {
     if (shouldCloseOrMessage === true) {
       setTimeout(function () {
-        dispatch.pub('success', {
+        mediator.success({
           username: sendData.username,
           userid: sendData.userid,
           url: options.url,
@@ -130,7 +106,7 @@ function (require,   $,        object,         fn,
     }
 
     //Tell the extension that the size of the content may have changed.
-    sizePanelToContent();
+    mediator.sizeToContent();
   }
 
   function showStatus(statusId, shouldCloseOrMessage) {
@@ -213,12 +189,12 @@ function (require,   $,        object,         fn,
         // notify on successful send for components that want to do
         // work, like save any new contacts.
         updateChromeStatus(SHARE_DONE);
-        dispatch.pub('sendComplete', sendData);
+        mediator.sendComplete(sendData);
         // Let the 'shared' status stay up for a second.
         setTimeout(function() {
             // do *not* send the sendData in the result as that might leak
             // private information to content.
-            sendOWAMessage({cmd: 'result', app: sendData.appid, data: "ok"});
+            mediator.result(sendData.appid);
           }, 1000);
       },
       error: function(error, message) {
@@ -242,7 +218,7 @@ function (require,   $,        object,         fn,
             //var headerError = xhr.getResponseHeader('X-Error');
             reAuth();
           } else if (status === 503) {
-            dispatch.pub('serverErrorPossibleRetry');
+            showStatus('statusServerBusy');
           } else if (status === 0) {
             showStatus('statusServerError');
           } else {
@@ -256,7 +232,7 @@ function (require,   $,        object,         fn,
           // Let the 'error' status stay up for a second then notify OWA of
           // the error.
           setTimeout(function() {
-              sendOWAMessage({cmd: 'error', app: sendData.appid, data: "error"});
+              mediator.error(sendData.appid);
             }, 1000);
         }
       }
@@ -277,7 +253,7 @@ function (require,   $,        object,         fn,
           // hide the panel now, but only if the extension can show status
           // itself (0.7.7 or greater)
           updateChromeStatus(SHARE_START);
-          hide();
+          mediator.hide();
 
           //First see if a bitly URL is needed.
           if (svcConfig.shorten && shortenPrefs) {
@@ -359,7 +335,7 @@ function (require,   $,        object,         fn,
           tabButtonsDom = $('.widgets-TabButton');
           servicePanelsDom = $('.servicePanel');
 
-          checkBase64Preview();
+          mediator.checkBase64Preview(options);
 
           //If no matching accounts match the last selection clear it.
           if (lastSelectionMatch < 0 && !accountAdded && lastSelection) {
@@ -380,7 +356,7 @@ function (require,   $,        object,         fn,
           //Inform extension the content size has changed, but use a delay,
           //to allow any reflow/adjustments.
           setTimeout(function () {
-            sizePanelToContent();
+            mediator.sizeToContent();
           }, 100);
         }
 
@@ -415,8 +391,7 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
             }, tabFragment));
 
             // Get the contructor function for the panel.
-            PanelCtor = require('widgets/ServicePanel');
-            accountPanel = new PanelCtor({
+            accountPanel = new ServicePanel({
               options: options,
               owaservice: thisSvc,
               savedState: accountPanelsRestoreState[appid]
@@ -452,14 +427,6 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
   function onFirstShareState() {
     // Wait until DOM ready to start the DOM work.
     $(function () {
-      dispatch.pub('oauthResponse', function(data) {
-        // pass back to the panel?
-      });
-      dispatch.sub('requestAuthorization', function(data) {
-        // from account panel, pass up to the addon
-        dispatch.pub('oauthAuthorize', data);
-      });
-
       //Listen to sendMessage events from the AccountPanels
       dispatch.sub('sendMessage', function (data) {
         sendMessage(data);
@@ -471,25 +438,17 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
           method: "link.send.logout",
           success: function(result) {
             dump("logout worked\n");
-            sendOWAMessage({cmd: "reconfigure"});
+            mediator.reconfigure();
           },
           error: function(err, message) {
             dump("failed to logout: " + err + ": " + message + "\n");
             // may as well update the accounts anyway incase it really did work!
-            sendOWAMessage({cmd: "reconfigure"});
+            mediator.reconfigure();
           }
         });
       });
 
-      // Listen for 503 errors, could be a retry call, but for
-      // now, just show server error until better feedback is
-      // worked out in https://bugzilla.mozilla.org/show_bug.cgi?id=642653
-      dispatch.sub('serverErrorPossibleRetry', function () {
-        showStatus('statusServerBusy');
-      });
-
-      bodyDom = $('body');
-      bodyDom
+      $('body')
         .delegate('.widgets-TabButton', 'click', function (evt) {
           evt.preventDefault();
 
@@ -505,7 +464,7 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
           $('#' + target).removeClass('hidden');
 
           setTimeout(function () {
-            sizePanelToContent();
+            mediator.sizeToContent();
           }, 15);
         })
         .delegate('#statusAuthButton, .statusErrorButton', 'click', function (evt) {
@@ -519,11 +478,11 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
         })
         .delegate('.settingsLink', 'click', function (evt) {
           evt.preventDefault();
-          dispatch.pub('openPrefs');
+          mediator.openPrefs();
         })
         .delegate('.close', 'click', function (evt) {
           evt.preventDefault();
-          close();
+          mediator.close();
         });
 
       $('#authOkButton').click(function (evt) {
@@ -644,9 +603,7 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
         // and listen for "Account changed" events coming back from it.
         // (We do this once per app as each one may have a different origin)
         svcRec.subAcctsChanged = dispatch.sub('accountsChanged',
-                                              function () {
-                                                sendOWAMessage({cmd: "reconfigure"});
-                                              },
+                                              mediator.reconfigure,
                                               window,
                                               svcRec.app.app);
 
@@ -655,81 +612,46 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
       }
     });
   };
+  
+  
+  function owa_setup(data) {
+    data.serviceList.forEach(function(svc, index) {
+      var svcRec = {app: svc,
+                    iframe: document.getElementById("svc-frame-" + index)
+      }
+      owaservices.push(svcRec);
+      owaservicesbyid[svc.app] = svcRec;
+    });
+    displayAccounts();
+    var requestMethod = data.method;
+    var requestArgs = data.args;
 
-  function sendOWAMessage(messageData) {
-    var msg = document.createEvent("MessageEvent");
-    msg.initMessageEvent("message", // type
-                         true, true, // bubble, cancelable
-                         JSON.stringify(messageData),  // data
-                         "resource://openwebapps/service", "", window); // origin, source
-    document.dispatchEvent(msg);
-  }
-  window.sendOWAMessage = sendOWAMessage;
-
-
-  function handleOWAMessage(message) {
-    var topic, data;
-    try {
-      // Only some messages are valid JSON, only care about the ones
-      // that are.
-      message = JSON.parse(message);
-    } catch (e) {
-      dump("share panel ignoring non-json message\n");
-      return;
-    }
-    if (message.cmd === "init") {
-      // Sent by OWA before it creates the iframes etc.
-      _deleteOldServices();
-    } else if (message.cmd === "setup") {
-      // Sent by OWA after it has created the iframes.
-      message.serviceList.forEach(function(svc, index) {
-        var svcRec = {app: svc,
-                      iframe: document.getElementById("svc-frame-" + index)
+    _createChannels(requestMethod, requestArgs);
+    // use the newly created channels to get the characteristics for
+    // each owa service.
+    owaservices.forEach(function(thisSvc) {
+      var ch = thisSvc.channel;
+      ch.call({
+        method: "link.send.getCharacteristics",
+        success: function(result) {
+          thisSvc.characteristics = result;
+          _fetchLoginInfo(thisSvc, function() {
+            dispatch.pub('serviceChanged', thisSvc.app.app);
+          });
+        },
+        error: function(err) {
+          dump("failed to get owa characteristics: " + err + "\n");
+          _fetchLoginInfo(thisSvc, function() {
+            dispatch.pub('serviceChanged', thisSvc.app.app);
+          });
         }
-        owaservices.push(svcRec);
-        owaservicesbyid[svc.app] = svcRec;
       });
-      displayAccounts();
-      var requestMethod = message.method;
-      var requestArgs = message.args;
-    /* XXX - strange - don't get the start_channels even though OWA's
-      services.js sends this immediately after 'setup'!!!
-    } else if (message.cmd === "start_channels") {
-    *****/
-      _createChannels(requestMethod, requestArgs);
-      // use the newly created channels to get the characteristics for
-      // each owa service.
-      owaservices.forEach(function(thisSvc) {
-        var ch = thisSvc.channel;
-        ch.call({
-          method: "link.send.getCharacteristics",
-          success: function(result) {
-            thisSvc.characteristics = result;
-            _fetchLoginInfo(thisSvc, function() {
-              dispatch.pub('serviceChanged', thisSvc.app.app);
-            });
-          },
-          error: function(err) {
-            dump("failed to get owa characteristics: " + err + "\n");
-            _fetchLoginInfo(thisSvc, function() {
-              dispatch.pub('serviceChanged', thisSvc.app.app);
-            });
-          }
-        });
-      });
-    }
-  };
-  // currently hacks in the OWA code mean we must expose this function
-  window.handleAdminPostMessage = handleOWAMessage;
-
-/** Currently not used as OWA doesn't postMessage at the moment
-  window.addEventListener("message", function(evt) {
-    // Make sure we only act on messages from "ourself" (actually, they come
-    // from OWA, but it sets the origin to our window...)
-    if (window.location.href.indexOf(evt.origin) === 0) {
-      handleOWAMessage(evt.data);
-    }
-  }, false);
-
-***/
+    });
+  }
+  /* initialize and setup commands sent from owa */
+  dispatch.sub("init", _deleteOldServices);
+  dispatch.sub("setup", owa_setup);
+  
+dump("F1 panel is ready!\n");
+  mediator.reconfigure();
 });
