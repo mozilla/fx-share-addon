@@ -78,6 +78,7 @@ define(['dispatch'], function (dispatch) {
     },
 
     storeGet: function (key) {
+      dump("FAKE STORE_GET\n");
       var value = dataStore[key];
       //JSON wants null.
       if (value === undefined) {
@@ -108,26 +109,29 @@ define(['dispatch'], function (dispatch) {
     }
   };
 
-  // register all events.
-  window.addEventListener('message', function (evt) {
-    if (evt.origin === origin) {
-      var message;
-      try {
-        message = JSON.parse(evt.data);
-      } catch (e) {
-        console.error('Could not JSON parse: ' + evt.data);
-      }
-
-      if (message && message.topic) {
-        if (subs[message.topic]) {
-          subs[message.topic](message.data);
-        } else {
-          // actually quite a few of these, uncomment if you want a play
-          // by play of topics going through the window.
-          //console.log("Unhandled topic: " + message.topic, message.data);
-        }
-      }
-    }
-  }, false);
+  // XXX we MIGHT want to reenable this later, for now, kill the use of
+  // fakeStorage by not listening for messages here
+  
+  //register all events.
+  //window.addEventListener('message', function (evt) {
+  //  if (evt.origin === origin) {
+  //    var message;
+  //    try {
+  //      message = JSON.parse(evt.data);
+  //    } catch (e) {
+  //      console.error('Could not JSON parse: ' + evt.data);
+  //    }
+  //
+  //    if (message && message.topic) {
+  //      if (subs[message.topic]) {
+  //        subs[message.topic](message.data);
+  //      } else {
+  //        // actually quite a few of these, uncomment if you want a play
+  //        // by play of topics going through the window.
+  //        //console.log("Unhandled topic: " + message.topic, message.data);
+  //      }
+  //    }
+  //  }
+  //}, false);
 
 });
