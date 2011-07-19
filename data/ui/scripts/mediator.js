@@ -34,15 +34,9 @@
  * via postmessage or port calls
  */
 
-define(['jquery'], function ($) {
+define(['jquery', 'dispatch'], function ($, dispatch) {
     
     var m = {
-        sendOWAMessage: function(messageData) {
-            var origin = window.location.protocol + "//" + window.location.host;
-            var topic = messageData.cmd || messageData.topic;
-            dump("sendOWAMessage "+topic+" from "+origin+"\n");
-            window.postMessage(JSON.stringify(messageData), origin);
-        },
         /**
          * checkBase64Preview
          * the current result will be sent via a post message to base64Preview
@@ -52,7 +46,7 @@ define(['jquery'], function ($) {
           //Useful for sending previews in email.
           var preview = options.previews && options.previews[0];
           if (preview && preview.http_url && !preview.base64) {
-            this.sendOWAMessage({cmd: 'generateBase64Preview', data: preview.http_url});
+            dispatch.pub('generateBase64Preview', preview.http_url);
           }
         },
         
@@ -62,7 +56,7 @@ define(['jquery'], function ($) {
          * hide the mediator panel
          */
         hide: function() {
-            this.sendOWAMessage({cmd: 'hide'});
+            dispatch.pub('hide');
         },
         
         /**
@@ -71,46 +65,44 @@ define(['jquery'], function ($) {
          * close the mediator panel and do a hard reset of data in it
          */
         close: function() {
-            this.sendOWAMessage({cmd: 'close'});
+            dispatch.pub('close');
         },
         
         success: function(data) {
-            this.sendOWAMessage({cmd: 'success', data: data});
+            dispatch.pub('success', data);
         },
         
         sendComplete: function(data) {
-            this.sendOWAMessage({cmd: 'sendComplete', data: sendData});
+            dispatch.pub('sendComplete', sendData);
         },
         
         /**
          * XXX prefs panel has been removed
          */
         openPrefs: function() {
-            this.sendOWAMessage({cmd: 'openPrefs'});
+            dispatch.pub('openPrefs');
         },
 
         sizeToContent: function() {
-            this.sendOWAMessage({cmd: 'sizeToContent'});
+            dispatch.pub('sizeToContent');
         },
         
         reconfigure: function() {
-            this.sendOWAMessage({cmd: "reconfigure"});
+            dispatch.pub('reconfigure');
         },
         
         updateChromeStatus: function(app, result) {
-            var messageData = {app:app, cmd:"updateStatus", result:result};
-            this.sendOWAMessage(messageData);
+            dispatch.pub('updateStatus', {app:app, result:result});
         },
         
         result: function(appid) {
-            this.sendOWAMessage({cmd: 'result', app: appid, data: "ok"});
+            dispatch.pub('result', {app:appid, result: "ok"});
         },
         
         error: function(appid) {
-            this.sendOWAMessage({cmd: 'error', app: appid, data: "error"});
+            dispatch.pub('error', {app:appid, result: "error"});
         }
     }
-    //window.sendOWAMessage = m.sendOWAMessage;
     return m;
     
 });

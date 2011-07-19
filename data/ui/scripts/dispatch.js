@@ -48,7 +48,7 @@ define(['jquery'], function ($) {
           //'topic' and 'data'.
           try {
             var message = JSON.parse(evt.data),
-              pubTopic = message.topic || message.cmd;
+              pubTopic = message.cmd;
             if (pubTopic && pubTopic === topic) {
               try {
                 callback(message.data);
@@ -79,7 +79,7 @@ define(['jquery'], function ($) {
     pub: function (topic, data, win) {
       win = win || window;
       var text = JSON.stringify({
-        topic: topic,
+        cmd: topic,
         data: data
       }),
       i, otherWin;
