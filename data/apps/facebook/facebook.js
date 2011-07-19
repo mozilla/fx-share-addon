@@ -26,25 +26,24 @@
   document: false, setTimeout: false, localStorage: false */
 "use strict";
 dump("loading facebook.js\n");
-define([ "require", "jquery", "jschannel", "../common"],
-
-function (require,   $,       jschannel,   common) {
+define([ "require", "../common"],
+function (require,  common) {
 
   var domain = "facebook.com";
-  // Bind the OWA messages
-  var chan = Channel.build({window: window.parent, origin: "*", scope: "openwebapps_conduit"});
-  chan.bind("confirm", function(t, data) {
-    dump("facebook channel.confirm with args: " + data + "!\n");
-    data.domain = domain;
-    common.send(t, data);
-  });
-  chan.bind("link.send", function(t, args) {
+
+  navigator.apps.services.registerHandler('image.send', 'init', function(args, cb) {
     dump("facebook link.send connection\n");
   });
-  chan.bind("link.send.getCharacteristics", function(t, args) {
+
+  navigator.apps.services.registerHandler('image.send', 'confirm', function(args, cb, cberr) {
+    args.domain = domain;
+    common.send(args, cb, cberr);
+  });
+
+  navigator.apps.services.registerHandler('link.send', 'getCharacteristics', function(args, cb, cberr) {
     dump("facebook link.send.getCharacteristics\n");
     // some if these need re-thinking.
-    return {
+    cb({
       type: 'facebook', // XXX - should be able to nuke this.
 
       features: {
@@ -76,14 +75,17 @@ function (require,   $,       jschannel,   common) {
         'widgets/AccountPanel': 'widgets/AccountPanelFaceBook'
       }
       ***/
-    };
+    });
   });
-  chan.bind("link.send.getLogin", function(t, args) {
-    dump("facebook link.send.getLogin\n");
-    return common.getLogin(t, domain);
+
+  navigator.apps.services.registerHandler('link.send', 'getLogin', function(args, cb, cberr) {
+    common.getLogin(domain, args, cb, cberr);
   });
-  chan.bind("link.send.logout", function(t, args) {
-    dump("facebook link.send.logout\n");
-    return common.logout(t, domain);
+
+  navigator.apps.services.registerHandler('link.send', 'logout', function(args, cb, cberr) {
+    common.logout(domain, args, cb, cberr);
   });
+
+  // Tell OWA we are now ready to be invoked.
+  navigator.apps.services.ready();
 });
