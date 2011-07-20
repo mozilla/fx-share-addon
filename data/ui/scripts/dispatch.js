@@ -52,7 +52,7 @@ define(['jquery'], function ($) {
             if (pubTopic && pubTopic === topic) {
               try {
                 callback(message.data);
-                dump("dispatch handled ["+pubTopic+"] with data "+evt.data+"\n");
+                //dump("dispatch handled ["+pubTopic+"] with data "+evt.data+"\n");
               } catch (e) {
                 dump("Error in dispatch.sub callback for topic '" + pubTopic + "': " + e.toString() + "\n");
                 dump(e.stack);
