@@ -31,20 +31,8 @@ define([ "require", "jquery", "jschannel", "../common"],
 function (require,   $,       jschannel,   common) {
 
   var domain = "facebook.com";
-  // Bind the OWA messages
-  var chan = Channel.build({window: window.parent, origin: "*", scope: "openwebapps_conduit"});
-  chan.bind("confirm", function(t, data) {
-    dump("facebook channel.confirm with args: " + data + "!\n");
-    data.domain = domain;
-    common.send(t, data);
-  });
-  chan.bind("link.send", function(t, args) {
-    dump("facebook link.send connection\n");
-  });
-  chan.bind("link.send.getCharacteristics", function(t, args) {
-    dump("facebook link.send.getCharacteristics\n");
-    // some if these need re-thinking.
-    return {
+  
+  var characteristics = {
       type: 'facebook', // XXX - should be able to nuke this.
 
       features: {
@@ -67,7 +55,7 @@ function (require,   $,       jschannel,   common) {
       textLimit: 420,
       serviceUrl: 'http://facebook.com',
       revokeUrl: 'http://www.facebook.com/editapps.php?v=allowed',
-      signOutUrl: 'http://facebook.com'
+      signOutUrl: 'http://facebook.com',
       /***
       accountLink: function (account) {
         return 'http://www.facebook.com/profile.php?id=' + account.userid;
@@ -76,11 +64,46 @@ function (require,   $,       jschannel,   common) {
         'widgets/AccountPanel': 'widgets/AccountPanelFaceBook'
       }
       ***/
+      auth: {
+        type: "oauth",
+        name: "facebook",
+        displayName: "Facebook",
+        calls: {
+                  signatureMethod     : "HMAC-SHA1",
+                  userAuthorizationURL: "https://graph.facebook.com/oauth/authorize",
+                  accessTokenURL      : "https://graph.facebook.com/oauth/access_token"
+                },
+        key: "110796232295543",
+        secret: "19fd15e594991fd88e05b3534403e5c8",
+        params: {
+            scope: "publish_stream,offline_access,user_groups",
+            type: "user_agent",
+            display: "popup"
+            },
+        completionURI: "http://www.oauthcallback.local/postauthorize",
+        version: "2.0",
+        tokenRx: "#access_token=([^&]*)"
+      }
     };
+
+  // Bind the OWA messages
+  var chan = Channel.build({window: window.parent, origin: "*", scope: window.location.href});
+  chan.bind("confirm", function(t, data) {
+    dump("facebook channel.confirm with args: " + data + "!\n");
+    data.domain = domain;
+    common.send(t, data);
+  });
+  chan.bind("link.send", function(t, args) {
+    dump("facebook link.send connection\n");
+  });
+  chan.bind("link.send.getCharacteristics", function(t, args) {
+    dump("facebook link.send.getCharacteristics\n");
+    // some if these need re-thinking.
+    return characteristics;
   });
   chan.bind("link.send.getLogin", function(t, args) {
     dump("facebook link.send.getLogin\n");
-    return common.getLogin(t, domain);
+    return common.getLogin(t, domain, characteristics);
   });
   chan.bind("link.send.logout", function(t, args) {
     dump("facebook link.send.logout\n");

@@ -75,7 +75,7 @@ function (require,   $) {
       });
     },
 
-    getLogin: function(t, domain) {
+    getLogin: function(t, domain, config) {
         dump("getLogin called for "+domain+"\n");
       var key = "ff-share-" + domain;
       var strval = window.localStorage.getItem(key);
@@ -93,10 +93,10 @@ function (require,   $) {
           if (acct.hasOwnProperty(attr)) retUser[attr] = acct[attr];
         }
         result.user = retUser;
-      } else {
-        dump("XXX LOGIN NOT IMPLEMENTED, see ServicePanel.js for start towards oauth login\n");
+      } else
+      if (config.auth) {
+        result.auth = config.auth;
       }
-        dump("getLogin returning "+JSON.stringify(result)+"\n");
       return result;
     },
 

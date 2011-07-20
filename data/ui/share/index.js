@@ -488,6 +488,12 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
       $('#authOkButton').click(function (evt) {
         // just incase the service doesn't detect the logout automatically
         // (ie, incase it returns the stale user info), force a logout.
+        
+        // XXX FIXME.  need to test this use case somehow.  We really should
+        // not reproduce the opening of an auth dialog here, we do that in
+        // servicepanel.js.  We probably should do something like:
+        //var accountPanel = accountPanels[sendData.appid];
+        //accountPanel.onLogin();
         var svcRec = owaservicesbyid[sendData.appid];
         // apparently must create the window here, before we do the channel
         // stuff to avoid it being blocked.
@@ -540,12 +546,12 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
     ch.call({
       method: "link.send.getLogin",
       success: function(result) {
-        svcRec.login = result;
+        svcRec.auth = result.auth;
         callback();
       },
       error: function(err, message) {
         dump("failed to get owa login info: " + err + ": " + message + "\n");
-        svcRec.login = null;
+        svcRec.auth = null;
         callback();
       }
     });
@@ -576,27 +582,26 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
 
     owaservices.forEach(function(svcRec, i) {
       try {
-        // XXX if it's a resource use a global so we can still work
+        // if we're loading an app from an addon, use a global origin.  also use
+        // the apps url for scope, since each app needs a unique origin+scope
         var origin = svcRec.app.url.indexOf("resource://") == 0 ? "*" : svcRec.app.url;
         var chan = Channel.build({
             window: svcRec.iframe.contentWindow,
             origin: origin,
-            scope: "openwebapps_conduit"
+            scope: svcRec.app.url
         });
 
+        // XXX PRIVACY LEAK.  we cannot give the owa service any details of the
+        // user browser prior to the user making the action to share.  This gives
+        // all page details to the owa without user interaction, must fix before
+        // any release
         chan.call({
             method: requestMethod,
             params: requestArguments,
             success: function() {}, /* perhaps record the fact that it worked? */
             error: (function() {return function(error, message) {
               // XXX - what is this error handler trying to do???
-              var messageData = {cmd:"error", error:error, msg:message};
-              var msg = document.createEvent("MessageEvent");
-              msg.initMessageEvent("message", // type
-                                   true, true, // bubble, cancelable
-                                   JSON.stringify(messageData),  // data
-                                   "resource://openwebapps/service", "", window); // origin, source
-              document.dispatchEvent(msg);
+              dispatch.pub("error", {error:error, msg:message} );
             }}())
         });
         svcRec.channel = chan;

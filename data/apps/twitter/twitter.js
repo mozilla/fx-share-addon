@@ -29,21 +29,9 @@
 define([ "require", "jquery", "jschannel", "../common"],
 
 function (require,   $,       jschannel,   common) {
+dump("TWITTER LOADING\n");
   var domain = "twitter.com"
-
-  // Bind the OWA messages
-  var chan = Channel.build({window: window.parent, origin: "*", scope: "openwebapps_conduit"});
-  chan.bind("confirm", function(t, data) {
-    dump("channel.confirm with args: " + data + "!\n");
-    data.domain = domain;
-    common.send(t, data);
-  });
-  chan.bind("link.send", function(t, args) {
-    dump("got link.send connection\n");
-  });
-  chan.bind("link.send.getCharacteristics", function(t, args) {
-    // some if these need re-thinking.
-    return {
+  var characteristics = {
       type: 'twitter', // XXX - should be able to nuke this.
 
       features: {
@@ -63,7 +51,7 @@ function (require,   $,       jschannel,   common) {
         toLabel: 'type in name of recipient'
       }],
       textLimit: 140,
-      shorten: true
+      shorten: true,
       /***
       serviceUrl: 'http://twitter.com',
       revokeUrl: 'http://twitter.com/settings/connections',
@@ -80,10 +68,31 @@ function (require,   $,       jschannel,   common) {
         'widgets/AccountPanel': 'widgets/AccountPanelTwitter'
       }
       ***/
+      auth: {
+        type: "dialog",
+        url: 'http://localhost:5000/dev/1/auth.html?domain=' + encodeURIComponent(domain)
+      }
+      
     };
+dump("app using scope "+window.location.href+"\n");
+  // Bind the OWA messages
+  var chan = Channel.build({window: window.parent, origin: "*", scope: window.location.href});
+  chan.bind("confirm", function(t, data) {
+    dump("channel.confirm with args: " + data + "!\n");
+    data.domain = domain;
+    common.send(t, data);
+  });
+  chan.bind("link.send", function(t, args) {
+    dump("got link.send connection\n");
+  });
+  chan.bind("link.send.getCharacteristics", function(t, args) {
+    // some if these need re-thinking.
+    dump("twitter link.send.getCharacteristics\n");
+    return characteristics;
   });
   chan.bind("link.send.getLogin", function(t, args) {
-    return common.getLogin(t, domain);
+    dump("twitter link.send.getLogin\n");
+    return common.getLogin(t, domain, characteristics);
   });
   chan.bind("link.send.logout", function(t, args) {
     return common.logout(t, domain);

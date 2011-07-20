@@ -149,24 +149,32 @@ dump("logging into show account panel\n");
 dump("onLogin called for "+this.owaservice.app.app+"\n");
         var store = storage(),
             app = this.owaservice.app;
-        if (app.manifest.experimental.oauth) {
-          dump("dispatch to oauthAuthorize\n");
-          try {
-            var messageData = {app: this.owaservice.app.app,
-                               oauth: app.manifest.experimental.oauth};
-            dispatch.pub('oauthAuthorize', messageData);
-          } catch(e) {
-            dump(e+"\n");
+dump("auth "+JSON.stringify(this.owaservice.auth)+"\n");
+        if (this.owaservice.auth) {
+          if (this.owaservice.auth.type == 'oauth') {
+            dump("dispatch to oauthAuthorize\n");
+            try {
+              var messageData = {app: this.owaservice.app.app,
+                                 oauth: this.owaservice.auth};
+              dispatch.pub('oauthAuthorize', messageData);
+            } catch(e) {
+              dump(e+"\n");
+            }
+          } else
+          if (this.owaservice.auth.type == 'dialog') {
+            var url = this.owaservice.auth.url,
+              w = this.owaservice.auth.width || 600,
+              h = this.owaservice.auth.height || 600,
+              win = window.open(url,
+                  "ffshareAuth",
+                  "dialog=yes, modal=yes, width="+w+", height="+h+", scrollbars=yes");
+            win.focus();
+          } else {
+            dump("XXX UNSUPPORTED LOGIN TYPE\n");
           }
-
-        } else
-        if (this.owaservice.login.login) {
-            var url = app.app + this.owaservice.login.login.dialog,
-            win = window.open(url,
-                  "ffshareOAuth",
-                  "dialog=yes, modal=yes, width=900, height=500, scrollbars=yes");
           store.set('lastSelection', app.app);
-          win.focus();
+        } else {
+          dump("XXX UNSUPPORTED AUTH TYPE\n");
         }
       },
 
