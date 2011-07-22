@@ -67,14 +67,6 @@ function (object,         Widget,         $,        template,
             this.serviceChanged();
           }
         }));
-        this.authorizationSub = dispatch.sub('authorizationResponse', fn.bind(this, function (data) {
-          dump("authorizationSub: "+this.owaservice.app.app+"\n");
-          if (data.app === this.owaservice.app.app) {
-            // XXX
-            dump(JSON.stringify(data)+"\n");
-            //this.authorized();
-          }
-        }));
       },
 
       destroy: function () {
@@ -91,26 +83,43 @@ function (object,         Widget,         $,        template,
 
       //The service state has changed, update the relevant HTML bits.
       serviceChanged: function () {
+
+        var ch = this.owaservice.channel;
+        var self = this;
+        ch.call({
+          method: "link.send.getLogin",
+          success: function(result) {
+            self.owaservice.auth = result.auth;
+            self.owaservice.user = result.user;
+            self.updateServicePanel();
+          },
+          error: function(err, message) {
+            dump("failed to get owa login info: " + err + ": " + message + "\n");
+            self.owaservice.auth = null;
+            self.updateServicePanel();
+          }
+        });
+      },
+
+      updateServicePanel: function () {
+        dump("serviceChanged....\n");
         // If either 'characteristics' or 'login' are null, we are waiting
         // for those methods to return.
         $(".accountLoading", this.node).hide();
         $(".accountLogin", this.node).show();
         var showPanel = false;
-        if (!this.owaservice.characteristics || !this.owaservice.login) {
+        if (!this.owaservice.characteristics) {
           // waiting for the app to load and respond.
-dump("waiting for app to load and respond\n");
-          //$(".accountLoading", this.node).show();
-          //$(".accountLogin", this.node).hide();
-        } else if (!this.owaservice.login.user) {
+          $(".accountLoading", this.node).show();
+          $(".accountLogin", this.node).hide();
+        } else if (!this.owaservice.user) {
           // getLogin call has returned but no user logged in.
-dump("getlogin returned no user\n");
-          //$(".accountLoading", this.node).hide();
-          //$(".accountLogin", this.node).show();
+          $(".accountLoading", this.node).hide();
+          $(".accountLogin", this.node).show();
         } else {
           // logged in so can show the account panel.
-dump("logging into show account panel\n");
-          //$(".accountLoading", this.node).hide();
-          //$(".accountLogin", this.node).hide();
+          $(".accountLoading", this.node).hide();
+          $(".accountLogin", this.node).hide();
           showPanel = true;
         }
         var thisPanelDiv = $(".accountPanel", this.node);
@@ -146,17 +155,28 @@ dump("logging into show account panel\n");
       onLogin: function (evt) {
         // hrmph - tried to dispatch.pub back to the main panel but then
         // the popup was blocked.
-dump("onLogin called for "+this.owaservice.app.app+"\n");
         var store = storage(),
+            self = this,
             app = this.owaservice.app;
-dump("auth "+JSON.stringify(this.owaservice.auth)+"\n");
         if (this.owaservice.auth) {
           if (this.owaservice.auth.type == 'oauth') {
             dump("dispatch to oauthAuthorize\n");
             try {
               var messageData = {app: this.owaservice.app.app,
                                  oauth: this.owaservice.auth};
-              dispatch.pub('oauthAuthorize', messageData);
+              navigator.apps.oauth.authorize(messageData, function(svc) {
+                self.owaservice.channel.call({
+                  method: "link.send.setAuthorization",
+                  params: svc,
+                  success: function(result) {
+                    dump("setting auth success!\n");
+                    dispatch.pub('serviceChanged', self.owaservice.app.app);
+                  },
+                  error: function(result) {
+                    dump("error getting setting authorization\n");
+                  }
+                });
+              });
             } catch(e) {
               dump(e+"\n");
             }
