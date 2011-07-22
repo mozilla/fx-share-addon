@@ -73,7 +73,7 @@ function (object,         Widget,         $,        template,
       contactsName: 'Contacts',
 
       onCreate: function (onAsynCreateDone) {
-        var profile = this.owaservice.login.user,
+        var profile = this.owaservice.user,
             onFinishCreate = this.makeCreateCallback(),
             name;
 
