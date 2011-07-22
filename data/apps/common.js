@@ -76,26 +76,32 @@ function (require,   $) {
     },
 
     getLogin: function(t, domain, config) {
-        dump("getLogin called for "+domain+"\n");
+dump("getLogin called for "+domain+"\n");
       var key = "ff-share-" + domain;
       var strval = window.localStorage.getItem(key);
       var result = {};
-      if (strval) {
-        var raw = JSON.parse(strval);
-        // Turn the nested object into a flat one with profile and info all in one,
-        // as required by the OWA APIs.
-        var acct = raw.profile.accounts[0];
-        var retUser = {};
-        for (var attr in raw.profile) {
-          if (raw.profile.hasOwnProperty(attr)) retUser[attr] = raw.profile[attr];
+      try {
+        if (strval) {
+          var raw = JSON.parse(strval);
+          // Turn the nested object into a flat one with profile and info all in one,
+          // as required by the OWA APIs.
+          var acct = raw.profile.accounts[0];
+          var retUser = {};
+          for (var attr in raw.profile) {
+            if (raw.profile.hasOwnProperty(attr)) retUser[attr] = raw.profile[attr];
+          }
+          for (var attr in acct) {
+            if (acct.hasOwnProperty(attr)) retUser[attr] = acct[attr];
+          }
+          result.user = retUser;
+        } else
+        if (config.auth) {
+          result.auth = config.auth;
         }
-        for (var attr in acct) {
-          if (acct.hasOwnProperty(attr)) retUser[attr] = acct[attr];
-        }
-        result.user = retUser;
-      } else
-      if (config.auth) {
-        result.auth = config.auth;
+      } catch(e) {
+        dump("common.getLogin error "+e+"\n");
+        // some error, logout 
+        window.localStorage.removeItem(key);
       }
       return result;
     },
