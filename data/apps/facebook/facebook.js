@@ -86,15 +86,195 @@ function (require,   $,       jschannel,   common) {
       }
     };
 
+
+  var api = {
+    key: "ff-share-" + domain,
+
+    profileToPoco: function(profile) {
+      var newPerson = {};
+      if (profile.name) newPerson.displayName = profile.name;
+      if (profile["first_name"]) {
+        if (!newPerson.name ) newPerson.name={};
+        newPerson.name.givenName = profile["first_name"];
+      }
+      if (profile["last_name"]) {
+        if (!newPerson.name) newPerson.name={};
+        newPerson.name.familyName = profile["last_name"];
+      }
+      if (profile.birthday) {
+        newPerson.birthday = profile.birthday;
+      }
+      if (profile.about) {
+        newPerson.notes = [{type:"About", value:profile.about}];
+      }
+      if (profile.website) {
+        var websites = profile.website.split("\n");
+        for each (var site in websites) {
+          if (!newPerson.urls) newPerson.urls = [];
+          
+          if (site.length > 0) {
+            if (site.indexOf("http://") != 0) {
+              site = "http://" + site;
+            }
+            
+            var label = "URL";
+            try {
+              var parsedURI = IO_SERVICE.newURI(site, null, null);
+              var host = parsedURI.host;
+              if (host.indexOf("www.") == 0) host = host.substring(4);
+              label = host;
+            } catch (e) {
+            }
+            newPerson.urls.push({type:label, value:site})
+          }
+        }
+      }
+
+      var username=null;
+      if (profile.link) {
+        if (!newPerson.urls) newPerson.urls = [];
+        newPerson.urls.push({type:"facebook.com", value:profile.link});
+
+        var lastIdx = profile.link.lastIndexOf("/");
+        username = profile.link.slice(lastIdx+1);
+        if (username.indexOf("profile.php?id=") == 0) username = username.slice(15);
+
+        newPerson.accounts = [{domain:"facebook.com", username:username, userid:profile.id}];
+      }
+      newPerson.photos = [
+        {type:"thumbnail", value:"https://graph.facebook.com/" + (username ? username : id) + "/picture?type=square"},
+        {type:"profile", value:"https://graph.facebook.com/" + (username ? username : id) + "/picture?type=large"}
+      ];
+      return newPerson;
+    },
+    
+    getProfile: function(t, oauthConfig) {
+      dump("calling https://graph.facebook.com/me\n");
+      navigator.apps.oauth.call(oauthConfig, {
+        method: "GET",
+        action: "https://graph.facebook.com/me",
+        parameters: {}
+      },function(json) {
+        //dump("got facebook profile "+JSON.stringify(json)+"\n");
+        try {
+        var me = api.profileToPoco(json);
+        var user = {
+          profile: me,
+          oauth: oauthConfig
+        }
+        window.localStorage.setItem(api.key, JSON.stringify(user));
+        t.complete(user);
+
+        // initiate contact retreival now
+        api.contacts({type: 'groups'});
+        api.contacts({type: 'friends'});
+
+        } catch(e) {
+          dump(e+"\n");
+        }
+      });
+    },
+    
+    send: function(t, data) {
+      //dump("send data is "+JSON.stringify(data)+"\n")
+      var strval = window.localStorage.getItem(api.key);
+      var urec = JSON.parse(strval);
+      var oauthConfig = urec.oauth;
+      var url;
+
+      if (data.shareType == 'groupWall') {
+          direct = options.get('to', None)
+          if (!data.direct) {
+            dump("addressee missing\n");
+            return;
+          }
+          url = "https://graph.facebook.com/"+data.direct+"/feed"
+      } else
+      if (data.shareType == 'wall') {
+          url = "https://graph.facebook.com/me/feed"
+      } else {
+        dump("SHARE DATA INSUFFICIENT!\n");
+        return;
+      }
+      // map facebook: f1 data names
+      // facebook docs https://developers.facebook.com/docs/reference/api/post/
+      var map = {
+        'message': 'message',
+        'link': 'link',
+        'title': 'name',
+        'description': 'description',
+        'picture': 'picture',
+        'caption': 'caption',
+        'source': 'source',
+        'privacy': 'privacy'
+      };
+      var body = {};
+      for (var n in map) {
+        if (data[n])
+          body[map[n]] = data[n];
+      }
+      dump("send ["+url+"] args "+JSON.stringify(body)+"\n");
+
+      navigator.apps.oauth.call(oauthConfig, {
+        method: "POST",
+        action: url,
+        parameters: body
+      },function(json) {
+        dump("got facebook send result "+JSON.stringify(json)+"\n");
+      });      
+    },
+    
+    _handleContacts: function(data, type) {
+      var ckey = api.key+'.'+type;
+      var strval = window.localStorage.getItem(ckey);
+      var groups = strval && JSON.parse(strval) || [];
+
+      for (var g in data) {
+        groups.push({
+          'displayName': data[g].name,
+          'type': type,
+          'accounts': [{ userid: data[g].id, username: null, 'domain': domain }]
+        })
+      }
+      
+      window.localStorage.setItem(ckey, JSON.stringify(groups));
+      return groups.length;
+    },
+
+    contacts: function(options) {
+      var params = {
+          offset: options && options.offset || 0,
+          limit: options && options.limit || 50,
+          type: options && options.type || 'groups'
+      };
+      var url = "https://graph.facebook.com/me/"+ params.type;
+
+      var strval = window.localStorage.getItem(api.key);
+      var urec = JSON.parse(strval);
+      var oauthConfig = urec.oauth;
+      this._pagedContacts(url, params, oauthConfig);
+    },
+
+    _pagedContacts: function(url, params, oauthConfig) {
+      navigator.apps.oauth.call(oauthConfig, {
+        method: "GET",
+        action: url,
+        parameters: params
+      },function(json) {
+        api._handleContacts(json, params.type)
+        if (json.paging && json.paging.next) {
+          params.offset += params.limit;
+          setTimeout(api._pagedContacts, 0, url, params, oauthConfig);
+        }
+      }); 
+    }
+  };
+
   // Bind the OWA messages
   var chan = Channel.build({window: window.parent, origin: "*", scope: window.location.href});
-  chan.bind("confirm", function(t, data) {
-    dump("facebook channel.confirm with args: " + data + "!\n");
-    data.domain = domain;
-    common.send(t, data);
-  });
   chan.bind("link.send", function(t, args) {
     dump("facebook link.send connection\n");
+    api.send(t, data);
   });
   chan.bind("link.send.getCharacteristics", function(t, args) {
     dump("facebook link.send.getCharacteristics\n");
@@ -104,6 +284,12 @@ function (require,   $,       jschannel,   common) {
   chan.bind("link.send.getLogin", function(t, args) {
     dump("facebook link.send.getLogin\n");
     return common.getLogin(t, domain, characteristics);
+  });
+  chan.bind("link.send.setAuthorization", function(t, args) {
+    dump("facebook link.send.setAuthorization\n");
+    api.getProfile(t, args);
+    t.delayReturn(true);
+    return null;
   });
   chan.bind("link.send.logout", function(t, args) {
     dump("facebook link.send.logout\n");
