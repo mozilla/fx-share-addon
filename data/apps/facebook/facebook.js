@@ -91,6 +91,7 @@ function (require,   $,       jschannel,   common) {
     key: "ff-share-" + domain,
 
     profileToPoco: function(profile) {
+      // pilfered from contacts addon
       var newPerson = {};
       if (profile.name) newPerson.displayName = profile.name;
       if (profile["first_name"]) {
@@ -117,15 +118,7 @@ function (require,   $,       jschannel,   common) {
               site = "http://" + site;
             }
             
-            var label = "URL";
-            try {
-              var parsedURI = IO_SERVICE.newURI(site, null, null);
-              var host = parsedURI.host;
-              if (host.indexOf("www.") == 0) host = host.substring(4);
-              label = host;
-            } catch (e) {
-            }
-            newPerson.urls.push({type:label, value:site})
+            newPerson.urls.push({type:'url', value:site})
           }
         }
       }
@@ -142,8 +135,8 @@ function (require,   $,       jschannel,   common) {
         newPerson.accounts = [{domain:"facebook.com", username:username, userid:profile.id}];
       }
       newPerson.photos = [
-        {type:"thumbnail", value:"https://graph.facebook.com/" + (username ? username : id) + "/picture?type=square"},
-        {type:"profile", value:"https://graph.facebook.com/" + (username ? username : id) + "/picture?type=large"}
+        {type:"thumbnail", value:"https://graph.facebook.com/" + (username ? username : profile.id) + "/picture?type=square"},
+        {type:"profile", value:"https://graph.facebook.com/" + (username ? username : profile.id) + "/picture?type=large"}
       ];
       return newPerson;
     },
