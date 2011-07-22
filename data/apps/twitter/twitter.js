@@ -69,26 +69,164 @@ dump("TWITTER LOADING\n");
       }
       ***/
       auth: {
-        type: "dialog",
-        url: 'http://localhost:5000/dev/1/auth.html?domain=' + encodeURIComponent(domain)
+        type: "oauth",
+        name: "twitter",
+        displayName: "Twitter",
+        calls: {
+                  signatureMethod     : "HMAC-SHA1",
+                  requestTokenURL     : "https://twitter.com/oauth/request_token",
+                  userAuthorizationURL: "https://twitter.com/oauth/authorize",
+                  accessTokenURL      : "https://twitter.com/oauth/access_token"
+                },
+        key: "lppkBgcpuhe2TKZIRVoQg",
+        secret: "M6hwPkgEyqxkDz583LFYAv5dTVg1AsKIXHFPiIFhsM",
+        params: null,
+        completionURI: "http://oauthcallback.local/access.xhtml",
+        version: "1.0",
+        tokenRx: "oauth_verifier=([^&]*)"
       }
       
     };
+
+  var api = {
+    key: "ff-share-" + domain,
+
+    profileToPoco: function(profile) {
+      var poco = {
+          displayName: profile.name || profile.screen_name
+      }
+      if (profile.url)
+          poco['urls'] = [{"primary": false, "value": profile.url}]
+      if (profile.profile_image_url)
+          poco['photos'] = [{'type': 'profile',
+                             "value": profile.profile_image_url}]
+      if (profile.created_at)
+          poco['published'] = profile.created_at
+  
+      poco['accounts'] = [{'domain': 'twitter.com',
+                           'userid': profile.id,
+                           'username': profile.screen_name}]
+  
+      return poco
+    },
+
+    getProfile: function(t, oauthConfig) {
+      navigator.apps.oauth.call(oauthConfig, {
+        method: "GET",
+        action: "https://api.twitter.com/1/account/verify_credentials.json",
+        parameters: {}
+      },function(json) {
+        var me = api.profileToPoco(json);
+        var user = {
+          profile: me,
+          oauth: oauthConfig
+        }
+        window.localStorage.setItem(api.key, JSON.stringify(user));
+        t.complete(user);
+
+        // initiate contact retreival now
+        api.contacts({type: 'followers'});
+        //api.contacts({type: 'following'});
+      });
+    },
+
+    send: function(t, data) {
+      //dump("send data is "+JSON.stringify(data)+"\n")
+      var strval = window.localStorage.getItem(api.key);
+      var urec = JSON.parse(strval);
+      var oauthConfig = urec.oauth;
+      var url, body;
+
+      if (data.shareType == 'direct') {
+          if (!data.to) {
+            dump("addressee missing\n");
+            return;
+          }
+          url = 'https://api.twitter.com/1/direct_messages/new.json'
+          body = { user: data.to, text: data.message }
+      } else
+      if (data.shareType == 'public') {
+          url = 'https://api.twitter.com/1/statuses/update.json'
+          body = { status: data.message }
+      } else {
+        dump("SHARE DATA INSUFFICIENT!\n");
+        return;
+      }
+      
+      //dump("send ["+url+"] args "+JSON.stringify(body)+"\n");
+
+      navigator.apps.oauth.call(oauthConfig, {
+        method: "POST",
+        action: url,
+        parameters: body
+      },function(json) {
+        dump("got twitter send result "+JSON.stringify(json)+"\n");
+      });      
+    },
+    
+    _handleContacts: function(data, type) {
+      var ckey = api.key+'.'+type;
+      var strval = window.localStorage.getItem(ckey);
+      var users = strval && JSON.parse(strval) || [];
+
+      for (var u in data.users) {
+        users.push(api.profileToPoco(data.users[u]))
+      }
+      
+      window.localStorage.setItem(ckey, JSON.stringify(users));
+      return users.length;      
+    },
+
+    contacts: function(options) {
+      var strval = window.localStorage.getItem(api.key);
+      var urec = JSON.parse(strval);
+
+      var params = {
+          cursor: options && options.cursor || -1,
+          screen_name: urec.profile.username
+      };
+      var url = "https://api.twitter.com/1/statuses/followers.json";
+      if (options.type == 'following') {
+        url = "NOT YET IMPLEMENTED";
+        return;
+      }
+
+      var oauthConfig = urec.oauth;
+      this._pagedContacts(url, params, oauthConfig);
+    },
+
+    _pagedContacts: function(url, params, oauthConfig) {
+      navigator.apps.oauth.call(oauthConfig, {
+        method: "GET",
+        action: url,
+        parameters: params
+      },function(json) {
+        api._handleContacts(json, params.type)
+        if (json.next_cursor) {
+          params.cursor = json.next_cursor;
+          setTimeout(api._pagedContacts, 0, url, params, oauthConfig);
+        }
+      }); 
+    }
+  }
+
 dump("app using scope "+window.location.href+"\n");
   // Bind the OWA messages
   var chan = Channel.build({window: window.parent, origin: "*", scope: window.location.href});
-  chan.bind("confirm", function(t, data) {
-    dump("channel.confirm with args: " + data + "!\n");
-    data.domain = domain;
-    common.send(t, data);
-  });
   chan.bind("link.send", function(t, args) {
     dump("got link.send connection\n");
+    api.send(t, args);
   });
   chan.bind("link.send.getCharacteristics", function(t, args) {
     // some if these need re-thinking.
     dump("twitter link.send.getCharacteristics\n");
     return characteristics;
+  });
+  chan.bind("link.send.setAuthorization", function(t, args) {
+    dump("twitter link.send.setAuthorization\n");
+    api.getProfile(t, args);
+    t.delayReturn(true);
+    return null;
   });
   chan.bind("link.send.getLogin", function(t, args) {
     dump("twitter link.send.getLogin\n");
