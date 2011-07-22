@@ -179,7 +179,7 @@ function (require,   $,        object,         fn,
     var svcRec = owaservicesbyid[sendData.appid];
     var channel = svcRec.channel;
     channel.call({
-      method: "confirm",
+      method: "link.send",
       params: sendData,
       success: function() {
         var prop;
@@ -433,17 +433,21 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
       });
 
       dispatch.sub('logout', function (appid) {
+        // XXX calling reconfigure is very heavy handed, we can simply logout
+        // and update the panel
         var svcRec = owaservicesbyid[appid];
         svcRec.channel.call({
           method: "link.send.logout",
           success: function(result) {
             dump("logout worked\n");
-            mediator.reconfigure();
+            //mediator.reconfigure();
+            dispatch.pub('serviceChanged', svcRec.app.app);
           },
           error: function(err, message) {
             dump("failed to logout: " + err + ": " + message + "\n");
             // may as well update the accounts anyway incase it really did work!
-            mediator.reconfigure();
+            //mediator.reconfigure();
+            dispatch.pub('serviceChanged', svcRec.app.app);
           }
         });
       });
@@ -541,22 +545,6 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
     });
   };
 
-  function _fetchLoginInfo(svcRec, callback) {
-    var ch = svcRec.channel;
-    ch.call({
-      method: "link.send.getLogin",
-      success: function(result) {
-        svcRec.auth = result.auth;
-        callback();
-      },
-      error: function(err, message) {
-        dump("failed to get owa login info: " + err + ": " + message + "\n");
-        svcRec.auth = null;
-        callback();
-      }
-    });
-  };
-
   function _deleteOldServices() {
     // first the channels
     while (owaservices.length) {
@@ -589,20 +577,6 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
             window: svcRec.iframe.contentWindow,
             origin: origin,
             scope: svcRec.app.url
-        });
-
-        // XXX PRIVACY LEAK.  we cannot give the owa service any details of the
-        // user browser prior to the user making the action to share.  This gives
-        // all page details to the owa without user interaction, must fix before
-        // any release
-        chan.call({
-            method: requestMethod,
-            params: requestArguments,
-            success: function() {}, /* perhaps record the fact that it worked? */
-            error: (function() {return function(error, message) {
-              // XXX - what is this error handler trying to do???
-              dispatch.pub("error", {error:error, msg:message} );
-            }}())
         });
         svcRec.channel = chan;
         // and listen for "Account changed" events coming back from it.
@@ -640,15 +614,11 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
         method: "link.send.getCharacteristics",
         success: function(result) {
           thisSvc.characteristics = result;
-          _fetchLoginInfo(thisSvc, function() {
-            dispatch.pub('serviceChanged', thisSvc.app.app);
-          });
+          dispatch.pub('serviceChanged', thisSvc.app.app);
         },
         error: function(err) {
           dump("failed to get owa characteristics: " + err + "\n");
-          _fetchLoginInfo(thisSvc, function() {
-            dispatch.pub('serviceChanged', thisSvc.app.app);
-          });
+          dispatch.pub('serviceChanged', thisSvc.app.app);
         }
       });
     });
