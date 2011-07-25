@@ -35,6 +35,13 @@ exports.testBookmarkPage = function(test) {
         }
       };
       let topWindow = wm.getMostRecentWindow("navigator:browser");
+      // test interaction with the injector code is suspect, but as we don't
+      // actually rely on it, we can stub it so the panel constructs correctly
+      if (!topWindow.appinjector) {
+        topWindow.appinjector = {
+          register: function() {;}
+        }
+      }
       let {SharePanel} = require("ffshare/panel");
       let sharePanel = new SharePanel(topWindow, tab.contentWindow, "link.send", {});
       sharePanel.result(shareMessage);
