@@ -41,7 +41,13 @@ function (require,   $,       jschannel,   common) {
         //direct: true,
         subject: false,
         counter: true,
-        medium: true
+        medium: true,
+        picture: true, // url to an image
+        image: false, // base64 of image data
+        title: true,
+        caption: true,
+        description: true,
+        privacy: true
       },
       shareTypes: [{
         type: 'wall',

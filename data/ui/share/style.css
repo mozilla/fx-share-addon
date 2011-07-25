@@ -169,7 +169,7 @@ body {
   height: 100%;
   min-height: 120px;
   color: @color;
-  background: @background;
+  /*background: @background;*/
 }
 
 noscript {
@@ -195,6 +195,11 @@ noscript {
   background: @tabsBackgroundWebKit;
   background: @tabsBackground;
   border-right: @tabsBorderRight;
+}
+
+#pageInfo .thumb {
+    width: 75px;
+    height: 75px;
 }
 
 button::-moz-focus-inner {
@@ -227,8 +232,8 @@ button:active {
 }
 
 #tabContent {
-  background: @tabContentBackgroundWebKit;
-  background: @tabContentBackground;
+  /*background: @tabContentBackgroundWebKit;*/
+  /*background: @tabContentBackground;*/
 
 }
 

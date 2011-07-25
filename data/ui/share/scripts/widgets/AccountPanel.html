@@ -3,12 +3,22 @@
     <div class="user inactive col">
       <input type="hidden" name="userid" value="{svcAccount.userid}" />
       <input type="hidden" name="username" value="{svcAccount.username}" />
-      <input type="hidden" name="picture" value="{preview(options)}" />
-      <input type="hidden" name="picture_base64" value="{preview_base64(options)}" />
+      {svc.features.picture [}
+        <input type="hidden" name="picture" value="{preview(options)}" />
+      {]}
+      {svc.features.image [}
+        <input type="hidden" name="picture_base64" value="{preview_base64(options)}" />
+      {]}
       <input type="hidden" name="link" value="{link(options)}" />
-      <input type="hidden" name="title" value="{options.title}" />
-      <input type="hidden" name="caption" value="{options.caption}" />
-      <input type="hidden" name="description" value="{options.description}" />
+      {svc.features.title [}
+        <input type="hidden" name="title" value="{options.title}" />
+      {]}
+      {svc.features.caption [}
+        <input type="hidden" name="caption" value="{options.caption}" />
+      {]}
+      {svc.features.description [}
+        <input type="hidden" name="description" value="{options.description}" />
+      {]}
       {svc.features.medium [}
         <input type="hidden" name="medium" value="{options.medium}" />
         <input type="hidden" name="source" value="{options.source}" />
@@ -28,6 +38,27 @@
         <input type="hidden" name="shareType" value="{svc.shareTypes[0].type}" />
       {]}
       <textarea class="message compose" placeholder="Type your message here, and we'll attach the link when you send." name="message">{options.message}</textarea>
+      
+      <div id="pageInfo">
+        <div class="hbox">
+            {svc.features.picture [}
+          <div class="thumbContainer">
+            <div class="thumbnail"><img class="thumb" src="{thumb(options)}"></div>
+          </div>
+            {]}
+          <div class="boxFlex1 shareInfo">
+            {svc.features.title [}
+            <div class="overflow pageTitle title">{options.title}</div>
+            {]}
+            {svc.features.description [}
+            <div class="overflow pageDescription description">{options.description}</div>
+            {]}
+      <!--      <a href="#" class="nofollow url overflow selected">{cleanLink(options.url)}</a>
+            <a href="#" class="nofollow shorturl overflow surl">{cleanLink(options.shortUrl)}</a>-->
+          </div>
+        </div>
+      </div>
+
       {gt(svc.shareTypes.length, 1) [}
         <div class="shareTypeSection hbox">
           <div class="shareTypeSelectSection">
