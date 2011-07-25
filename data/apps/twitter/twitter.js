@@ -154,6 +154,7 @@ dump("TWITTER LOADING\n");
       }
       
       //dump("send ["+url+"] args "+JSON.stringify(body)+"\n");
+      t.delayReturn(true);
 
       navigator.apps.oauth.call(oauthConfig, {
         method: "POST",
@@ -161,6 +162,11 @@ dump("TWITTER LOADING\n");
         parameters: body
       },function(json) {
         dump("got twitter send result "+JSON.stringify(json)+"\n");
+        if ('error' in json) {
+            t.error("error", json)
+        } else {
+            t.complete(json)
+        }
       });      
     },
     

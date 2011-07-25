@@ -208,13 +208,19 @@ function (require,   $,       jschannel,   common) {
       }
       dump("send ["+url+"] args "+JSON.stringify(body)+"\n");
 
+      t.delayReturn(true);
       navigator.apps.oauth.call(oauthConfig, {
         method: "POST",
         action: url,
         parameters: body
       },function(json) {
         dump("got facebook send result "+JSON.stringify(json)+"\n");
-      });      
+        if ('error' in json) {
+            t.error("error", json)
+        } else {
+            t.complete(json)
+        }
+      });
     },
     
     _handleContacts: function(data, type) {
@@ -267,7 +273,7 @@ function (require,   $,       jschannel,   common) {
   var chan = Channel.build({window: window.parent, origin: "*", scope: window.location.href});
   chan.bind("link.send", function(t, args) {
     dump("facebook link.send connection\n");
-    api.send(t, data);
+    api.send(t, args);
   });
   chan.bind("link.send.getCharacteristics", function(t, args) {
     dump("facebook link.send.getCharacteristics\n");
