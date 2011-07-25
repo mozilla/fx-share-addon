@@ -73,7 +73,7 @@ define(['jquery', 'dispatch'], function ($, dispatch) {
         },
         
         sendComplete: function(data) {
-            dispatch.pub('sendComplete', sendData);
+            dispatch.pub('sendComplete', data);
         },
         
         /**
