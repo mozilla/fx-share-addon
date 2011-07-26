@@ -68,14 +68,6 @@ define(['jquery', 'dispatch'], function ($, dispatch) {
             dispatch.pub('close');
         },
         
-        success: function(data) {
-            dispatch.pub('success', data);
-        },
-        
-        sendComplete: function(data) {
-            dispatch.pub('sendComplete', data);
-        },
-        
         /**
          * XXX prefs panel has been removed
          */
@@ -91,12 +83,13 @@ define(['jquery', 'dispatch'], function ($, dispatch) {
             dispatch.pub('reconfigure');
         },
         
-        updateChromeStatus: function(app, result) {
-            dispatch.pub('updateStatus', {app:app, result:result});
+        updateChromeStatus: function(status) {
+            dispatch.pub('updateStatus', status);
         },
-        
-        result: function(appid) {
-            dispatch.pub('result', {app:appid, result: "ok"});
+
+        // This is the 'success' notification defined by OWA.
+        result: function(resultInfo) {
+            dispatch.pub('result', resultInfo);
         },
         
         error: function(appid) {

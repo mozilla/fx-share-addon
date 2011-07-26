@@ -28,11 +28,9 @@ exports.testBookmarkPage = function(test) {
       let nsiuri = Services.io.newURI(pageUrl, null, null);
 
       let shareMessage = {
-        data: {
-          link: pageUrl,
-          service: "mochitest",
-          title: 'A test page'
-        }
+        link: pageUrl,
+        appName: "F1 test suite",
+        title: 'A test page'
       };
       let topWindow = wm.getMostRecentWindow("navigator:browser");
       // test interaction with the injector code is suspect, but as we don't
@@ -46,10 +44,9 @@ exports.testBookmarkPage = function(test) {
       let sharePanel = new SharePanel(topWindow, tab.contentWindow, "link.send", {});
       sharePanel.result(shareMessage);
       test.assert(bms.isBookmarked(nsiuri));
-      // Tagging is currently disabled.
-      //let tags = PlacesUtils.tagging.getTagsForURI(nsiuri, {});
-      //test.assertStrictEqual(tags.length, 1);
-      //test.assertStrictEqual(tags[0], shareMessage.data.service);
+      let tags = PlacesUtils.tagging.getTagsForURI(nsiuri, {});
+      test.assertStrictEqual(tags.length, 1);
+      test.assertStrictEqual(tags[0], shareMessage.appName);
 
 //      gBrowser.removeCurrentTab();
       tab.close(function() {

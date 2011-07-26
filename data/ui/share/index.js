@@ -84,21 +84,13 @@ function (require,   $,        object,         fn,
   //For debug tab purpose, make it global.
   window.closeShare = mediator.close;
 
-  function updateChromeStatus(status, statusId, message) {
-    var app = sendData.appid;
-    var result = {status:status, statusId:statusId, message:message, url:options.url};
-    mediator.updateChromeStatus(app, result);
+  function updateChromeStatus(statusCode) {
+    mediator.updateChromeStatus({statusCode: statusCode});
   }
 
   function _showStatus(statusId, shouldCloseOrMessage) {
     if (shouldCloseOrMessage === true) {
       setTimeout(function () {
-        mediator.success({
-          username: sendData.username,
-          userid: sendData.userid,
-          url: options.url,
-          service: owaservicesbyid[sendData.appid].app.manifest.name
-        });
         $('div.status').addClass('hidden');
       }, 2000);
     } else if (shouldCloseOrMessage) {
@@ -115,7 +107,7 @@ function (require,   $,        object,         fn,
     $('#' + statusId).removeClass('hidden');
 
     if (!okStatusIds[statusId]) {
-      updateChromeStatus(SHARE_ERROR, statusId, shouldCloseOrMessage);
+      updateChromeStatus(SHARE_ERROR);
     }
     _showStatus(statusId, shouldCloseOrMessage);
   }
@@ -188,13 +180,18 @@ function (require,   $,        object,         fn,
         showStatusShared();
         // notify on successful send for components that want to do
         // work, like save any new contacts.
-        updateChromeStatus(SHARE_DONE);
-        mediator.sendComplete(sendData);
+        dispatch.pub('sendComplete', sendData);
+
         // Let the 'shared' status stay up for a second.
         setTimeout(function() {
             // do *not* send the sendData in the result as that might leak
-            // private information to content.
-            mediator.result(sendData.appid);
+            // private information to content.  We do however need to include
+            // info like the URL and title so our 'agent' can bookmark it etc.
+            // XXX - needs more thought about who exactly is responsible for
+            // not leaking sensitive stuff back to content as even this
+            // limited data is somewhat sensitive...
+            mediator.result({link: sendData.link, title: sendData.title,
+                             appName: svcRec.app.manifest.name});
           }, 1000);
       },
       error: function(error, message) {
