@@ -146,7 +146,40 @@ function (require,   $,       jschannel,   common) {
       ];
       return newPerson;
     },
-    
+
+    // Given a PoCo record, return the 'account' element for my domain.
+    // Returns null if no such acct, throws if more than 1 such acct.
+    getDomainAccount: function(poco) {
+      var result = null;
+      if (poco.accounts) {
+        poco.accounts.forEach(function(acct) {
+          if (acct.domain === domain) {
+            if (result) {
+              throw "malformed poco record - multiple '" + domain + "' accounts";
+            }
+            result = acct;
+          }
+        });
+      }
+      return result;
+    },
+
+    // Given a recipient name string, find a matching PoCo record guaranteed
+    // to have an account identitifier for our domain.
+    // Throws on error.
+    resolveRecipient: function(recipstr, type) {
+      var ckey = api.key+'.'+type;
+      var strval = window.localStorage.getItem(ckey);
+      var allCollection = strval ? JSON.parse(strval) : {};
+
+      // We only support exact displayName matching, and this is the key in
+      // our collection.
+      if (allCollection[recipstr]) {
+        return allCollection[recipstr];
+      }
+      throw "invalid recipient '" + recipstr + "'";
+    },
+
     getProfile: function(t, oauthConfig) {
       dump("calling https://graph.facebook.com/me\n");
       navigator.apps.oauth.call(oauthConfig, {
@@ -162,6 +195,12 @@ function (require,   $,       jschannel,   common) {
           oauth: oauthConfig
         }
         window.localStorage.setItem(api.key, JSON.stringify(user));
+        // nuke the existing contacts before returning so we don't have a race
+        // which allows a different user's contacts to be returned.
+        // XXX - this whole "what user are the contacts for" needs thought...
+        window.localStorage.removeItem(api.key+'.groups');
+        window.localStorage.removeItem(api.key+'.friends');
+
         t.complete(user);
 
         // initiate contact retreival now
@@ -170,6 +209,7 @@ function (require,   $,       jschannel,   common) {
 
         } catch(e) {
           dump(e+"\n");
+          t.error(e);
         }
       });
     },
@@ -180,20 +220,26 @@ function (require,   $,       jschannel,   common) {
       var urec = JSON.parse(strval);
       var oauthConfig = urec.oauth;
       var url;
+      var to = data.to || [];
 
-      if (data.shareType == 'groupWall') {
-          direct = options.get('to', None)
-          if (!data.direct) {
-            dump("addressee missing\n");
-            return;
-          }
-          url = "https://graph.facebook.com/"+data.direct+"/feed"
+      if (data.shareType === 'groupWall') {
+        if (to.length === 0 || !to[0]) {
+          throw "wall name missing";
+        }
+        if (to.length != 1) {
+          throw "can only post to a single wall";
+        }
+        var pocoGroup = api.resolveRecipient(to[0], 'groups');
+        var userid = api.getDomainAccount(pocoGroup).userid;
+        url = "https://graph.facebook.com/"+userid+"/feed";
       } else
-      if (data.shareType == 'wall') {
-          url = "https://graph.facebook.com/me/feed"
+      if (data.shareType === 'wall') {
+        if (to.length !== 0) {
+          throw "invalid recipient for wall posting";
+        }
+        url = "https://graph.facebook.com/me/feed"
       } else {
-        dump("SHARE DATA INSUFFICIENT!\n");
-        return;
+        throw "invalid shareType";
       }
       // map facebook: f1 data names
       // facebook docs https://developers.facebook.com/docs/reference/api/post/
@@ -232,18 +278,24 @@ function (require,   $,       jschannel,   common) {
     _handleContacts: function(data, type) {
       var ckey = api.key+'.'+type;
       var strval = window.localStorage.getItem(ckey);
-      var groups = strval && JSON.parse(strval) || [];
+      var groups = strval && JSON.parse(strval) || {};
+      var newContacts = data.data || [];
+      // We store in a keyed object so we can easily re-fetch contacts and
+      // not wind up with duplicates.  Something better than displayName
+      // might be better, but currently we rely on displayName being unique
+      // so the UI works correctly (as it currently deals exclusively with
+      // displayName)
 
-      for (var g in data) {
-        groups.push({
-          'displayName': data[g].name,
+      for each (var contact in newContacts) {
+        var displayName = contact.name;
+        groups[displayName] = {
+          'displayName': displayName,
           'type': type,
-          'accounts': [{ userid: data[g].id, username: null, 'domain': domain }]
-        })
+          'accounts': [{ userid: contact.id, username: null, 'domain': domain }]
+        };
       }
-      
+
       window.localStorage.setItem(ckey, JSON.stringify(groups));
-      return groups.length;
     },
 
     contacts: function(options) {
@@ -299,5 +351,63 @@ function (require,   $,       jschannel,   common) {
   chan.bind("link.send.logout", function(t, args) {
     dump("facebook link.send.logout\n");
     return common.logout(t, domain);
+  });
+  // Get a list of recipient names for a specific shareType.  Only returns
+  // the names to avoid leaking full profile information for all our contacts
+  // (some of whom may have profiles private to the rest of the world.)
+  // A super-anal service who thinks even this is leaking too much is free to
+  // return an empty list.
+  // This means the onus then falls back on us to match these names back up
+  // with our PoCo records so we can extract the userid.
+  chan.bind("link.send.getShareTypeRecipients", function(t, args) {
+    var type;
+    // XXX - todo - handle 'force'
+    if (args.force) {
+      dump("XXX - TODO: facebook needs to implement 'force' support");
+    }
+    if (args.shareType === "wall") {
+      return []; // no possible values.
+    } else if (args.shareType === "groupWall") {
+      type = "groups";
+    } else {
+      throw("invalid shareType " + args.shareType + "\n");
+    }
+    var ckey = api.key+'.'+type;
+    var strval = window.localStorage.getItem(ckey);
+    var byName = JSON.parse(strval);
+    // convert back to a simple array of names to use for auto-complete.
+    var result = [];
+    for (var displayName in byName) {
+      result.push(displayName);
+    }
+    return result;
+  });
+  // Validate a list of strings which are intended to be recipient names.
+  // The names possibly came back from getShareTypeRecipients() or were typed.
+  // Returns a string (but that string would resolve to itself - ie, passing
+  // 'Display Name' would resolve to @username, while @username always
+  // resolves to @username.)
+  // A super-anal service who thinks any resolution at all is leaking too much
+  // into is free to return exactly the names which were passed in (then fail
+  // at send time if appropriate)
+  chan.bind("link.send.resolveRecipients", function(t, args) {
+    var type;
+    if (args.shareType === "groupWall") {
+      type = "groups";
+    } else {
+      throw("invalid shareType " + args.shareType + "\n");
+    }
+    var results = []
+    args.names.forEach(
+      function(displayName) {
+        try {
+          api.resolveRecipient(displayName, type);
+          results.push({result: displayName});
+        } catch (e) {
+          results.push({error: e.toString()});
+        }
+      }
+    );
+    return results;
   });
 });
