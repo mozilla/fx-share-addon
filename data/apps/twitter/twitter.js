@@ -47,7 +47,6 @@ dump("TWITTER LOADING\n");
       }, {
         type: 'direct',
         name: 'Direct Message',
-        showTo: true,
         toLabel: 'type in name of recipient'
       }],
       textLimit: 140,

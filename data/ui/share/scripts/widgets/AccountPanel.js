@@ -343,7 +343,7 @@ function (object,         Widget,         $,        template,
         //If there is a special to value (like linkedin my connections), drop it in
         toInputDom.val(shareType.specialTo ? shareType.specialTo : '');
 
-        if (shareType.showTo) {
+        if (shareType.toLabel) {
           toSectionDom.removeClass('hiddenImportant');
           shareTypeDom.addClass('wide');
           actionsDom.addClass('wide');

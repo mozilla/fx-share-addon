@@ -55,12 +55,10 @@ function (require,   $,       jschannel,   common) {
       }, {
         type: 'friendsWall',
         name: 'friends wall',
-        showTo: true,
         toLabel: 'type in the name of the person you want to write to'
       }, {
         type: 'groupWall',
         name: 'group wall',
-        showTo: true,
         toLabel: 'type in the name of the group'
       }],
       textLimit: 420,
