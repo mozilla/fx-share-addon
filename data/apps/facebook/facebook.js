@@ -53,6 +53,11 @@ function (require,   $,       jschannel,   common) {
         type: 'wall',
         name: 'my wall'
       }, {
+        type: 'friendsWall',
+        name: 'friends wall',
+        showTo: true,
+        toLabel: 'type in the name of the person you want to write to'
+      }, {
         type: 'groupWall',
         name: 'group wall',
         showTo: true,
@@ -233,6 +238,17 @@ function (require,   $,       jschannel,   common) {
         var userid = api.getDomainAccount(pocoGroup).userid;
         url = "https://graph.facebook.com/"+userid+"/feed";
       } else
+      if (data.shareType === 'friendsWall') {
+        if (to.length === 0 || !to[0]) {
+          throw "wall name missing";
+        }
+        if (to.length != 1) {
+          throw "can only post to a single wall";
+        }
+        var pocoGroup = api.resolveRecipient(to[0], 'friends');
+        var userid = api.getDomainAccount(pocoGroup).userid;
+        url = "https://graph.facebook.com/"+userid+"/feed";
+      } else
       if (data.shareType === 'wall') {
         if (to.length !== 0) {
           throw "invalid recipient for wall posting";
@@ -369,6 +385,8 @@ function (require,   $,       jschannel,   common) {
       return []; // no possible values.
     } else if (args.shareType === "groupWall") {
       type = "groups";
+    } else if (args.shareType === "friendsWall") {
+      type = "friends";
     } else {
       throw("invalid shareType " + args.shareType + "\n");
     }
@@ -394,6 +412,9 @@ function (require,   $,       jschannel,   common) {
     var type;
     if (args.shareType === "groupWall") {
       type = "groups";
+    } else
+    if (args.shareType === "friendsWall") {
+      type = "friends";
     } else {
       throw("invalid shareType " + args.shareType + "\n");
     }
