@@ -26,11 +26,11 @@
 "use strict";
 
 define([ 'blade/object', 'blade/Widget', 'jquery', 'text!./AccountPanel.html',
-         'TextCounter', 'module', 'dispatch', 'accounts', 'mediator',
+         'TextCounter', 'module', 'dispatch', 'mediator',
          'AutoComplete', 'blade/fn', './jigFuncs', 'Select',
          'jquery.textOverflow'],
 function (object,         Widget,         $,        template,
-          TextCounter,   module,   dispatch,   accounts,   mediator,
+          TextCounter,   module,   dispatch,   mediator,
           AutoComplete,   fn,         jigFuncs,     Select) {
 
   var className = module.id.replace(/\//g, '-');
