@@ -26,10 +26,10 @@
 "use strict";
 
 define([ 'blade/object', 'blade/Widget', 'jquery', 'text!./ServicePanel.html',
-         'storage', 'module', 'dispatch', 'widgets/AccountPanel',
+         'module', 'dispatch', 'widgets/AccountPanel',
          'require', 'blade/fn', './jigFuncs'],
 function (object,         Widget,         $,        template,
-          storage,   module,   dispatch,   AccountPanel,
+          module,   dispatch,   AccountPanel,
           require,   fn,         jigFuncs) {
 
   var className = module.id.replace(/\//g, '-');
@@ -85,6 +85,12 @@ function (object,         Widget,         $,        template,
       serviceChanged: function () {
 
         var ch = this.owaservice.channel;
+        if (!ch) {
+          // We have either not yet setup, or have lost the channel to the
+          // service - just update the panel which will do the right thing.
+          this.updateServicePanel();
+          return;
+        }
         var self = this;
         ch.call({
           method: "link.send.getLogin",
@@ -155,8 +161,7 @@ function (object,         Widget,         $,        template,
       onLogin: function (evt) {
         // hrmph - tried to dispatch.pub back to the main panel but then
         // the popup was blocked.
-        var store = storage(),
-            self = this,
+        var self = this,
             app = this.owaservice.app;
         if (this.owaservice.auth) {
           if (this.owaservice.auth.type == 'oauth') {
@@ -192,7 +197,7 @@ function (object,         Widget,         $,        template,
           } else {
             dump("XXX UNSUPPORTED LOGIN TYPE\n");
           }
-          store.set('lastSelection', app.app);
+          localStorage["last-app-selected"] = app.app;
         } else {
           dump("XXX UNSUPPORTED AUTH TYPE\n");
         }

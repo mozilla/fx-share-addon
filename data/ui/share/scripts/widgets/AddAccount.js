@@ -26,14 +26,13 @@
 "use strict";
 
 define([ 'blade/object', 'blade/fn', 'blade/Widget', 'jquery',
-         'storage', 'module', 'dispatch', 'Select',
+         'module', 'dispatch', 'Select',
          'text!./AddAccount.html'],
 function (object,         fn,         Widget,         $,
-          storage,   module,   dispatch,   Select,
+          module,   dispatch,   Select,
           template) {
 
-  var className = module.id.replace(/\//g, '-'),
-      store = storage();
+  var className = module.id.replace(/\//g, '-');
 
   //Define the widget.
   return object(Widget, null, function (parent) {

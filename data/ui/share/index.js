@@ -176,7 +176,7 @@ function (require,   $,        object,         fn,
       success: function() {
         var prop;
         // {'message': u'Status is a duplicate.', 'provider': u'twitter.com'}
-        store.set('lastSelection', sendData.appid);
+        localStorage["last-app-selected"] = sendData.appid;
         showStatusShared();
         // notify on successful send for components that want to do
         // work, like save any new contacts.
@@ -296,112 +296,102 @@ function (require,   $,        object,         fn,
         tabsDom = $('#tabs'),
         tabContentDom = $('#tabContent'),
         tabFragment = document.createDocumentFragment(),
-        fragment = document.createDocumentFragment();
+        fragment = document.createDocumentFragment(),
+        asyncCount = 0,
+        asyncConstructionDone = false,
+        accountPanel,
+        lastSelection = localStorage['last-app-selected'];
 
     $('#shareui').removeClass('hidden');
 
-    store.get('lastSelection', function (lastSelection) {
-      store.get('accountAdded', function (accountAdded) {
+    // Finishes account creation. Actually runs *after* the work done
+    // below this function.
+    function finishCreate() {
+      var addButton, addAccountWidget;
 
-        var asyncCount = 0,
-            asyncConstructionDone = false,
-            accountPanel;
+      // Add tab button for add account
+      addButton = new TabButton({
+        target: 'addAccount',
+        title: 'Add Account',
+        name: '+'
+      }, tabFragment);
 
-        // Finishes account creation. Actually runs *after* the work done
-        // below this function.
-        function finishCreate() {
-          var addButton, addAccountWidget;
+      // Add the AddAccount UI to the DOM/tab list.
+      addAccountWidget = new AddAccount({
+        id: 'addAccount', owaservices: owaservices
+      }, fragment);
 
-          // Add tab button for add account
-          addButton = new TabButton({
-            target: 'addAccount',
-            title: 'Add Account',
-            name: '+'
-          }, tabFragment);
+      // add the tabs and tab contents now
+      tabsDom.append(tabFragment);
+      tabContentDom.append(fragment);
 
-          // Add the AddAccount UI to the DOM/tab list.
-          addAccountWidget = new AddAccount({
-            id: 'addAccount', owaservices: owaservices
-          }, fragment);
+      // Get a handle on the DOM elements used for tab selection.
+      tabButtonsDom = $('.widgets-TabButton');
+      servicePanelsDom = $('.servicePanel');
 
-          // add the tabs and tab contents now
-          tabsDom.append(tabFragment);
-          tabContentDom.append(fragment);
+      mediator.checkBase64Preview(options);
 
-          // Get a handle on the DOM elements used for tab selection.
-          tabButtonsDom = $('.widgets-TabButton');
-          servicePanelsDom = $('.servicePanel');
+      //If no matching accounts match the last selection clear it.
+      if (lastSelectionMatch < 0 && lastSelection) {
+        delete localStorage["last-app-selected"];
+        lastSelectionMatch = 0;
+      }
 
-          mediator.checkBase64Preview(options);
+      // which domain was last active?
+      // TODO in new tabs world.
+      //$("#accounts").accordion({ active: lastSelectionMatch });
+      tabButtonsDom.eq(lastSelectionMatch).click();
 
-          //If no matching accounts match the last selection clear it.
-          if (lastSelectionMatch < 0 && !accountAdded && lastSelection) {
-            store.remove('lastSelection');
-            lastSelectionMatch = 0;
-          }
+      //Inform extension the content size has changed, but use a delay,
+      //to allow any reflow/adjustments.
+      setTimeout(function () {
+        mediator.sizeToContent();
+      }, 100);
+    }
 
-          // which domain was last active?
-          // TODO in new tabs world.
-          //$("#accounts").accordion({ active: lastSelectionMatch });
-          tabButtonsDom.eq(lastSelectionMatch).click();
+    //Figure out what accounts we do have
+    owaservices.forEach(function (thisSvc, index) {
+      var appid = thisSvc.app.app,
+          tabId = "ServicePanel" + index,
+          PanelCtor;
 
-          //Reset the just added state now that accounts have been configured one time.
-          if (accountAdded) {
-            store.remove('accountAdded');
-          }
+      //Make sure to see if there is a match for last selection
+      if (appid === lastSelection) {
+        lastSelectionMatch = index;
+      }
 
-          //Inform extension the content size has changed, but use a delay,
-          //to allow any reflow/adjustments.
-          setTimeout(function () {
-            mediator.sizeToContent();
-          }, 100);
+      if (accountPanels[appid]) {
+        dump("EEEK - no concept of multiple accts per service!\n");
+        // accountPanels[appid].addService(thisSvc);
+      } else {
+        /// XXX - need the OWA icon helper!!
+        var icon;
+        for (var z in thisSvc.app.manifest.icons) {
+          icon = thisSvc.app.app + thisSvc.app.manifest.icons[z];
+          break;
         }
-
-        //Figure out what accounts we do have
-        owaservices.forEach(function (thisSvc, index) {
-          var appid = thisSvc.app.app,
-              tabId = "ServicePanel" + index,
-              PanelCtor;
-
-          //Make sure to see if there is a match for last selection
-          if (appid === lastSelection) {
-            lastSelectionMatch = index;
-          }
-
-          if (accountPanels[appid]) {
-            dump("EEEK - no concept of multiple accts per service!\n");
-            // accountPanels[appid].addService(thisSvc);
-          } else {
-            /// XXX - need the OWA icon helper!!
-            var icon;
-            for (var z in thisSvc.app.manifest.icons) {
-              icon = thisSvc.app.app + thisSvc.app.manifest.icons[z];
-              break;
-            }
-            // Add a tab button for the service.
+        // Add a tab button for the service.
 dump("adding tab for "+thisSvc.app.manifest.name+"\n");
-            tabsDom.append(new TabButton({
-              target: tabId,
-              type: appid,
-              title: thisSvc.app.manifest.name,
-              serviceIcon: icon
-            }, tabFragment));
+        tabsDom.append(new TabButton({
+          target: tabId,
+          type: appid,
+          title: thisSvc.app.manifest.name,
+          serviceIcon: icon
+        }, tabFragment));
 
-            // Get the contructor function for the panel.
-            accountPanel = new ServicePanel({
-              options: options,
-              owaservice: thisSvc,
-              savedState: accountPanelsRestoreState[appid]
-            }, fragment);
+        // Get the contructor function for the panel.
+        accountPanel = new ServicePanel({
+          options: options,
+          owaservice: thisSvc,
+          savedState: accountPanelsRestoreState[appid]
+        }, fragment);
 
-            accountPanel.node.setAttribute("id", tabId);
-            accountPanels[appid] = accountPanel;
-          }
-        });
-        finishCreate();
-        accountPanelsRestoreState = {};
-      });
+        accountPanel.node.setAttribute("id", tabId);
+        accountPanels[appid] = accountPanel;
+      }
     });
+    finishCreate();
+    accountPanelsRestoreState = {};
   }
   
   //function doAuthorization(data) {
@@ -561,10 +551,7 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
     accountPanels = {};
   };
 
-  function _createChannels(requestMethod, requestArguments) {
-    options = requestArguments;
-    onFirstShareState();
-
+  function _createChannels(requestMethod) {
     owaservices.forEach(function(svcRec, i) {
       try {
         // if we're loading an app from an addon, use a global origin.  also use
@@ -598,11 +585,10 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
       owaservices.push(svcRec);
       owaservicesbyid[svc.app] = svcRec;
     });
+    options = data.args;
+    onFirstShareState();
     displayAccounts();
-    var requestMethod = data.method;
-    var requestArgs = data.args;
-
-    _createChannels(requestMethod, requestArgs);
+    _createChannels(data.method);
     // use the newly created channels to get the characteristics for
     // each owa service.
     owaservices.forEach(function(thisSvc) {
