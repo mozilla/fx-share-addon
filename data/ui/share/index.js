@@ -76,7 +76,7 @@ function (require,   $,        object,         fn,
         style.type = 'text/css';
         style.textContent = css.toCSS();
         document.head.appendChild(style);
-        document.body.style.visibility = 'visible';
+        document.body.style.display = 'block';
       }
     });
   });

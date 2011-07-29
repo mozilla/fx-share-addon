@@ -865,7 +865,7 @@ div.status {
   position: absolute;
   height: 100%;
   width: 100%;
-  min-height: 180px;
+  min-height: 120px;
   top: 0;
   left: 0;
   color: #0a0a0a;
