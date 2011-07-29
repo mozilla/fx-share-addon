@@ -26,10 +26,10 @@
 "use strict";
 
 define([ 'blade/object', 'blade/Widget', 'jquery', 'text!./ServicePanel.html',
-         'module', 'dispatch', 'widgets/AccountPanel',
+         'mediator',     'module', 'dispatch', 'widgets/AccountPanel',
          'require', 'blade/fn', './jigFuncs'],
 function (object,         Widget,         $,        template,
-          module,   dispatch,   AccountPanel,
+          mediator,       module,   dispatch,   AccountPanel,
           require,   fn,         jigFuncs) {
 
   var className = module.id.replace(/\//g, '-');
@@ -153,6 +153,7 @@ function (object,         Widget,         $,        template,
         } else {
           thisPanelDiv.hide();
         }
+        mediator.sizeToContent();
       },
 
       onRemove: function (evt) {
