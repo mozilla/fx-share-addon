@@ -78,6 +78,7 @@ define(['dispatch'], function (dispatch) {
     },
 
     storeGet: function (key) {
+      dump("FAKE STORE_GET\n");
       var value = dataStore[key];
       //JSON wants null.
       if (value === undefined) {
@@ -117,10 +118,10 @@ define(['dispatch'], function (dispatch) {
       } catch (e) {
         console.error('Could not JSON parse: ' + evt.data);
       }
-
-      if (message && message.topic) {
-        if (subs[message.topic]) {
-          subs[message.topic](message.data);
+  
+      if (message && message.cmd) {
+        if (subs[message.cmd]) {
+          subs[message.cmd](message.data);
         } else {
           // actually quite a few of these, uncomment if you want a play
           // by play of topics going through the window.

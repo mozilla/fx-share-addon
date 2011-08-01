@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-Cu.import("resource://services-share/panel.js");
+let {validateURL} = require("ffshare/panel");
 
 let bad_urls = [
   "http://invalid.comhttp://invalid.com",
@@ -19,14 +19,14 @@ let good_urls = [
   "http://s3.www.valid.org/images/small_logo.png"  
   ];
 
-function run_test() {
+exports.runTest = function(test) {
   // First test urls that should fail validation.
   for (var i=0; i < bad_urls.length; i++) {
-    do_check_eq(validateURL(bad_urls[i]), null);
+    test.assertStrictEqual(validateURL(bad_urls[i]), null);
   }
 
   // Test some good urls now.
   for (var i=0; i < good_urls.length; i++) {
-    do_check_eq(validateURL(good_urls[i]), good_urls[i]);
+    test.assertStrictEqual(validateURL(good_urls[i]), good_urls[i]);
   }
 }

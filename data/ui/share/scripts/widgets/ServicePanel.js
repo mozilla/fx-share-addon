@@ -26,10 +26,10 @@
 "use strict";
 
 define([ 'blade/object', 'blade/Widget', 'jquery', 'text!./ServicePanel.html',
-         'storage', 'module', 'dispatch', 'widgets/AccountPanel',
+         'mediator',     'module', 'dispatch', 'widgets/AccountPanel',
          'require', 'blade/fn', './jigFuncs'],
 function (object,         Widget,         $,        template,
-          storage,   module,   dispatch,   AccountPanel,
+          mediator,       module,   dispatch,   AccountPanel,
           require,   fn,         jigFuncs) {
 
   var className = module.id.replace(/\//g, '-');
@@ -78,31 +78,45 @@ function (object,         Widget,         $,        template,
       },
 
       onRender: function () {
-        this.serviceChanged();
+        this.updateServicePanel();
       },
 
       //The service state has changed, update the relevant HTML bits.
       serviceChanged: function () {
+        var self = this;
+        this.owaservice.call("getLogin", {},
+          function(result) {
+            self.owaservice.auth = result.auth;
+            self.owaservice.user = result.user;
+            self.updateServicePanel();
+          },
+          function(err, message) {
+            dump("failed to get owa login info: " + err + ": " + message + "\n");
+            self.owaservice.auth = null;
+            self.updateServicePanel();
+          }
+        );
+      },
+
+      updateServicePanel: function () {
+        dump("serviceChanged....\n");
         // If either 'characteristics' or 'login' are null, we are waiting
         // for those methods to return.
         $(".accountLoading", this.node).hide();
         $(".accountLogin", this.node).show();
         var showPanel = false;
-        if (!this.owaservice.characteristics || !this.owaservice.login) {
+        if (!this.owaservice.characteristics) {
           // waiting for the app to load and respond.
-dump("waiting for app to load and respond\n");
-          //$(".accountLoading", this.node).show();
-          //$(".accountLogin", this.node).hide();
-        } else if (!this.owaservice.login.user) {
+          $(".accountLoading", this.node).show();
+          $(".accountLogin", this.node).hide();
+        } else if (!this.owaservice.user) {
           // getLogin call has returned but no user logged in.
-dump("getlogin returned no user\n");
-          //$(".accountLoading", this.node).hide();
-          //$(".accountLogin", this.node).show();
+          $(".accountLoading", this.node).hide();
+          $(".accountLogin", this.node).show();
         } else {
           // logged in so can show the account panel.
-dump("logging into show account panel\n");
-          //$(".accountLoading", this.node).hide();
-          //$(".accountLogin", this.node).hide();
+          $(".accountLoading", this.node).hide();
+          $(".accountLogin", this.node).hide();
           showPanel = true;
         }
         var thisPanelDiv = $(".accountPanel", this.node);
@@ -130,6 +144,7 @@ dump("logging into show account panel\n");
         } else {
           thisPanelDiv.hide();
         }
+        mediator.sizeToContent();
       },
 
       onRemove: function (evt) {
@@ -138,29 +153,43 @@ dump("logging into show account panel\n");
       onLogin: function (evt) {
         // hrmph - tried to dispatch.pub back to the main panel but then
         // the popup was blocked.
-dump("onLogin called for "+this.owaservice.app.origin+"\n");
-        var store = storage(),
+        var self = this,
             app = this.owaservice.app;
-        if (app.manifest.experimental.oauth) {
-          dump("dispatch to oauthAuthorize\n");
-          try {
-            // XXX need to fix postmessage between the share panel and the webapps
-            //dispatch.pub('oauthAuthorize', app.manifest.experimental.oauth);
-            var messageData = {app:app.manifest.experimental.oauth, cmd:"oauthAuthorize"};
-            sendOWAMessage(messageData);
-
-          } catch(e) {
-            dump(e+"\n");
+        if (this.owaservice.auth) {
+          if (this.owaservice.auth.type == 'oauth') {
+            dump("dispatch to oauthAuthorize\n");
+            try {
+              var messageData = {app: app.origin,
+                                 oauth: this.owaservice.auth};
+              navigator.apps.oauth.authorize(messageData, function(svc) {
+                self.owaservice.call("setAuthorization", svc,
+                        function(result) {
+                          dump("setting auth success!\n");
+                          dispatch.pub('serviceChanged', app.origin);
+                        },
+                        function(err, msg) {
+                          dump("error getting setting authorization" + err + "/" + msg + "\n");
+                        }
+                );
+              });
+            } catch(e) {
+              dump(e+"\n");
+            }
+          } else
+          if (this.owaservice.auth.type == 'dialog') {
+            var url = this.owaservice.auth.url,
+              w = this.owaservice.auth.width || 600,
+              h = this.owaservice.auth.height || 600,
+              win = window.open(url,
+                  "ffshareAuth",
+                  "dialog=yes, modal=yes, width="+w+", height="+h+", scrollbars=yes");
+            win.focus();
+          } else {
+            dump("XXX UNSUPPORTED LOGIN TYPE\n");
           }
-
-        } else
-        if (this.owaservice.login.login) {
-            var url = app.origin + this.owaservice.login.login.dialog,
-            win = window.open(url,
-                  "ffshareOAuth",
-                  "dialog=yes, modal=yes, width=900, height=500, scrollbars=yes");
-          store.set('lastSelection', app.origin);
-          win.focus();
+          localStorage["last-app-selected"] = app.origin;
+        } else {
+          dump("XXX UNSUPPORTED AUTH TYPE\n");
         }
       },
 

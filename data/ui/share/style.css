@@ -169,7 +169,7 @@ body {
   height: 100%;
   min-height: 120px;
   color: @color;
-  background: @background;
+  /*background: @background;*/
 }
 
 noscript {
@@ -195,6 +195,11 @@ noscript {
   background: @tabsBackgroundWebKit;
   background: @tabsBackground;
   border-right: @tabsBorderRight;
+}
+
+#pageInfo .thumb {
+    width: 75px;
+    height: 75px;
 }
 
 button::-moz-focus-inner {
@@ -227,8 +232,8 @@ button:active {
 }
 
 #tabContent {
-  background: @tabContentBackgroundWebKit;
-  background: @tabContentBackground;
+  /*background: @tabContentBackgroundWebKit;*/
+  /*background: @tabContentBackground;*/
 
 }
 
@@ -860,7 +865,7 @@ div.status {
   position: absolute;
   height: 100%;
   width: 100%;
-  min-height: 180px;
+  min-height: 120px;
   top: 0;
   left: 0;
   color: #0a0a0a;

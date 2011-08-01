@@ -26,12 +26,12 @@
 "use strict";
 
 define([ 'blade/object', 'blade/Widget', 'jquery', 'text!./AccountPanel.html',
-         'TextCounter', 'module', 'dispatch', 'accounts',
-         'require', 'AutoComplete', 'blade/fn', './jigFuncs', 'Select',
+         'TextCounter', 'module', 'dispatch', 'mediator',
+         'AutoComplete', 'blade/fn', './jigFuncs', 'Select',
          'jquery.textOverflow'],
 function (object,         Widget,         $,        template,
-          TextCounter,   module,   dispatch,   accounts,
-          require,   AutoComplete,   fn,         jigFuncs,     Select) {
+          TextCounter,   module,   dispatch,   mediator,
+          AutoComplete,   fn,         jigFuncs,     Select) {
 
   var className = module.id.replace(/\//g, '-');
 
@@ -69,17 +69,13 @@ function (object,         Widget,         $,        template,
 
       template: template,
 
-      // The module name for the Contacts module
-      contactsName: 'Contacts',
-
       onCreate: function (onAsynCreateDone) {
-        var profile = this.owaservice.login.user,
+        var profile = this.owaservice.user,
             onFinishCreate = this.makeCreateCallback(),
             name;
 
-        //Set up the svcAccount property
-        this.svcAccount = profile;
-        this.svc = this.owaservice.characteristics;
+        this.characteristics = this.owaservice.characteristics;
+        this.svc = this.characteristics // just for the jig template...
 
         //Set up the photo property
         this.photo = profile.photos && profile.photos[0] && profile.photos[0].value;
@@ -87,32 +83,16 @@ function (object,         Widget,         $,        template,
         //Set up nicer display name
         // XXX for email services, we should show the email account, but we
         // cannot rely on userid being a 'pretty' name we can display
-        name = this.svcAccount.username;
+        name = profile.username;
         if (!name) {
           name = profile.displayName;
         }
 
         this.displayName = name;
 
-        // Figure out what module will handle contacts.
-        this.contactsName = (this.svc.overlays &&
-                                this.svc.overlays[this.contactsName]) ||
-                                this.contactsName;
-
         //Listen for updates to base64Preview
         this.base64PreviewSub = dispatch.sub('base64Preview', fn.bind(this, function (dataUrl) {
           $('[name="picture_base64"]', this.node).val(jigFuncs.rawBase64(dataUrl));
-        }));
-
-        // listen for successful send, and if so, update contacts list, if
-        // the send matches this account.
-        this.sendCompleteSub = dispatch.sub('sendComplete', fn.bind(this, function (data) {
-          var acct = this.svcAccount;
-          if (data.to && acct.domain === data.domain &&
-              acct.userid === data.userid &&
-              acct.username === data.username) {
-            this.contacts.incorporate(data.to);
-          }
         }));
 
         // indicate async creation is done.
@@ -133,8 +113,7 @@ function (object,         Widget,         $,        template,
       },
 
       onRender: function () {
-        var acNode,
-            root = $(this.node),
+        var root = $(this.node),
             opts = this.options,
             formLink = jigFuncs.link(opts);
 
@@ -167,12 +146,15 @@ function (object,         Widget,         $,        template,
         root.find('[name="subject"]').val(opts.subject);
         root.find('[name="message"]').val(opts.message);
 
-        if (this.svc.shareTypes.length > 1) {
+        var shareTypes = this.characteristics.shareTypes;
+        if (shareTypes.length > 1) {
+          var initialShareType = opts.shareType || this.options.shareType ||
+                                 shareTypes[0].type;
           //Insert a Select widget if it is desired.
           this.select = new Select({
             name: 'shareType',
-            value: this.options.shareType,
-            options: this.svc.shareTypes.map(function (item) {
+            value: initialShareType,
+            options: shareTypes.map(function (item) {
                       return {
                         name: item.name,
                         value: item.type
@@ -180,37 +162,18 @@ function (object,         Widget,         $,        template,
                     })
           }, $('.shareTypeSelectSection', this.node)[0]);
 
+          // Update anything which depends on the share state and do the same
+          // as it changes.
+          this.changeShareType(this.getShareType(initialShareType));
           // Listen to changes in the Select
           this.selectChangeFunc = fn.bind(this, function (evt) {
             this.onShareTypeChange(evt);
           });
           this.select.dom.bind('change', this.selectChangeFunc);
-
-          // Update the display that is linked to the select.
-          if (this.options.shareType) {
-            this.changeShareType(this.getShareType(this.options.shareType));
-          }
         }
 
-        if (this.svc.textLimit) {
+        if (this.characteristics.textLimit) {
           this.startCounter();
-        }
-
-        // Set up autocomplete and contacts used for autocomplete.
-        // Since contacts can have a different
-        // format/display per service, allow for service overrides.
-        acNode = this.toDom[0];
-        if (acNode) {
-          require([this.contactsName], fn.bind(this, function (Contacts) {
-            this.contacts = new Contacts(this.svc, this.svcAccount);
-            this.autoComplete = new AutoComplete(acNode, this.contacts);
-            // Listen for autocomplete selections, so that the error
-            // state is not set on a node after using the mouse to select
-            // an autocomplete option.
-            this.toDom.bind('autocompleteselect', fn.bind(this, function () {
-              this.resetError();
-            }));
-          }));
         }
 
         //Create ellipsis for anything wanting ... overflow
@@ -239,15 +202,57 @@ function (object,         Widget,         $,        template,
           this.showStatus('needRecipient');
         } else {
           // Make sure all recipients are good.
-          try {
-            this.contacts.convert(value);
-          } catch (e) {
-            // Disable share with invalid recipient.
-            this.shareButtonNode.setAttribute('disabled', 'disabled');
-            this.toDom.addClass('inputError');
-            this.showStatus('invalidRecipient');
-          }
+          this.resolveRecipients(
+            value,
+            function(good, bad) {
+              if (bad.length === 0) {
+                // all good - may we well update the to field with the
+                // resolved names.
+                if (good.length) {
+                  this.toDom.val(good.join(", ") + ", ");
+                }
+              } else {
+                // at least one error
+                this.shareButtonNode.setAttribute('disabled', 'disabled');
+                this.toDom.addClass('inputError');
+                this.showStatus('invalidRecipient');
+              }
+            }.bind(this)
+          );
         }
+      },
+
+      // Given a string direct from the UI, convert it to a list of PoCo
+      // records suitable to pass back to the service.
+      resolveRecipients: function(toText, cb) {
+        var names = [],
+            split = toText.split(',');
+        split.forEach(function (to) {
+          to = to.trim();
+          if (to) {
+            names.push(to)
+          }
+        });
+        var shareType = this.getShareType(this.select.val()).type;
+        this.owaservice.call('resolveRecipients',
+          {shareType: shareType, names: names},
+          function(results) {
+            var good = [], bad = [];
+            results.forEach(function (result) {
+              if (result.result) {
+                good.push(result.result);
+              } else {
+                bad.push(result.error);
+              }
+            });
+            cb(good, bad);
+          },
+          function(err, msg) {
+            dump("error resolving recipients: " + err + "/" + msg + "\n");
+            // and callback as if all are bad.
+            cb([], names);
+          }
+        );
       },
 
       /**
@@ -264,7 +269,7 @@ function (object,         Widget,         $,        template,
         if (!this.counter) {
           this.counter = new TextCounter($('textarea.message', this.node),
                                          $('.counter', this.node),
-                                         this.svc.textLimit - this.urlSize);
+                                         this.characteristics.textLimit - this.urlSize);
         }
         this.updateCounter();
       },
@@ -274,9 +279,10 @@ function (object,         Widget,         $,        template,
         // potentially be a different length than a bit.ly url so account for
         // that. The + 1 is to account for a space before adding the URL to the
         // tweet.
+        var tl = this.characteristics.textLimit;
         this.counter.updateLimit(this.options.shortUrl ?
-                                 (this.svc.textLimit - (this.options.shortUrl.length + 1)) :
-                                 this.svc.textLimit - this.urlSize);
+                                 tl - this.options.shortUrl.length + 1 :
+                                 tl - this.urlSize);
       },
 
       /**
@@ -318,17 +324,12 @@ function (object,         Widget,         $,        template,
       },
 
       getShareType: function (shareTypeValue) {
-        for (var i = 0, item; (item = this.svc.shareTypes[i]); i++) {
+        for (var i = 0, item; (item = this.characteristics.shareTypes[i]); i++) {
           if (item.type === shareTypeValue) {
             return item;
           }
         }
         return null;
-      },
-
-      selectFirstShareType: function () {
-        this.select.selectIndex(0);
-        this.changeShareType(this.svc.shareTypes[0]);
       },
 
       changeShareType: function (shareType) {
@@ -341,7 +342,7 @@ function (object,         Widget,         $,        template,
         //If there is a special to value (like linkedin my connections), drop it in
         toInputDom.val(shareType.specialTo ? shareType.specialTo : '');
 
-        if (shareType.showTo) {
+        if (shareType.toLabel) {
           toSectionDom.removeClass('hiddenImportant');
           shareTypeDom.addClass('wide');
           actionsDom.addClass('wide');
@@ -353,6 +354,20 @@ function (object,         Widget,         $,        template,
           shareTypeDom.removeClass('wide');
           shareTypeSelectDom.removeClass('fixedSize');
         }
+        // Set up autocomplete and contacts used for autocomplete.
+        var acNode = this.toDom[0];
+        if (acNode) {
+          if (!this.autoComplete) {
+            this.autoComplete = new AutoComplete(acNode, this.owaservice);
+            // Listen for autocomplete selections, so that the error
+            // state is not set on a node after using the mouse to select
+            // an autocomplete option.
+            this.toDom.bind('autocompleteselect', fn.bind(this, function () {
+              this.resetError();
+            }));
+          }
+          this.autoComplete.shareTypeChanged(shareType.type);
+        }
       },
 
       onShareTypeChange: function (evt) {
@@ -363,7 +378,7 @@ function (object,         Widget,         $,        template,
         //is enabled.
         this.resetError();
 
-        sizePanelToContent();
+        mediator.sizeToContent();
       },
 
       onSubmit: function (evt) {
@@ -375,6 +390,9 @@ function (object,         Widget,         $,        template,
         var sendData = this.getFormData();
         // put the appid in the data so the caller can find us.
         sendData.appid = this.owaservice.app.origin;
+        // and any other import things from the initial params which don't
+        // currently appear on the form.
+        sendData.title = this.options.title;
 
         if (!this.validate(sendData)) {
           return;
@@ -382,17 +400,24 @@ function (object,         Widget,         $,        template,
 
         if (this.options.shortUrl) {
           sendData.shorturl = this.options.shortUrl;
-        } else if (this.svc.shorten) {
+        } else if (this.characteristics.shorten) {
           sendData.shorten = true;
         }
 
-        // fixup to addressing if necessary
-        if (sendData.to) {
-          sendData.to = this.contacts.convert(sendData.to);
-        }
-
-        //Notify the page of a send.
-        dispatch.pub('sendMessage', sendData);
+        // fixup 'to' addressing do the send.
+        this.resolveRecipients(
+          sendData.to || '',
+          function(good, bad) {
+            // in theory we have already called validateTo, so errors here
+            // shouldn't happen.
+            if (bad.length) {
+              dump("unexpected errors resolving recipients: " + bad + "\n");
+            }
+            sendData.to = good;
+            //Notify the page of a send.
+            dispatch.pub('sendMessage', sendData);
+          }
+        );
       },
 
       onRemove: function (evt) {

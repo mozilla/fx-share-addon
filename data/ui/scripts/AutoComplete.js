@@ -44,35 +44,46 @@ function ($,        object,         fn,         module,   dispatch,
     refreshShowing: false,
     askRefresh: true,
 
-    init: function (node, contactService) {
+    init: function (node, owasvc) {
       this.dom = $(node);
       this.attachedWidget = false;
       this.acOptions = [];
+      this.owasvc = owasvc;
+      this.orient = owasvc.characteristics.features.subject ? 'below' : 'above';
 
-      this.orient = contactService.svc.features.subject ? 'below' : 'above';
-
-      // Listen for changes to the contacts.
-      contactService.notify(fn.bind(this, this.attachAutoComplete));
-
-      this.contactService = contactService;
-
+      // XXX - still relevant?
       dispatch.sub('optionsChanged', fn.bind(this, function (data) {
         // allow refetching contacts when a new page is shared.
         this.askRefresh = true;
       }));
     },
 
+    shareTypeChanged: function(shareType, forceRefresh /* = false */) {
+      this.currentShareType = shareType;
+
+      // ask the service for its contacts.
+      this.owasvc.call("getShareTypeRecipients",
+          {shareType: shareType, force: !!forceRefresh},
+          function(recips) {
+            this._attachAutoComplete(recips);
+          }.bind(this),
+          function(err, message) {
+            dump("Contact fetch failed: " + err + "/" + message + "\n");
+            this._attachAutoComplete([]);
+          }.bind(this)
+      );
+    },
+
     /**
      * Updates the formatted autocomplete options and binds the
      * autocomplete widget, but only on the first call.
      */
-    attachAutoComplete: function (contactService, contactList) {
-      contactList = contactList || [];
+    _attachAutoComplete: function (recipstrs) {
       this.acOptions = [];
 
       // Update the acOptions with formatted contact values.
-      contactList.forEach(fn.bind(this, function (contact) {
-        this.acOptions.push(contactService.formatContact(contact));
+      recipstrs.forEach(fn.bind(this, function (recipstr) {
+        this.acOptions.push(recipstr);
       }));
 
       if (!this.attachedWidget) {
@@ -222,7 +233,7 @@ function ($,        object,         fn,         module,   dispatch,
               this.waitingSearch = this.dom.val().trim();
               this.showSpinner();
               this.askRefresh = false;
-              this.contactService.fetch();
+              this.shareTypeChanged(this.currentShareType, true);
               this.hideRefresh();
             }))
             .bind('blur', fn.bind(this, function (evt) {

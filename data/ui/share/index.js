@@ -39,35 +39,29 @@ dump("heya! from f1\n");
 define([ "require", "jquery", "blade/object", "blade/fn",
         "blade/jig", "blade/url", "dispatch",
          "storage",  "widgets/ServicePanel", "widgets/TabButton",
-         "widgets/AddAccount", "less", "osTheme", "jquery-ui-1.8.7.min",
-         "jquery.textOverflow"
+         "widgets/AddAccount", "less", "osTheme", "mediator",
+         "jquery-ui-1.8.7.min", "jquery.textOverflow"
          ],
 function (require,   $,        object,         fn,
           jig,         url,        dispatch,
           storage,   ServicePanel,           TabButton,
-          AddAccount,           less,   osTheme) {
+          AddAccount,           less,   osTheme,   mediator) {
 
   var accountPanels = {},
-    accountPanelsRestoreState = {},
-    store = storage(),
-    SHARE_DONE = 0,
-    SHARE_START = 1,
-    SHARE_ERROR = 2,
-    okStatusIds = {
-      statusSettings: true,
-      statusSharing: true,
-      statusShared: true
-    },
-    // If it has been more than a day,
-    // refresh the UI, record a timestamp for it.
-    refreshStamp = (new Date()).getTime(),
-    //1 day.
-    refreshInterval = 1 * 24 * 60 * 60 * 1000,
-
-    options, bodyDom, sendData, tabButtonsDom,
-    servicePanelsDom,
-    owaservices = [], // A list of OWA service objects
-    owaservicesbyid = {}; // A map version of the above
+      accountPanelsRestoreState = {},
+      store = storage(),
+      SHARE_DONE = 0,
+      SHARE_START = 1,
+      SHARE_ERROR = 2,
+      okStatusIds = {
+        statusSettings: true,
+        statusSharing: true,
+        statusShared: true
+      },
+      options, sendData, tabButtonsDom,
+      servicePanelsDom,
+      owaservices = [], // A list of OWA service objects
+      owaservicesbyid = {}; // A map version of the above
 
   //Start processing of less files right away.
   require(['text!style/' + osTheme + '.css', 'text!style.css'],
@@ -82,53 +76,21 @@ function (require,   $,        object,         fn,
         style.type = 'text/css';
         style.textContent = css.toCSS();
         document.head.appendChild(style);
-        document.body.style.visibility = 'visible';
+        document.body.style.display = 'block';
       }
     });
   });
 
-  function checkBase64Preview() {
-    //Ask extension to generate base64 data if none available.
-    //Useful for sending previews in email.
-    var preview = options.previews && options.previews[0];
-    if (preview && preview.http_url && !preview.base64) {
-      dispatch.pub('generateBase64Preview', preview.http_url);
-    }
-  }
-
-  function hide() {
-    dispatch.pub('hide');
-  }
-  window.hideShare = hide;
-
-  function close() {
-    dispatch.pub('close');
-  }
   //For debug tab purpose, make it global.
-  window.closeShare = close;
+  window.closeShare = mediator.close;
 
-  function updateChromeStatus(status, statusId, message) {
-    var app = sendData.appid;
-    var result = {status:status, statusId:statusId, message:message, url:options.url};
-    var messageData = {app:app, cmd:"updateStatus", result:result};
-    sendOWAMessage(messageData);
+  function updateChromeStatus(statusCode) {
+    mediator.updateChromeStatus({statusCode: statusCode});
   }
-  window.updateChromeStatus = updateChromeStatus;
-
-  function sizePanelToContent() {
-    sendOWAMessage({cmd: 'sizeToContent'});
-  }
-  window.sizePanelToContent = sizePanelToContent;
 
   function _showStatus(statusId, shouldCloseOrMessage) {
     if (shouldCloseOrMessage === true) {
       setTimeout(function () {
-        dispatch.pub('success', {
-          username: sendData.username,
-          userid: sendData.userid,
-          url: options.url,
-          service: owaservicesbyid[sendData.appid].app.manifest.name
-        });
         $('div.status').addClass('hidden');
       }, 2000);
     } else if (shouldCloseOrMessage) {
@@ -136,7 +98,7 @@ function (require,   $,        object,         fn,
     }
 
     //Tell the extension that the size of the content may have changed.
-    sizePanelToContent();
+    mediator.sizeToContent();
   }
 
   function showStatus(statusId, shouldCloseOrMessage) {
@@ -145,7 +107,7 @@ function (require,   $,        object,         fn,
     $('#' + statusId).removeClass('hidden');
 
     if (!okStatusIds[statusId]) {
-      updateChromeStatus(SHARE_ERROR, statusId, shouldCloseOrMessage);
+      updateChromeStatus(SHARE_ERROR);
     }
     _showStatus(statusId, shouldCloseOrMessage);
   }
@@ -211,17 +173,22 @@ function (require,   $,        object,         fn,
       function(result) {
         var prop;
         // {'message': u'Status is a duplicate.', 'provider': u'twitter.com'}
-        store.set('lastSelection', sendData.appid);
+        localStorage["last-app-selected"] = sendData.appid;
         showStatusShared();
         // notify on successful send for components that want to do
         // work, like save any new contacts.
-        updateChromeStatus(SHARE_DONE);
         dispatch.pub('sendComplete', sendData);
+
         // Let the 'shared' status stay up for a second.
         setTimeout(function() {
             // do *not* send the sendData in the result as that might leak
-            // private information to content.
-            sendOWAMessage({cmd: 'result', app: sendData.appid, data: "ok"});
+            // private information to content.  We do however need to include
+            // info like the URL and title so our 'agent' can bookmark it etc.
+            // XXX - needs more thought about who exactly is responsible for
+            // not leaking sensitive stuff back to content as even this
+            // limited data is somewhat sensitive...
+            mediator.result({link: sendData.link, title: sendData.title,
+                             appName: svcRec.app.manifest.name});
           }, 1000);
       },
       function(error, message) {
@@ -245,7 +212,7 @@ function (require,   $,        object,         fn,
             //var headerError = xhr.getResponseHeader('X-Error');
             reAuth();
           } else if (status === 503) {
-            dispatch.pub('serverErrorPossibleRetry');
+            showStatus('statusServerBusy');
           } else if (status === 0) {
             showStatus('statusServerError');
           } else {
@@ -259,7 +226,7 @@ function (require,   $,        object,         fn,
           // Let the 'error' status stay up for a second then notify OWA of
           // the error.
           setTimeout(function() {
-              sendOWAMessage({cmd: 'error', app: sendData.appid, data: "error"});
+              mediator.error(sendData.appid);
             }, 1000);
         }
       }
@@ -280,7 +247,7 @@ function (require,   $,        object,         fn,
           // hide the panel now, but only if the extension can show status
           // itself (0.7.7 or greater)
           updateChromeStatus(SHARE_START);
-          hide();
+          mediator.hide();
 
           //First see if a bitly URL is needed.
           if (svcConfig.shorten && shortenPrefs) {
@@ -326,108 +293,97 @@ function (require,   $,        object,         fn,
         tabsDom = $('#tabs'),
         tabContentDom = $('#tabContent'),
         tabFragment = document.createDocumentFragment(),
-        fragment = document.createDocumentFragment();
+        fragment = document.createDocumentFragment(),
+        asyncCount = 0,
+        asyncConstructionDone = false,
+        accountPanel,
+        lastSelection = localStorage['last-app-selected'];
 
     $('#shareui').removeClass('hidden');
 
-    store.get('lastSelection', function (lastSelection) {
-      store.get('accountAdded', function (accountAdded) {
+    // Finishes account creation. Actually runs *after* the work done
+    // below this function.
+    function finishCreate() {
+      var addButton, addAccountWidget;
 
-        var asyncCount = 0,
-            asyncConstructionDone = false,
-            accountPanel;
+      // Add tab button for add account
+      addButton = new TabButton({
+        target: 'addAccount',
+        title: 'Add Account',
+        name: '+'
+      }, tabFragment);
 
-        // Finishes account creation. Actually runs *after* the work done
-        // below this function.
-        function finishCreate() {
-          var addButton, addAccountWidget;
+      // Add the AddAccount UI to the DOM/tab list.
+      addAccountWidget = new AddAccount({
+        id: 'addAccount', owaservices: owaservices
+      }, fragment);
 
-          // Add tab button for add account
-          addButton = new TabButton({
-            target: 'addAccount',
-            title: 'Add Account',
-            name: '+'
-          }, tabFragment);
+      // add the tabs and tab contents now
+      tabsDom.append(tabFragment);
+      tabContentDom.append(fragment);
 
-          // Add the AddAccount UI to the DOM/tab list.
-          addAccountWidget = new AddAccount({
-            id: 'addAccount', owaservices: owaservices
-          }, fragment);
+      // Get a handle on the DOM elements used for tab selection.
+      tabButtonsDom = $('.widgets-TabButton');
+      servicePanelsDom = $('.servicePanel');
 
-          // add the tabs and tab contents now
-          tabsDom.append(tabFragment);
-          tabContentDom.append(fragment);
+      mediator.checkBase64Preview(options);
 
-          // Get a handle on the DOM elements used for tab selection.
-          tabButtonsDom = $('.widgets-TabButton');
-          servicePanelsDom = $('.servicePanel');
+      //If no matching accounts match the last selection clear it.
+      if (lastSelectionMatch < 0 && lastSelection) {
+        delete localStorage["last-app-selected"];
+        lastSelectionMatch = 0;
+      }
 
-          checkBase64Preview();
+      // which domain was last active?
+      // TODO in new tabs world.
+      //$("#accounts").accordion({ active: lastSelectionMatch });
+      tabButtonsDom.eq(lastSelectionMatch).click();
 
-          //If no matching accounts match the last selection clear it.
-          if (lastSelectionMatch < 0 && !accountAdded && lastSelection) {
-            store.remove('lastSelection');
-            lastSelectionMatch = 0;
-          }
+      //Inform extension the content size has changed, but use a delay,
+      //to allow any reflow/adjustments.
+      setTimeout(function () {
+        mediator.sizeToContent();
+      }, 100);
+    }
 
-          // which domain was last active?
-          // TODO in new tabs world.
-          //$("#accounts").accordion({ active: lastSelectionMatch });
-          tabButtonsDom.eq(lastSelectionMatch).click();
+    //Figure out what accounts we do have
+    owaservices.forEach(function (thisSvc, index) {
+      var appid = thisSvc.app.origin,
+          tabId = "ServicePanel" + index,
+          PanelCtor;
 
-          //Reset the just added state now that accounts have been configured one time.
-          if (accountAdded) {
-            store.remove('accountAdded');
-          }
+      //Make sure to see if there is a match for last selection
+      if (appid === lastSelection) {
+        lastSelectionMatch = index;
+      }
 
-          //Inform extension the content size has changed, but use a delay,
-          //to allow any reflow/adjustments.
-          setTimeout(function () {
-            sizePanelToContent();
-          }, 100);
-        }
+      if (accountPanels[appid]) {
+        // accountPanels[appid].addService(thisSvc);
+      } else {
+        /// XXX - need the OWA icon helper!!
+        var icon = thisSvc.getIconForSize(48); // XXX - what size should really be used???
+        // Add a tab button for the service.
+dump("adding tab for "+thisSvc.app.manifest.name+" with icon " + icon + "\n");
+        tabsDom.append(new TabButton({
+          target: tabId,
+          type: appid,
+          title: thisSvc.app.manifest.name,
+          serviceIcon: icon
+        }, tabFragment));
 
-        //Figure out what accounts we do have
-        owaservices.forEach(function (thisSvc, index) {
-          var appid = thisSvc.app.origin,
-              tabId = "ServicePanel" + index,
-              PanelCtor;
+        // Get the contructor function for the panel.
+        accountPanel = new ServicePanel({
+          options: options,
+          owaservice: thisSvc,
+          savedState: accountPanelsRestoreState[appid]
+        }, fragment);
 
-          //Make sure to see if there is a match for last selection
-          if (appid === lastSelection) {
-            lastSelectionMatch = index;
-          }
-
-          if (accountPanels[appid]) {
-            // accountPanels[appid].addService(thisSvc);
-          } else {
-            /// XXX - need the OWA icon helper!!
-            var icon = thisSvc.getIconForSize(48); // XXX - what size should really be used???
-            // Add a tab button for the service.
-dump("adding tab for "+thisSvc.app.manifest.name+"\n");
-            tabsDom.append(new TabButton({
-              target: tabId,
-              type: appid,
-              title: thisSvc.app.manifest.name,
-              serviceIcon: icon
-            }, tabFragment));
-
-            // Get the contructor function for the panel.
-            PanelCtor = require('widgets/ServicePanel');
-            accountPanel = new PanelCtor({
-              options: options,
-              owaservice: thisSvc,
-              savedState: accountPanelsRestoreState[appid]
-            }, fragment);
-
-            accountPanel.node.setAttribute("id", tabId);
-            accountPanels[appid] = accountPanel;
-          }
-        });
-        finishCreate();
-        accountPanelsRestoreState = {};
-      });
+        accountPanel.node.setAttribute("id", tabId);
+        accountPanels[appid] = accountPanel;
+      }
     });
+    finishCreate();
+    accountPanelsRestoreState = {};
   }
   
   //function doAuthorization(data) {
@@ -450,43 +406,31 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
   function onFirstShareState() {
     // Wait until DOM ready to start the DOM work.
     $(function () {
-      dispatch.pub('oauthResponse', function(data) {
-        // pass back to the panel?
-      });
-      dispatch.sub('requestAuthorization', function(data) {
-        // from account panel, pass up to the addon
-        dispatch.pub('oauthAuthorize', data);
-      });
-
       //Listen to sendMessage events from the AccountPanels
       dispatch.sub('sendMessage', function (data) {
         sendMessage(data);
       });
 
       dispatch.sub('logout', function (appid) {
+        // XXX calling reconfigure is very heavy handed, we can simply logout
+        // and update the panel
         var svcRec = owaservicesbyid[appid];
         svcRec.call("logout", {},
           function(result) {
             dump("logout worked\n");
-            sendOWAMessage({cmd: "reconfigure"});
+            //mediator.reconfigure();
+            dispatch.pub('serviceChanged', svcRec.app.origin);
           },
           function(err, message) {
             dump("failed to logout: " + err + ": " + message + "\n");
             // may as well update the accounts anyway incase it really did work!
-            sendOWAMessage({cmd: "reconfigure"});
+            //mediator.reconfigure();
+            dispatch.pub('serviceChanged', svcRec.app.origin);
           }
         );
       });
 
-      // Listen for 503 errors, could be a retry call, but for
-      // now, just show server error until better feedback is
-      // worked out in https://bugzilla.mozilla.org/show_bug.cgi?id=642653
-      dispatch.sub('serverErrorPossibleRetry', function () {
-        showStatus('statusServerBusy');
-      });
-
-      bodyDom = $('body');
-      bodyDom
+      $('body')
         .delegate('.widgets-TabButton', 'click', function (evt) {
           evt.preventDefault();
 
@@ -502,7 +446,7 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
           $('#' + target).removeClass('hidden');
 
           setTimeout(function () {
-            sizePanelToContent();
+            mediator.sizeToContent();
           }, 15);
         })
         .delegate('#statusAuthButton, .statusErrorButton', 'click', function (evt) {
@@ -516,16 +460,22 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
         })
         .delegate('.settingsLink', 'click', function (evt) {
           evt.preventDefault();
-          dispatch.pub('openPrefs');
+          mediator.openPrefs();
         })
         .delegate('.close', 'click', function (evt) {
           evt.preventDefault();
-          close();
+          mediator.close();
         });
 
       $('#authOkButton').click(function (evt) {
         // just incase the service doesn't detect the logout automatically
         // (ie, incase it returns the stale user info), force a logout.
+        
+        // XXX FIXME.  need to test this use case somehow.  We really should
+        // not reproduce the opening of an auth dialog here, we do that in
+        // servicepanel.js.  We probably should do something like:
+        //var accountPanel = accountPanels[sendData.appid];
+        //accountPanel.onLogin();
         var svcRec = owaservicesbyid[sendData.appid];
         // apparently must create the window here, before we call the service
         // to avoid it being blocked.
@@ -572,20 +522,6 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
     });
   };
 
-  function _fetchLoginInfo(svcRec, callback) {
-    svcRec.call("getLogin", {},
-      function(result) {
-        svcRec.login = result;
-        callback();
-      },
-      function(err, message) {
-        dump("failed to get owa login info: " + err + ": " + message + "\n");
-        svcRec.login = null;
-        callback();
-      }
-    );
-  };
-
   function _deleteOldServices() {
     while (owaservices.length) {
       var svcRec = owaservices.pop();
@@ -603,40 +539,28 @@ dump("adding tab for "+thisSvc.app.manifest.name+"\n");
     accountPanels = {};
   };
 
-  function sendOWAMessage(messageData) {
-    var msg = document.createEvent("MessageEvent");
-    dump("sending " + messageData.cmd + "\n");
-    msg.initMessageEvent("message", // type
-                         true, true, // bubble, cancelable
-                         JSON.stringify(messageData),  // data
-                         "resource://openwebapps/service", "", window); // origin, source
-    document.dispatchEvent(msg);
-  }
-  window.sendOWAMessage = sendOWAMessage;
-
+  // tell OWA we are ready...
   window.navigator.apps.mediation.ready(
     function(method, args, services) {
-      dump("invoke handler called\n");
-      options = args;
-      // Sent by OWA before it creates the iframes etc.
+      dump("ready handler called with " + services.length + " services\n");
       _deleteOldServices();
-      displayAccounts();
+      options = args;
       owaservices = services;
+      onFirstShareState();
+      displayAccounts();
       for (var i = 0; i < services.length; i++) {
         var svc = services[i];
-        document.getElementById("frame-garage").appendChild(svc.iframe);
-        // $("#frame-garage").append(svc.iframe);
+        $("#frame-garage").append(svc.iframe);
         owaservicesbyid[svc.app.origin] = svc;
         svc.on("ready", function() {
-          dump("service ready!!\n");
-          svc.call("getCharacteristics", {}, function(chars) {
+          var readyService = this;
+          dump("service ready: " + readyService.app.origin + "\n");
+          readyService.call("getCharacteristics", {}, function(chars) {
             dump("got chars!\n");
-            svc.characteristics = chars;
-            _fetchLoginInfo(svc, function() {
-              dispatch.pub('serviceChanged', svc.app.origin);
-            });
+            readyService.characteristics = chars;
+            dispatch.pub('serviceChanged', readyService.app.origin);
           });
-        });
+        }.bind(svc));
       }
     }
   );

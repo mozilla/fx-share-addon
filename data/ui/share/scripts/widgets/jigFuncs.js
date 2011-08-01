@@ -61,7 +61,7 @@ define(['blade/jig'], function (jig) {
     lastToShareType: function (shareTypes) {
       var i, shareType;
       for (i = shareTypes.length - 1; (shareType = shareTypes[i]); i--) {
-        if (shareType.showTo) {
+        if (shareType.toLabel) {
           return shareType;
         }
       }
