@@ -34,8 +34,8 @@
  * via postmessage or port calls
  */
 
-define(['jquery', 'dispatch'], function ($, dispatch) {
-    
+define(function () {
+    var emit = window.navigator.apps.mediation.emit;
     var m = {
         /**
          * checkBase64Preview
@@ -46,7 +46,7 @@ define(['jquery', 'dispatch'], function ($, dispatch) {
           //Useful for sending previews in email.
           var preview = options.previews && options.previews[0];
           if (preview && preview.http_url && !preview.base64) {
-            dispatch.pub('generateBase64Preview', preview.http_url);
+            emit('generateBase64Preview', preview.http_url);
           }
         },
         
@@ -56,7 +56,7 @@ define(['jquery', 'dispatch'], function ($, dispatch) {
          * hide the mediator panel
          */
         hide: function() {
-            dispatch.pub('hide');
+            emit('hide');
         },
         
         /**
@@ -65,35 +65,35 @@ define(['jquery', 'dispatch'], function ($, dispatch) {
          * close the mediator panel and do a hard reset of data in it
          */
         close: function() {
-            dispatch.pub('close');
+            emit('close');
         },
         
         /**
          * XXX prefs panel has been removed
          */
         openPrefs: function() {
-            dispatch.pub('openPrefs');
+            emit('openPrefs');
         },
 
         sizeToContent: function() {
-            dispatch.pub('sizeToContent');
+            emit('sizeToContent');
         },
         
         reconfigure: function() {
-            dispatch.pub('reconfigure');
+            emit('reconfigure');
         },
         
         updateChromeStatus: function(status) {
-            dispatch.pub('updateStatus', status);
+            emit('updateStatus', status);
         },
 
         // This is the 'success' notification defined by OWA.
         result: function(resultInfo) {
-            dispatch.pub('result', resultInfo);
+            emit('result', resultInfo);
         },
         
         error: function(appid) {
-            dispatch.pub('error', {app:appid, result: "error"});
+            emit('error', {app:appid, result: "error"});
         }
     }
     return m;
