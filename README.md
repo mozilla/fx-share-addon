@@ -48,10 +48,10 @@ In another directory, create a clone of the [Open Web Apps - mhammond fork](http
 
     git clone https://github.com/mhammond/openwebapps
 
-Switch to a `mediator` branch
+Switch to a `mediator-jetpack-api` branch
 
     cd openwebapps
-    git checkout origin/mediator
+    git checkout origin/mediator-jetpack-api
 
 
 Install and setup the [Jetpack SDK](https://github.com/mozilla/jetpack)
