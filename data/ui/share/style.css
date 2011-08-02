@@ -467,7 +467,7 @@ img.avatar {
 
 .widgets-AccountPanel .shareTypeSection {
   float: left;
-  width: 100px;
+  width: 50%;
 }
 
 .widgets-AccountPanel .shareTypeSection.wide {
@@ -512,7 +512,7 @@ body .toSection input[type="text"] {
 }
 
 .widgets-AccountPanel .accountActions {
-  width: 190px;
+    width: 50%;
 }
 
 .widgets-AccountPanel .accountActions.wide {
