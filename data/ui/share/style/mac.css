@@ -27,3 +27,6 @@
 @buttonShareColor: #005796;
 @buttonShareBackgroundWebKit: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #0097F1), color-stop(100%, #545454));
 @buttonShareBackground: -moz-linear-gradient(center top , #23AEFF 0%, #0097F1 100%);
+
+@inputBorder: 1px solid #577894;
+@inputBoxShadow: 0 0 5px #57BCFF;

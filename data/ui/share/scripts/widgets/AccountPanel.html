@@ -10,14 +10,8 @@
         <input type="hidden" name="picture_base64" value="{preview_base64(options)}" />
       {]}
       <input type="hidden" name="link" value="{link(options)}" />
-      {svc.features.title [}
-        <input type="hidden" name="title" value="{options.title}" />
-      {]}
       {svc.features.caption [}
         <input type="hidden" name="caption" value="{options.caption}" />
-      {]}
-      {svc.features.description [}
-        <input type="hidden" name="description" value="{options.description}" />
       {]}
       {svc.features.medium [}
         <input type="hidden" name="medium" value="{options.medium}" />
@@ -27,7 +21,7 @@
       <span class="username">{displayName}</span>
       <a class="remove" href="#">logout</a>
     </div>
-    <div class="message boxFlex addressing">
+    <div class="boxFlex addressing">
       {lt(svc.shareTypes.length, 2)[}
         {svc.features.direct [}
           <input name="to" placeholder="to" type="text" value="{options.to}" autocomplete="off"/>
@@ -48,10 +42,11 @@
             {]}
           <div class="boxFlex1 shareInfo">
             {svc.features.title [}
-            <div class="overflow pageTitle title">{options.title}</div>
+              <input class="pageTitle" type="text" name="title" value="{options.title}" />
             {]}
+            <div class="nofollow url overflow">{cleanLink(options.url)}</div>
             {svc.features.description [}
-            <div class="overflow pageDescription description">{options.description}</div>
+              <textarea class="pageDescription" name="description">{options.description}</textarea>
             {]}
       <!--      <a href="#" class="nofollow url overflow selected">{cleanLink(options.url)}</a>
             <a href="#" class="nofollow shorturl overflow surl">{cleanLink(options.shortUrl)}</a>-->
