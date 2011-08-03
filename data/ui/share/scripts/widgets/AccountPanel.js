@@ -74,6 +74,7 @@ function (object,         Widget,         $,        template,
             onFinishCreate = this.makeCreateCallback(),
             name;
 
+        this.profile = profile;
         this.characteristics = this.owaservice.characteristics;
         this.svc = this.characteristics // just for the jig template...
 
