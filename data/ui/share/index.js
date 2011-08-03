@@ -385,22 +385,6 @@ dump("adding tab for "+thisSvc.app.manifest.name+" with icon " + icon + "\n");
     finishCreate();
     accountPanelsRestoreState = {};
   }
-  
-  //function doAuthorization(data) {
-  //  dump("attempt oauthAuthorization\n");
-  //  var svcRec = owaservicesbyid[data.appid];
-  //  var channel = svcRec.channel;
-  //  channel.call({
-  //    method: "oauthAuthorization",
-  //    params: data,
-  //    success: function() {
-  //      dump("got success callback from oauthAuthorization\n");
-  //    },
-  //    error: function(error, message) {
-  //    }
-  //  });
-  //  
-  //}
 
   // Set up initialization work for the first share state passing.
   function onFirstShareState() {
