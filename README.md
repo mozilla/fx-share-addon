@@ -30,18 +30,19 @@ On Windows:
 
 In the profile manager, create a profile with the name `fxsharetest`, then exit the profile manager.
 
-Install the [oauthorizer](https://github.com/mozilla/oauthorizer) add-on
+Prepare the [oauthorizer](https://github.com/mozilla/oauthorizer) add-on
 ------------------------------
 
 This add-on is required to drive all OAuth systems inside the browser until those systems switch to using Open Web Apps.
 
-Be sure to install it into the profile you will be working with.  e.g. `fxsharetest`
-
     git clone https://github.com/mozilla/oauthorizer
-    cd oauthorizer
-    echo `pwd` > /path/to/firefox/profile.fxsharetest/extensions/oauthorizer@mozillamessaging.com
 
-Install the [Open Web Apps](https://github.com/mozilla/openwebapps) add-on
+Switch to a `jetpack` branch:
+
+    git co jetpack
+    cd oauthorizer
+
+Prepare the [Open Web Apps](https://github.com/mozilla/openwebapps) add-on
 --------------------------------
 
 In another directory, create a clone of the [Open Web Apps - mhammond fork](https://github.com/mhammond/openwebapps) add-on
@@ -73,6 +74,7 @@ From the `$PARENT` directory use the following command:
 
     cfx run --pkgdir=fx-share-addon \
         --package-path=openwebapps/addons/jetpack \
+        --package-path=oauthorizer \
         --profiledir=/path/to/firefox/profile.fxsharetest \
         --binary-args=-console
 
@@ -80,9 +82,8 @@ _Note_:
 
 `--pkgdir` points to the root directory of this `fx-share-addon` (i.e. the directory holding this README)
 
-`--package-path` is the path to the `jetpack/addons` directory inside the [Open Web Apps - mhammond fork](https://github.com/mhammond/openwebapps) directory
+`--package-path` appears twice and lists the other jetpacks we depend on - `openwebapps/addons/jetpack` is the path to the `jetpack/addons` directory inside the [Open Web Apps - mhammond fork](https://github.com/mhammond/openwebapps) directory while `oauthorizer` is the path to the root of the [oauthorizer] directory.
 
-`--profiledir` points to your Firefox `fxsharetest` profile  or other development profile where you installed [oauthorizer](https://github.com/mozilla/oauthorizer)
-  _You can't use the 'temp' profile facility in Jetpack as the oauthorizer add-on needs to be installed and preferences need to be changed_
+`--profiledir` is optional and points to your Firefox `fxsharetest`profile or other development profile.
 
 `--binary-args` are optional but you may want to add them - eg, `-console`, `-purgecaches`, `-chromebug` etc.

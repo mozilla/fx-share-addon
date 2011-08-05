@@ -4,5 +4,5 @@
     "description": "Share things",
     "author": "Mozilla",
     "version": "0.001",
-    "dependencies": ["api-utils", "addon-kit", "openwebapps"]
+    "dependencies": ["api-utils", "addon-kit", "openwebapps", "oauthorizer"]
 }
