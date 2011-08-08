@@ -76,11 +76,7 @@ define(function () {
         },
 
         sizeToContent: function() {
-            var wrapper = document.getElementById('wrapper');
-            emit('sizeToContent', {
-                width: wrapper.scrollWidth,
-                height: wrapper.scrollHeight
-            });
+            emit('sizeToContent');
         },
         
         reconfigure: function() {
