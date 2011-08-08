@@ -26,9 +26,9 @@
   document: false, setTimeout: false, localStorage: false */
 "use strict";
 
-define([ "require", "jquery", "jschannel", "../common"],
+define([ "require", "../common"],
 
-function (require,   $,       jschannel,   common) {
+function (require,  common) {
 dump("TWITTER LOADING\n");
   var domain = "twitter.com"
   var characteristics = {
