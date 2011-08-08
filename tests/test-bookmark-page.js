@@ -41,8 +41,23 @@ exports.testBookmarkPage = function(test) {
         }
       }
       let {SharePanel} = require("ffshare/panel");
-      let sharePanel = new SharePanel(topWindow, tab.contentWindow, "link.send", {});
-      sharePanel.result(shareMessage);
+      let sharePanel = new SharePanel(topWindow, tab.contentWindow,
+                                      "link.send", {},
+                                      function () {;});
+      let oldPrefVal;
+      try {
+        oldPrefVal = Services.prefs.getBoolPref("services.share.bookmarking");
+      } catch (ex) {
+        // oldPrefVal stays undefined.
+      }
+      Services.prefs.setBoolPref("services.share.bookmarking", true);
+      try {
+        sharePanel.onResult(shareMessage);
+      } finally {
+        if (typeof oldPrefVal !== 'undefined') {
+          Services.prefs.setBoolPref("services.share.bookmarking", oldPrefVal);
+        }
+      }
       test.assert(bms.isBookmarked(nsiuri));
       let tags = PlacesUtils.tagging.getTagsForURI(nsiuri, {});
       test.assertStrictEqual(tags.length, 1);
