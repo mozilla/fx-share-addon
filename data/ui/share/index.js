@@ -68,6 +68,7 @@ function (require,   $,        object,         fn,
     function (osText, styleText) {
     (new less.Parser()).parse(osText + styleText, function (err, css) {
       if (err) {
+        dump("Failed to setup style-sheet: " + err.name + "/" + err.message);
         if (typeof console !== 'undefined' && console.error) {
           console.error(err);
         }
@@ -77,6 +78,7 @@ function (require,   $,        object,         fn,
         style.textContent = css.toCSS();
         document.head.appendChild(style);
         document.body.style.display = 'block';
+        mediator.sizeToContent();
       }
     });
   });
