@@ -8,7 +8,7 @@
 
 const {Cc, Ci, Cm, Cu, components} = require("chrome");
 
-let {createSharePanel, getTestUrl, getShareButton} = require("./test_utils");
+let {getTestUrl, getShareButton} = require("./test_utils");
 
 
 exports.testChangeInSameTab = function(test) {
@@ -21,7 +21,6 @@ exports.testChangeInSameTab = function(test) {
     onReady: function(tab) {
       let shareButton = getShareButton();
       // The button is visible now, but the panel is closed at first.
-      console.log("Share hidden is", shareButton.hidden);
       if (tab.url === "about:blank") {
         // must be second time around - should be hidden.
         test.assert(shareButton.hidden);
