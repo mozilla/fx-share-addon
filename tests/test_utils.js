@@ -1,5 +1,5 @@
 const {Cc, Ci} = require("chrome");
-
+const URL = require("url");
 // implicitly run our main() entry-point
 require("ffshare/main").main();
 
@@ -8,7 +8,7 @@ exports.getTestUrl = function(testPage) {
   let lastSlash = this.module.id.lastIndexOf("/");
   let resourceUrl = this.module.id.substr(0, lastSlash+1) + testPage;
   // return the file:// as F1 disables itself for resource:// urls.
-  return require("url").toFilename(resourceUrl);
+  return URL.fromFilename(URL.toFilename(resourceUrl));
 }
 
 exports.createTab = function(url, callback) {
