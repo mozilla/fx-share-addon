@@ -99,7 +99,6 @@ function (object,         Widget,         $,        template,
       },
 
       updateServicePanel: function () {
-        dump("serviceChanged....\n");
         // If either 'characteristics' or 'login' are null, we are waiting
         // for those methods to return.
         $(".accountLoading", this.node).hide();
@@ -157,14 +156,12 @@ function (object,         Widget,         $,        template,
             app = this.owaservice.app;
         if (this.owaservice.auth) {
           if (this.owaservice.auth.type == 'oauth') {
-            dump("dispatch to oauthAuthorize\n");
             try {
               var messageData = {app: app.origin,
                                  oauth: this.owaservice.auth};
               navigator.apps.oauth.authorize(messageData, function(svc) {
                 self.owaservice.call("setAuthorization", svc,
                         function(result) {
-                          dump("setting auth success!\n");
                           dispatch.pub('serviceChanged', app.origin);
                         },
                         function(err, msg) {
