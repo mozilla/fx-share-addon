@@ -8,13 +8,11 @@ Cu.import("resource://gre/modules/Services.jsm", tmp);
 Cu.import("resource://gre/modules/PlacesUtils.jsm", tmp);
 let {Services, PlacesUtils} = tmp;
 
-getTestId = function(testPage) {
-  let lastSlash = this.module.id.lastIndexOf("/");
-  return this.module.id.substr(0, lastSlash+1) + testPage;
-}
+let {createSharePanel, getTestUrl} = require("./test_utils");
+
 exports.testBookmarkPage = function(test) {
   test.waitUntilDone();
-  let pageUrl = getTestId("page.html");
+  let pageUrl = getTestUrl("page.html");
 
   const tabs = require("tabs"); // From addon-kit
   tabs.open({
@@ -22,8 +20,6 @@ exports.testBookmarkPage = function(test) {
     onReady: function(tab) {
       let bms = Cc["@mozilla.org/browser/nav-bookmarks-service;1"]
                 .getService(Ci.nsINavBookmarksService);
-      let wm = Cc["@mozilla.org/appshell/window-mediator;1"]
-                    .getService(Ci.nsIWindowMediator);
 
       let nsiuri = Services.io.newURI(pageUrl, null, null);
 
@@ -32,18 +28,7 @@ exports.testBookmarkPage = function(test) {
         appName: "F1 test suite",
         title: 'A test page'
       };
-      let topWindow = wm.getMostRecentWindow("navigator:browser");
-      // test interaction with the injector code is suspect, but as we don't
-      // actually rely on it, we can stub it so the panel constructs correctly
-      if (!topWindow.appinjector) {
-        topWindow.appinjector = {
-          register: function() {;}
-        }
-      }
-      let {SharePanel} = require("ffshare/panel");
-      let sharePanel = new SharePanel(topWindow, tab.contentWindow,
-                                      "link.send", {},
-                                      function () {;});
+      let sharePanel = createSharePanel(tab.contentWindow);
       let oldPrefVal;
       try {
         oldPrefVal = Services.prefs.getBoolPref("services.share.bookmarking");
@@ -63,7 +48,6 @@ exports.testBookmarkPage = function(test) {
       test.assertStrictEqual(tags.length, 1);
       test.assertStrictEqual(tags[0], shareMessage.appName);
 
-//      gBrowser.removeCurrentTab();
       tab.close(function() {
         test.done();
       });
