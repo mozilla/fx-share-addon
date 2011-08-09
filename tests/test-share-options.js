@@ -1,12 +1,16 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
+const {createSharePanel, getTestUrl, getShareButton, createTab, removeCurrentTab} = require("./test_utils");
+const Assert = require("test/assert").Assert;
 
 // each test object has the url and the expected options.  we only include
 // options we want to compare, other options we receive are ignored.
 let tests = [
   {
     // tests getShortUrl
-    url: PREFIX + "corpus/opengraph.html",
+    get url() {
+      return getTestUrl("corpus/opengraph.html")
+    },
     options: {
       // og:title
       title: ">This is my title<",
@@ -26,7 +30,9 @@ let tests = [
   },
   {
     // tests getShortUrl
-    url: PREFIX + "corpus/shorturl_link.html",
+    get url() {
+      return getTestUrl("corpus/shorturl_link.html")
+    },
     options: {
       previews: [{"http_url":"http://farm5.static.flickr.com/4141/5411147304_9f3996ba27_m.jpg","base64":""}],
       canonicalUrl: "http://www.flickr.com/photos/mixedpuppy/5411147304/",
@@ -35,7 +41,9 @@ let tests = [
   },
   {
     // tests getShortUrl
-    url: PREFIX + "corpus/shorturl_linkrel.html",
+    get url() {
+      return getTestUrl("corpus/shorturl_linkrel.html")
+    },
     options: {
       previews: [{"http_url":"http://farm5.static.flickr.com/4141/5411147304_9f3996ba27_m.jpg","base64":""}],
       canonicalUrl: "http://www.flickr.com/photos/mixedpuppy/5411147304/",
@@ -44,7 +52,9 @@ let tests = [
   },
   {
     // tests getShortUrl
-    url: PREFIX + "corpus/shortlink_linkrel.html",
+    get url() {
+      return getTestUrl("corpus/shortlink_linkrel.html")
+    },
     options: {
       previews: [{"http_url":"http://farm5.static.flickr.com/4141/5411147304_9f3996ba27_m.jpg","base64":""}],
       canonicalUrl: "http://www.flickr.com/photos/mixedpuppy/5411147304/",
@@ -54,67 +64,50 @@ let tests = [
 ];
 
 
-// every needle must be in the haystack
-function has(needle, haystack) {
-  return needle.every(function(el, i, ar) {
-    return haystack.some(function(hl, hi, har) {
-      return SimpleTest._deepCheck(el, hl, [], []);
-    });
-  });
-}
-
-function hasoptions(options, message) {
+function hasoptions(test, testOptions, options) {
   let passed = true;
-  for (let option in options) {
-    let data = options[option];
-    let message_data = message.data.options[option];
+  let msg;
+  for (let option in testOptions) {
+    let data = testOptions[option];
+    let message_data = options[option];
     if (Array.isArray(data)) {
       // the message may have more array elements than we are testing for, this
       // is ok since some of those are hard to test (e.g. base64 images). So we
       // just test that anything in our test data IS in the message.
-      if (!has(data, message_data)) {
-        passed = false;
-        //dump("TEST-FAIL-DATA option "+option+" "+JSON.stringify(data)+
-        //     " not in "+JSON.stringify(message_data)+"\n");
-        break;
-      }
+      new Assert(test).deepEqual(data, message_data, "option "+option+" "+JSON.stringify(data)+
+              " not in "+JSON.stringify(message_data)+"\n");
     } else {
-      if (data != message_data) {
-        passed = false;
-        //dump("TEST-FAIL-DATA option "+option+" "+JSON.stringify(data)+
-        //     " not in "+JSON.stringify(message_data)+"\n");
-        break;
-      }
+      test.assertEqual(data, message_data, "option "+option+" "+JSON.stringify(data)+
+              " != "+JSON.stringify(message_data)+"\n");
     }
   }
-  // only one test per message
-  ok(passed);
 }
 
-function testOne(theTest) {
+
+function testOne(test, theTest) {
   if (typeof(theTest) == 'undefined') {
-    cleanup(finish);
+    test.done();
     return;
   }
 
-  openTab(theTest.url, function() {
-    // Panel sends a "shareState" message in response to "getShareState"
-    next(gShareWindow, "message", function(event) {
-      let message = JSON.parse(event.data);
-      is(message.topic, "shareState");
-      isnot(message.data, undefined);
-      hasoptions(theTest.options, message);
+  createTab(theTest.url, function(tab) {
+    let panel = createSharePanel(tab.contentWindow);
 
-      gBrowser.removeCurrentTab();
-      // run the next test
-      testOne(tests.shift());
+    test.waitUntil(function() {return panel.panel.isShowing;}
+    ).then(function() {
+      let options = panel.updateargs();
+      hasoptions(test, theTest.options, options);
+
+      removeCurrentTab(function() {
+        // run the next test
+        testOne(test, tests.shift());
+      });
+
     });
-    ffshare.togglePanel();
   });
-
 }
 
-function test() {
-  waitForExplicitFinish();
-  testOne(tests.shift());
+exports.testShareOptions = function(test) {
+  test.waitUntilDone();
+  testOne(test, tests.shift());
 }
