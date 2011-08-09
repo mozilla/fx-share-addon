@@ -11,18 +11,48 @@ exports.getTestUrl = function(testPage) {
   return require("url").toFilename(resourceUrl);
 }
 
-
-exports.createSharePanel = function(contentWindow) {
+exports.createTab = function(url, callback) {
   let wm = Cc["@mozilla.org/appshell/window-mediator;1"]
                 .getService(Ci.nsIWindowMediator);
 
   let topWindow = wm.getMostRecentWindow("navigator:browser");
+  let gBrowser = topWindow.gBrowser;
+  let tab = gBrowser.selectedTab = gBrowser.addTab(url);
+  let newTabBrowser = gBrowser.getBrowserForTab(tab);
+  newTabBrowser.addEventListener("DOMContentLoaded",
+    function() {
+      callback(newTabBrowser);
+    },
+    false
+  );
+}
 
-  let {SharePanel} = require("ffshare/panel");
-  let sharePanel = new SharePanel(topWindow, contentWindow,
-                                  "link.send", {},
-                                  function () {;});
-  return sharePanel;
+exports.removeCurrentTab = function(callback) {
+  let wm = Cc["@mozilla.org/appshell/window-mediator;1"]
+                .getService(Ci.nsIWindowMediator);
+  let topWindow = wm.getMostRecentWindow("navigator:browser");
+  var container = topWindow.gBrowser.tabContainer;
+  let removedCallback = function() {
+    container.removeEventListener("TabClose", removedCallback, false);
+    callback();
+  }
+  container.addEventListener("TabClose", removedCallback, false);
+  topWindow.gBrowser.removeCurrentTab();
+}
+
+exports.createSharePanel = function(contentWindow) {
+  if (!contentWindow) throw "contentWindow is null";
+  let wm = Cc["@mozilla.org/appshell/window-mediator;1"]
+                .getService(Ci.nsIWindowMediator);
+
+  let topWindow = wm.getMostRecentWindow("navigator:browser");
+  // instead of constructing the object explicitly, we go via the services API
+  // so it knows the created panel is associated with the contentWindow/service.
+  let services = topWindow.apps._services;
+  let serviceName = "link.send";
+  // first pretend to invoke a service so our panel is created.
+  services.invoke(contentWindow, serviceName, {}, function () {;});
+  return services.get(contentWindow, "link.send");
 };
 
 exports.getShareButton = function(topWindow) {
