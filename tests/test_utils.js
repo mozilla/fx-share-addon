@@ -18,17 +18,19 @@ exports.createSharePanel = function(contentWindow) {
 
   let topWindow = wm.getMostRecentWindow("navigator:browser");
 
-  // test interaction with the injector code is suspect, but as we don't
-  // actually rely on it, we can stub it so the panel constructs correctly
-  if (!topWindow.appinjector) {
-    topWindow.appinjector = {
-      register: function() {;}
-    }
-  }
-
   let {SharePanel} = require("ffshare/panel");
   let sharePanel = new SharePanel(topWindow, contentWindow,
                                   "link.send", {},
                                   function () {;});
   return sharePanel;
 };
+
+exports.getShareButton = function(topWindow) {
+  if (!topWindow) {
+    let wm = Cc["@mozilla.org/appshell/window-mediator;1"]
+                  .getService(Ci.nsIWindowMediator);
+
+    topWindow = wm.getMostRecentWindow("navigator:browser");
+  }
+  return topWindow.document.getElementById("share-button");
+}
