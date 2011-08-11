@@ -10,11 +10,6 @@ let {Services, PlacesUtils} = tmp;
 
 let {createSharePanel, getTestUrl, createTab, removeCurrentTab} = require("./test_utils");
 
-getTestId = function(testPage) {
-  let lastSlash = this.module.id.lastIndexOf("/");
-  let resourceUrl = this.module.id.substr(0, lastSlash+1) + testPage;
-  return require("url").toFilename(resourceUrl);
-}
 exports.testButtonState = function(test) {
   test.waitUntilDone();
   let pageUrl = getTestUrl("page.html");
