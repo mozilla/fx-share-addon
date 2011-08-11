@@ -341,27 +341,22 @@ function (require,  common) {
 
   // Bind to OWA
   navigator.apps.services.registerHandler('link.send', 'init', function(args, cb) {
-    dump("facebook link.send.init\n");
   });
 
   navigator.apps.services.registerHandler('link.send', 'confirm', function(args, cb, cberr) {
-    dump("facebook link.send.confirm\n");
     api.send(args, cb, cberr);
   });
 
   navigator.apps.services.registerHandler('link.send', 'getCharacteristics', function(args, cb, cberr) {
-    dump("facebook link.send.getCharacteristics\n");
     // some if these need re-thinking.
     cb(characteristics);
   });
 
   navigator.apps.services.registerHandler('link.send', 'getLogin', function(args, cb, cberr) {
-    dump("facebook link.send.getLogin\n");
     common.getLogin(domain, characteristics, cb, cberr);
   });
 
   navigator.apps.services.registerHandler('link.send', 'setAuthorization', function(args, cb, cberr) {
-    dump("facebook link.send.setAuthorization\n");
     api.getProfile(args, cb, cberr);
   });
 
