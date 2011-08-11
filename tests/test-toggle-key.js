@@ -16,7 +16,7 @@ exports.testKey = function(test) {
     let panel = createSharePanel(tab.contentWindow);
     test.waitUntil(function() {return panel.panel.isShowing;}
     ).then(function() {
-      panel.panel.hide();
+      keyPress(panel.window.document.documentElement, "ESC");
       test.waitUntil(function() {return !panel.panel.isShowing;}
       ).then(function () {
         keyPress(panel.window.document.documentElement, "F1");
