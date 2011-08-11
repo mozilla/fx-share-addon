@@ -74,11 +74,9 @@ function hasoptions(test, testOptions, options) {
       // the message may have more array elements than we are testing for, this
       // is ok since some of those are hard to test (e.g. base64 images). So we
       // just test that anything in our test data IS in the message.
-      new Assert(test).deepEqual(data, message_data, "option "+option+" "+JSON.stringify(data)+
-              " not in "+JSON.stringify(message_data)+"\n");
+      new Assert(test).deepEqual(data, message_data, "option "+option);
     } else {
-      test.assertEqual(data, message_data, "option "+option+" "+JSON.stringify(data)+
-              " != "+JSON.stringify(message_data)+"\n");
+      test.assertEqual(data, message_data, "option "+option);
     }
   }
 }
