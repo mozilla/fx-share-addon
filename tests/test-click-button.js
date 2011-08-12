@@ -28,7 +28,6 @@ exports.testButton = function(test) {
     share.panel.on("show", function() {
       test.assert(true, "mouse clicks opens panels");
       // close the panel by clicking someplace outside the panel
-      // XXX this test worked pre-jetpack, some jetpackism is getting in the way
       mouseEvent(share.anchor);
     });
     share.panel.on("hide", function() {
