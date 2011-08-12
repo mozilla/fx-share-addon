@@ -21,7 +21,7 @@ exports.testButtonState = function(test) {
   });
 
   createTab(pageUrl, function(tab) {
-    let sharePanel = createSharePanel(tab.contentWindow);
+    let sharePanel = createSharePanel();
     //sharePanel.show();
     // the panel callback doesn't seem to happen immediately...
     test.waitUntil(function() {return sharePanel.anchor.getAttribute("checked");}

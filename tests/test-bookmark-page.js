@@ -8,11 +8,17 @@ Cu.import("resource://gre/modules/Services.jsm", tmp);
 Cu.import("resource://gre/modules/PlacesUtils.jsm", tmp);
 let {Services, PlacesUtils} = tmp;
 
-let {createSharePanel, getTestUrl, createTab, removeCurrentTab} = require("./test_utils");
+let {getSharePanel, getTestUrl, createTab, removeCurrentTab, finalize} = require("./test_utils");
 
 exports.testBookmarkPage = function(test) {
   test.waitUntilDone();
   let pageUrl = getTestUrl("page.html");
+
+  finalize(test, function(finish) {
+    removeCurrentTab(function() {
+      finish();
+    });
+  });
 
   createTab(pageUrl, function(tab) {
     let bms = Cc["@mozilla.org/browser/nav-bookmarks-service;1"]
@@ -25,7 +31,7 @@ exports.testBookmarkPage = function(test) {
       appName: "F1 test suite",
       title: 'A test page'
     };
-    let sharePanel = createSharePanel(tab.contentWindow);
+    let sharePanel = getSharePanel();
     let oldPrefVal;
     try {
       oldPrefVal = Services.prefs.getBoolPref("services.share.bookmarking");
@@ -46,8 +52,6 @@ exports.testBookmarkPage = function(test) {
     test.assertStrictEqual(tags.length, 1);
     test.assertStrictEqual(tags[0], shareMessage.appName);
 
-    removeCurrentTab(function() {
-      test.done();
-    });
+    test.done();
   });
 }

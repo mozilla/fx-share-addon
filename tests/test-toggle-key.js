@@ -5,8 +5,9 @@
  * Open and close the Share panel by hitting the F1 key.
  */
 
-const {createSharePanel, getTestUrl, getShareButton, createTab, removeCurrentTab, finalize} = require("./test_utils");
+const {getSharePanel, getTestUrl, getShareButton, createTab, removeCurrentTab, finalize} = require("./test_utils");
 const { keyPress } = require("api-utils/dom/events/keys");
+const { activeBrowserWindow: { document } } = require("window-utils");
 
 exports.testKey = function(test) {
   test.waitUntilDone();
@@ -19,19 +20,16 @@ exports.testKey = function(test) {
   });
 
   createTab(pageUrl, function(tab) {
-    let panel = createSharePanel(tab.contentWindow);
-    test.waitUntil(function() {return panel.panel.isShowing;}
-    ).then(function() {
-      keyPress(panel.window.document.documentElement, "ESC");
-      test.waitUntil(function() {return !panel.panel.isShowing;}
-      ).then(function () {
-        keyPress(panel.window.document.documentElement, "F1");
-        test.waitUntil(function() {return panel.panel.isShowing;}
-        ).then(function() {
-          panel.panel.hide();
-          test.done();
-        });
-      });
+    let share = getSharePanel();
+    share.panel.on("show", function() {
+      keyPress(document.documentElement, "ESCAPE");
     });
+    share.panel.on("hide", function() {
+      test.assert(true, "keypress open/close panels")
+      test.done();
+    });
+
+    keyPress(document.documentElement, "F1");
   });
+
 }

@@ -1,5 +1,5 @@
 const {Cc, Ci, Cm, Cu, components} = require("chrome");
-const {createSharePanel, getTestUrl, getShareButton, createTab, removeCurrentTab, finalize} = require("./test_utils");
+const {getSharePanel, getTestUrl, getShareButton, createTab, removeCurrentTab, finalize} = require("./test_utils");
 const events = require("dom/events");
 const { activeBrowserWindow: { document } } = require("window-utils");
 const window = document.window;
@@ -24,22 +24,19 @@ exports.testButton = function(test) {
   });
 
   createTab(pageUrl, function(tab) {
-    let panel = createSharePanel(tab.contentWindow);
-    test.waitUntil(function() {return panel.panel.isShowing;}
-    ).then(function() {
-      panel.panel.hide();
-      test.waitUntil(function() {return !panel.panel.isShowing;}
-      ).then(function () {
-        mouseEvent(panel.anchor);
-        test.waitUntil(function() {return panel.panel.isShowing;}
-        ).then(function() {
-          mouseEvent(panel.anchor);
-          test.waitUntil(function() {return !panel.panel.isShowing;}
-          ).then(function () {
-              test.done();
-          });
-        });
-      });
+    let share = getSharePanel();
+    share.panel.on("show", function() {
+      test.assert(true, "mouse clicks opens panels");
+      // close the panel by clicking someplace outside the panel
+      // XXX this test worked pre-jetpack, some jetpackism is getting in the way
+      mouseEvent(share.anchor);
     });
+    share.panel.on("hide", function() {
+      test.assert(true, "mouse clicks closes panels");
+      test.done();
+    });
+    
+    // open the panel by clicking on the urlbar icon
+    mouseEvent(share.anchor);
   });
 }

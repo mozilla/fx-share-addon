@@ -1,5 +1,6 @@
 const {Cc, Ci} = require("chrome");
 const URL = require("url");
+const tabs = require("tabs");
 // implicitly run our main() entry-point
 require("ffshare/main").main();
 
@@ -21,47 +22,42 @@ exports.getTestUrl = function(testPage) {
 }
 
 exports.createTab = function(url, callback) {
-  let wm = Cc["@mozilla.org/appshell/window-mediator;1"]
-                .getService(Ci.nsIWindowMediator);
-
-  let topWindow = wm.getMostRecentWindow("navigator:browser");
-  let gBrowser = topWindow.gBrowser;
-  let tab = gBrowser.selectedTab = gBrowser.addTab(url);
-  let newTabBrowser = gBrowser.getBrowserForTab(tab);
-  newTabBrowser.addEventListener("DOMContentLoaded",
-    function() {
-      callback(newTabBrowser);
-    },
-    false
-  );
+  tabs.open({
+    url: url,
+    onOpen: function onOpen(tab) {
+      tab.on('ready', function(tab){
+        callback(tab);
+      });
+    }
+  });
 }
 
 exports.removeCurrentTab = function(callback) {
-  let wm = Cc["@mozilla.org/appshell/window-mediator;1"]
-                .getService(Ci.nsIWindowMediator);
-  let topWindow = wm.getMostRecentWindow("navigator:browser");
-  var container = topWindow.gBrowser.tabContainer;
-  let removedCallback = function() {
-    container.removeEventListener("TabClose", removedCallback, false);
-    callback();
-  }
-  container.addEventListener("TabClose", removedCallback, false);
-  topWindow.gBrowser.removeCurrentTab();
+  let tab = tabs.activeTab;
+  tab.on('close', callback);
+  tab.close();
 }
 
-exports.createSharePanel = function(contentWindow) {
-  if (!contentWindow) throw "contentWindow is null";
+function getSharePanel() {
   let wm = Cc["@mozilla.org/appshell/window-mediator;1"]
                 .getService(Ci.nsIWindowMediator);
 
   let topWindow = wm.getMostRecentWindow("navigator:browser");
+  let tab = topWindow.gBrowser.selectedTab;
+  let browser = topWindow.gBrowser.getBrowserForTab(tab);
   // instead of constructing the object explicitly, we go via the services API
   // so it knows the created panel is associated with the contentWindow/service.
   let services = topWindow.apps._services;
   let serviceName = "link.send";
   // first pretend to invoke a service so our panel is created.
-  services.invoke(contentWindow, serviceName, {}, function () {;});
-  return services.get(contentWindow, "link.send");
+  return services.get(browser.contentWindow, serviceName, {}, function () {;});
+}
+exports.getSharePanel = getSharePanel;
+
+exports.createSharePanel = function(contentWindow) {
+  let panel = getSharePanel();
+  panel.show();
+  return panel;
 };
 
 exports.getShareButton = function(topWindow) {

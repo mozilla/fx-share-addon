@@ -3,7 +3,7 @@
 
 const {Cc, Ci, Cm, Cu, components} = require("chrome");
 
-let {createSharePanel, getTestUrl, createTab, removeCurrentTab} = require("./test_utils");
+let {getSharePanel, getTestUrl, createTab, removeCurrentTab} = require("./test_utils");
 
 /**
  * test share state information
@@ -20,26 +20,23 @@ exports.testShareState = function(test) {
   let pageUrl = getTestUrl("page.html");
 
   createTab(pageUrl, function(tab) {
-    let sharePanel = createSharePanel(tab.contentWindow);
-    test.waitUntil(function() {return sharePanel.anchor.getAttribute("checked");}
-    ).then(function() {
+    let sharePanel = getSharePanel();
 
-        // test 'sharing' state
-        sharePanel.onUpdateStatus({statusCode: SHARE_START});
-        test.assertEqual(sharePanel.anchor.getAttribute("status"),
-           SHARE_STATUS[SHARE_START], "share-state-start");
+    // test 'sharing' state
+    sharePanel.onUpdateStatus({statusCode: SHARE_START});
+    test.assertEqual(sharePanel.anchor.getAttribute("status"),
+       SHARE_STATUS[SHARE_START], "share-state-start");
 
-        // mark a success share, which should result temporarily in a
-        // SHARE_FINISHED status on the button
-        sharePanel.onUpdateStatus({statusCode: SHARE_DONE});
-        test.assertEqual(sharePanel.anchor.getAttribute("status"),
-           SHARE_STATUS[SHARE_FINISHED], "share-state-finished");
+    // mark a success share, which should result temporarily in a
+    // SHARE_FINISHED status on the button
+    sharePanel.onUpdateStatus({statusCode: SHARE_DONE});
+    test.assertEqual(sharePanel.anchor.getAttribute("status"),
+       SHARE_STATUS[SHARE_FINISHED], "share-state-finished");
 
-        removeCurrentTab(function() {
-          test.done();
-        });
-
+    removeCurrentTab(function() {
+      test.done();
     });
+
   });
 
 }

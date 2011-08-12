@@ -1,6 +1,6 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
-const {createSharePanel, getTestUrl, getShareButton, createTab, removeCurrentTab} = require("./test_utils");
+const {getSharePanel, getTestUrl, getShareButton, createTab, removeCurrentTab} = require("./test_utils");
 const Assert = require("test/assert").Assert;
 
 // each test object has the url and the expected options.  we only include
@@ -89,18 +89,13 @@ function testOne(test, theTest) {
   }
 
   createTab(theTest.url, function(tab) {
-    let panel = createSharePanel(tab.contentWindow);
+    let panel = getSharePanel();
+    let options = panel.updateargs();
+    hasoptions(test, theTest.options, options);
 
-    test.waitUntil(function() {return panel.panel.isShowing;}
-    ).then(function() {
-      let options = panel.updateargs();
-      hasoptions(test, theTest.options, options);
-
-      removeCurrentTab(function() {
-        // run the next test
-        testOne(test, tests.shift());
-      });
-
+    removeCurrentTab(function() {
+      // run the next test
+      testOne(test, tests.shift());
     });
   });
 }
