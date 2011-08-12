@@ -1,5 +1,5 @@
-
-const {createSharePanel, getTestUrl, getShareButton, createTab, removeCurrentTab} = require("./test_utils");
+const {Cc, Ci, Cm, Cu, components} = require("chrome");
+const {createSharePanel, getTestUrl, getShareButton, createTab, removeCurrentTab, finalize} = require("./test_utils");
 const events = require("dom/events");
 const { activeBrowserWindow: { document } } = require("window-utils");
 const window = document.window;
@@ -16,20 +16,27 @@ function mouseEvent(element) {
 exports.testButton = function(test) {
   test.waitUntilDone();
   let pageUrl = getTestUrl("page.html");
+  
+  finalize(test, function(finish) {
+    removeCurrentTab(function() {
+      finish();
+    });
+  });
 
   createTab(pageUrl, function(tab) {
     let panel = createSharePanel(tab.contentWindow);
     test.waitUntil(function() {return panel.panel.isShowing;}
     ).then(function() {
-      mouseEvent(panel.anchor);
+      panel.panel.hide();
       test.waitUntil(function() {return !panel.panel.isShowing;}
       ).then(function () {
         mouseEvent(panel.anchor);
         test.waitUntil(function() {return panel.panel.isShowing;}
         ).then(function() {
-          panel.panel.hide();
-          removeCurrentTab(function() {
-            test.done();
+          mouseEvent(panel.anchor);
+          test.waitUntil(function() {return !panel.panel.isShowing;}
+          ).then(function () {
+              test.done();
           });
         });
       });

@@ -5,12 +5,18 @@
  * Open and close the Share panel by hitting the F1 key.
  */
 
-const {createSharePanel, getTestUrl, getShareButton, createTab, removeCurrentTab} = require("./test_utils");
+const {createSharePanel, getTestUrl, getShareButton, createTab, removeCurrentTab, finalize} = require("./test_utils");
 const { keyPress } = require("api-utils/dom/events/keys");
 
 exports.testKey = function(test) {
   test.waitUntilDone();
   let pageUrl = getTestUrl("page.html");
+
+  finalize(test, function(finish) {
+    removeCurrentTab(function() {
+      finish();
+    });
+  });
 
   createTab(pageUrl, function(tab) {
     let panel = createSharePanel(tab.contentWindow);
@@ -23,9 +29,7 @@ exports.testKey = function(test) {
         test.waitUntil(function() {return panel.panel.isShowing;}
         ).then(function() {
           panel.panel.hide();
-          removeCurrentTab(function() {
-            test.done();
-          });
+          test.done();
         });
       });
     });

@@ -2,12 +2,18 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
 const {Cc, Ci, Cm, Cu, components} = require("chrome");
-let {createSharePanel, getTestUrl, createTab, removeCurrentTab} = require("./test_utils");
+let {createSharePanel, getTestUrl, createTab, removeCurrentTab, finalize} = require("./test_utils");
 
 // test showing the notification box, this could move to owa
 exports.testErrorNotification = function(test) {
   test.waitUntilDone();
   let pageUrl = getTestUrl("page.html");
+
+  finalize(test, function(finish) {
+    removeCurrentTab(function() {
+      finish();
+    });
+  });
 
   createTab(pageUrl, function(tab) {
     let sharePanel = createSharePanel(tab.contentWindow);
@@ -26,9 +32,7 @@ exports.testErrorNotification = function(test) {
       test.assertNotEqual(notification, undefined, "notification-box-showing")
       nBox.removeNotification(notification);
 
-      removeCurrentTab(function() {
-        test.done();
-      });
+      test.done();
     });
   });
 

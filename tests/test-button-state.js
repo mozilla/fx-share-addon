@@ -8,11 +8,17 @@ Cu.import("resource://gre/modules/Services.jsm", tmp);
 Cu.import("resource://gre/modules/PlacesUtils.jsm", tmp);
 let {Services, PlacesUtils} = tmp;
 
-let {createSharePanel, getTestUrl, createTab, removeCurrentTab} = require("./test_utils");
+let {createSharePanel, getTestUrl, createTab, removeCurrentTab, finalize} = require("./test_utils");
 
 exports.testButtonState = function(test) {
   test.waitUntilDone();
   let pageUrl = getTestUrl("page.html");
+
+  finalize(test, function(finish) {
+    removeCurrentTab(function() {
+      finish();
+    });
+  });
 
   createTab(pageUrl, function(tab) {
     let sharePanel = createSharePanel(tab.contentWindow);
@@ -23,9 +29,7 @@ exports.testButtonState = function(test) {
       sharePanel.panel.hide(); // XX - not currently exposed on sharePanel
       test.waitUntil(function() {return !sharePanel.anchor.getAttribute("checked")}
       ).then(function() {
-        removeCurrentTab(function() {
-          test.done();
-        });
+        test.done();
       });
     });
   });

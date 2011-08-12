@@ -3,6 +3,15 @@ const URL = require("url");
 // implicitly run our main() entry-point
 require("ffshare/main").main();
 
+exports.finalize = function(test, fn) {
+  let onDone = test.onDone;
+  test.onDone = function(test) {
+    fn(function() {
+      onDone(test);
+    });
+  }
+}
+
 // Return the URL of content in our 'test' directory.
 exports.getTestUrl = function(testPage) {
   let lastSlash = this.module.id.lastIndexOf("/");
