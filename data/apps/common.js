@@ -74,7 +74,6 @@ function (require,   $) {
     },
 
     getLogin: function(domain, config, cb, cberr) {
-dump("getLogin called for "+domain+"\n");
       var key = "ff-share-" + domain;
       var strval = window.localStorage.getItem(key);
       var result = {};

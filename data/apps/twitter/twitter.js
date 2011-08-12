@@ -29,7 +29,6 @@
 define([ "require", "../common"],
 
 function (require,  common) {
-dump("TWITTER LOADING\n");
   var domain = "twitter.com"
   var characteristics = {
       type: 'twitter', // XXX - should be able to nuke this.

@@ -34,7 +34,6 @@
  * oauth failure in addAccount.js
 
 */
-dump("heya! from f1\n");
 
 define([ "require", "jquery", "blade/object", "blade/fn",
         "blade/jig", "blade/url", "dispatch",
@@ -365,7 +364,6 @@ function (require,   $,        object,         fn,
         /// XXX - need the OWA icon helper!!
         var icon = thisSvc.getIconForSize(48); // XXX - what size should really be used???
         // Add a tab button for the service.
-dump("adding tab for "+thisSvc.app.manifest.name+" with icon " + icon + "\n");
         tabsDom.append(new TabButton({
           target: tabId,
           type: appid,
@@ -528,7 +526,6 @@ dump("adding tab for "+thisSvc.app.manifest.name+" with icon " + icon + "\n");
   // tell OWA we are ready...
   window.navigator.apps.mediation.ready(
     function(method, args, services) {
-      dump("ready handler called with " + services.length + " services\n");
       _deleteOldServices();
       options = args;
       owaservices = services;
@@ -540,9 +537,7 @@ dump("adding tab for "+thisSvc.app.manifest.name+" with icon " + icon + "\n");
         owaservicesbyid[svc.app.origin] = svc;
         svc.on("ready", function() {
           var readyService = this;
-          dump("service ready: " + readyService.app.origin + "\n");
           readyService.call("getCharacteristics", {}, function(chars) {
-            dump("got chars!\n");
             readyService.characteristics = chars;
             dispatch.pub('serviceChanged', readyService.app.origin);
           });

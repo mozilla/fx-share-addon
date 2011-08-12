@@ -25,7 +25,7 @@
 /*global define: false, location: true, window: false, alert: false,
   document: false, setTimeout: false, localStorage: false */
 "use strict";
-dump("loading facebook.js\n");
+
 define([ "require", "../common"],
 function (require,  common) {
 

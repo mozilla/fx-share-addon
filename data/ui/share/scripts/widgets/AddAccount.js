@@ -44,7 +44,6 @@ function (object,         fn,         Widget,         $,
         
         var options = [{name: 'Select type', value: ''}];
         this.owaservices.forEach(function(svc, i) {
-dump("AddAccount.onRender adding "+svc.app.manifest.name+"\n");
           options.push({
             name: svc.app.manifest.name,
             value: i.toString()
