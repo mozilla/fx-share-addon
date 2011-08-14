@@ -212,10 +212,6 @@ function (require,   $,        object,         fn,
             //are gone or they are all there.
             //var headerError = xhr.getResponseHeader('X-Error');
             reAuth();
-          } else if (status === 503) {
-            showStatus('statusServerBusy');
-          } else if (status === 0) {
-            showStatus('statusServerError');
           } else {
             showStatus('statusError', message); // XXX - need better default msg??
           }
