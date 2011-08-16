@@ -114,6 +114,17 @@ function (object,         Widget,         $,        template,
       },
 
       onRender: function () {
+        // Note an exception in _onRender will cause the widget creation
+        // process to hang and never return - so catch and log exceptions.
+        try {
+          this._onRender()
+        } catch (ex) {
+          dump("AccountPanel onRender failed: " + ex + "\n");
+          dump(ex.stack);
+        }
+      },
+
+      _onRender: function () {
         var root = $(this.node),
             opts = this.options,
             formLink = jigFuncs.link(opts);

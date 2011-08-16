@@ -1,0 +1,17 @@
+{
+  "name": "F1 Test App",
+  "installs_allowed_from": [ "*" ],
+  "icons": {
+        "128": "/does/not/exist/yet"
+  },
+  "experimental": {
+    "services": {
+      "link.send": {
+        "endpoint": "basic.html"
+      },
+      "test": {
+        "endpoint": "basic.html"
+      }
+    }
+  }
+}
