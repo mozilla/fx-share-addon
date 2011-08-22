@@ -73,14 +73,12 @@ exports.testAccountLoadsTwice = function(test) {
         test.assert(accountLoadingDiv.is(":visible"));
         test.assert(!accountLoginDiv.is(":visible"));
         test.assert(!accountPanelDiv.is(":visible"));
-        console.log("next sequence ****************************************");
 
         // now kick off the sequence of "unblocking" calls and testing each state.
         let seq2 = [
           {method: 'getCharacteristics', successArgs: {},
            callback: function(cbresume, results) {
             // only 'loading' should still be visible as getLogin is "blocked"
-            console.log("did getChars...");
             test.assert(accountLoadingDiv.is(":visible"));
             test.assert(!accountLoginDiv.is(":visible"));
             test.assert(!accountPanelDiv.is(":visible"));
@@ -89,7 +87,6 @@ exports.testAccountLoadsTwice = function(test) {
           },
           {method: 'getLogin', successArgs: {user: {displayName: 'test user'}},
            callback: function(cbresume) {
-            console.log("waiting for visible...");
             // We returned a user, so the account panel should become visible.
             test.waitUntil(function() {return accountPanelDiv.is(":visible");}
             ).then(function() {
