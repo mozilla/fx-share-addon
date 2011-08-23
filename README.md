@@ -1,18 +1,38 @@
-This repo contains the revised code originally meant for landing into fx5.  It has been reverted to a restartless addon but based on work from
-https://hg.mozilla.org/users/pweitershausen_mozilla.com/fx-share/
+The branch you are looking at is an effort towards getting Firefox Share working
+with the [Open Web Apps](https://apps.mozillalabs.com/) infrastructure.
 
-The branch you are looking at is an effort towards getting Firefox Share working with the [Open Web Apps](https://apps.mozillalabs.com/) infrastructure.
+PreRequisite
+===============
+
+* Firefox
+* Python
+* Git
+* make
 
 Getting setup
 =====================
 
-These are your setup instructions, in the end your directory structure should look something like this:
+To pull and run fx-share addon:
+  
+  git clone https://github.com/mozilla/fx-share-addon
+  cd fx-share-addon
+  make pull
+  make run
+  
+You can build an xpi:
 
-    $PARENT/
-           fx-share-addon
-           oauthorizer
-           openwebapps
-           jetpack
+  make xpi
+  
+You can run the tests:
+
+  make test
+  
+
+If you want to run (using make run) in a specific profile:
+
+  OWA_PROFILE=/path/to/firefox/profile make run
+  
+Tests cannot be run in a specific profile.
 
 
 Prepare your firefox profile
@@ -29,61 +49,3 @@ On Windows:
     firefox.exe -P
 
 In the profile manager, create a profile with the name `fxsharetest`, then exit the profile manager.
-
-Prepare the [oauthorizer](https://github.com/mozilla/oauthorizer) add-on
-------------------------------
-
-This add-on is required to drive all OAuth systems inside the browser until those systems switch to using Open Web Apps.
-
-    git clone https://github.com/mozilla/oauthorizer
-
-Switch to a `jetpack` branch:
-
-    git co jetpack
-    cd oauthorizer
-
-Prepare the [Open Web Apps](https://github.com/mozilla/openwebapps) add-on
---------------------------------
-
-In another directory, create a clone of the [Open Web Apps - mhammond fork](https://github.com/mhammond/openwebapps) add-on
-
-    git clone https://github.com/mhammond/openwebapps
-
-Switch to a `mediator-jetpack-api` branch
-
-    cd openwebapps
-    git checkout origin/mediator-jetpack-api
-
-
-Install and setup the [Jetpack SDK](https://github.com/mozilla/jetpack)
-------------------
-
-Install the jetpack SDK in another directory
-
-    git clone https://github.com/mozilla/jetpack
-
-Activate the SDK
-
-    cd jetpack
-    source bin/activate
-
-Run Firefox!
--------
-
-From the `$PARENT` directory use the following command:
-
-    cfx run --pkgdir=fx-share-addon \
-        --package-path=openwebapps/addons/jetpack \
-        --package-path=oauthorizer \
-        --profiledir=/path/to/firefox/profile.fxsharetest \
-        --binary-args=-console
-
-_Note_:
-
-`--pkgdir` points to the root directory of this `fx-share-addon` (i.e. the directory holding this README)
-
-`--package-path` appears twice and lists the other jetpacks we depend on - `openwebapps/addons/jetpack` is the path to the `jetpack/addons` directory inside the [Open Web Apps - mhammond fork](https://github.com/mhammond/openwebapps) directory while `oauthorizer` is the path to the root of the [oauthorizer] directory.
-
-`--profiledir` is optional and points to your Firefox `fxsharetest`profile or other development profile.
-
-`--binary-args` are optional but you may want to add them - eg, `-console`, `-purgecaches`, `-chromebug` etc.
