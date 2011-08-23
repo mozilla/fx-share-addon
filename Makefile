@@ -1,14 +1,6 @@
-ifeq ($(OS),Windows_NT)
-BIN_DIR = Scripts
-else
-BIN_DIR = bin
-endif
-
 APPNAME = fx-share-addon
 DEPS = github:addon-sdk,github:oauthorizer,github:openwebapps
 PYTHON = python
-
-GIT_DESCRIBE := `git describe --long`
 
 ifeq ($(TOPSRCDIR),)
   export TOPSRCDIR = $(shell pwd)
@@ -27,6 +19,7 @@ cfx_args :=  --pkgdir=$(TOPSRCDIR) $(profile) --package-path=$(oauthorizer) --pa
 
 xpi_name := ffshare.xpi
 
+# might be useful for symlink handling...
 SLINK = ln -sf
 ifneq ($(findstring MINGW,$(shell uname -s)),)
   SLINK = cp -r
@@ -39,7 +32,6 @@ xpi:    pull
 	$(addon_sdk)/cfx xpi $(cfx_args)
 
 pull:
-	$(VIRTUALENV) --no-site-packages --distribute .
 	$(PYTHON) build.py $(APPNAME) $(DEPS)
 
 test:
