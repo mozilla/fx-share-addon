@@ -12,12 +12,7 @@ function doit(args) {
   }
 
   navigator.apps.invokeService(
-    "link.send", 
-    {
-      title: "My Awesome share button",
-      description: "Demonstration of invoking share from content",
-      url: window.location.href
-    },
+    "link.send", args,
   
   function(result) {
     showResult(result);
@@ -70,7 +65,20 @@ API (depending on whether we've implemented that yet).
 
 <div style="width:664px;margin:auto">
   <div style="vertical-align:top;display:inline-block;width:200px">
-    <button style="font-size:18px" onclick="doit()">Share</button>
+    <button style="font-size:18px" onclick="doit(
+          {
+            title: 'This is the first button',
+            description: 'Demonstration of invoking share from content #1',
+            url: window.location.href
+          }
+        )">Share #1</button>
+    <button style="font-size:18px" onclick="doit(
+          {
+            title: 'This is the second button',
+            description: 'Demonstration of invoking share from content #2',
+            url: window.location.href
+          }
+        )">Share #2</button>
   </div>
 </div>
 
