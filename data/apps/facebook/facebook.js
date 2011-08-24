@@ -78,15 +78,14 @@ function (require,  common) {
         displayName: "Facebook",
         calls: {
                   signatureMethod     : "HMAC-SHA1",
-                  userAuthorizationURL: "https://graph.facebook.com/oauth/authorize",
-                  accessTokenURL      : "https://graph.facebook.com/oauth/access_token"
+                  userAuthorizationURL: "https://www.facebook.com/dialog/oauth",
+                  accessTokenURL      : ""
                 },
         key: "110796232295543",
-        secret: "19fd15e594991fd88e05b3534403e5c8",
+        secret: "",
         params: {
             scope: "publish_stream,offline_access,user_groups",
-            type: "user_agent",
-            display: "popup"
+            response_type: "token"
             },
         completionURI: "http://www.oauthcallback.local/postauthorize",
         version: "2.0",
