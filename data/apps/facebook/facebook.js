@@ -30,7 +30,7 @@ define([ "require", "../common"],
 function (require,  common) {
 
   var domain = "facebook.com";
-  
+
   var characteristics = {
       type: 'facebook', // XXX - should be able to nuke this.
 
@@ -120,12 +120,12 @@ function (require,  common) {
         var websites = profile.website.split("\n");
         for each (var site in websites) {
           if (!newPerson.urls) newPerson.urls = [];
-          
+
           if (site.length > 0) {
             if (site.indexOf("http://") != 0) {
               site = "http://" + site;
             }
-            
+
             newPerson.urls.push({type:'url', value:site})
           }
         }
@@ -215,7 +215,7 @@ function (require,  common) {
         }
       });
     },
-    
+
     send: function(data, cb, cberr) {
       //dump("send data is "+JSON.stringify(data)+"\n")
       var strval = window.localStorage.getItem(api.key);
@@ -286,7 +286,7 @@ function (require,  common) {
         }
       });
     },
-    
+
     _handleContacts: function(data, type) {
       var ckey = api.key+'.'+type;
       var strval = window.localStorage.getItem(ckey);
@@ -335,7 +335,7 @@ function (require,  common) {
           params.offset += params.limit;
           setTimeout(api._pagedContacts, 0, url, params, oauthConfig);
         }
-      }); 
+      });
     }
   };
 
