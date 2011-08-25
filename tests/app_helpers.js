@@ -101,7 +101,7 @@ exports.getSharePanelWithApp = function(test, args, cb) {
       });
 
       let panel = getSharePanel();
-      panel.panel.port.on("ready", function() {
+      panel.panel.port.once("ready", function() {
         // The mediator reported it is ready - now find the contentWindow for the mediator.
         // We can't get it via the panel, so we use our knowledge of the panel
         // implementation - it appended a XUL panel to the mainPopupSet.
@@ -191,17 +191,26 @@ function _testAppSequence(test, appInfo, seq, cbdone) {
       // The previously blocked call has returned.
       function cbresume() {
         if (seq.length === 0) {
-          // out of items - call the final callback or just finish the test if not specified.
-          if (cbdone) {
-            try {
-              cbdone();
-            } catch (ex) {
-              test.fail("error in test completion callback: " + ex + "\n" + ex.stack);
+          // out of items - tell the app we are done and to check itself.
+          invokeService(appFrame, "test", "finish", {},
+            function() {
+              // call the final callback or just finish the test if not specified.
+              if (cbdone) {
+                try {
+                  cbdone();
+                } catch (ex) {
+                  test.fail("error in test completion callback: " + ex + "\n" + ex.stack);
+                  test.done();
+                }
+              } else {
+                test.done();
+              }
+            },
+            function(errob) {
+              test.fail("app reported a completion error");
               test.done();
             }
-          } else {
-            test.done();
-          }
+          );
         } else {
           // and now the callback has returned we can play the next item in the
           // sequence.

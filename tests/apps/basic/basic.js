@@ -5,12 +5,17 @@
 // pendingCalls is calls made into the service where the 'result' of the call
 // hasn't yet been specified by the test framework.
 var pendingCalls = {};
+var isFinished = false;
 
 // A 'test' service used by the tests to control this app.
 navigator.apps.services.registerHandler('test', 'resume', function(args, cb, cberr) {
   // resume from a 'blocked' call.
   var attemptNum = 0;
   function doit() {
+    if (isFinished) {
+      cberr("test_suite_error", "this app has been finalized");
+      return;
+    }
     if (!(args.method in pendingCalls)) {
       // so the call hasn't yet been made to the app - sleep and retry later.
       if (++attemptNum > 100) {
@@ -36,9 +41,22 @@ navigator.apps.services.registerHandler('test', 'resume', function(args, cb, cbe
   doit();
 });
 
+navigator.apps.services.registerHandler('test', 'finish', function(args, cb, cberr) {
+  isFinished = true;
+  if (pendingCalls.length) {
+    cberr("test_suite_error", "finalized while pending calls are available")
+  } else {
+    cb();
+  }
+});
+
 // The helper for all the "real" methods to wait for instructions from the
 // test suite.
 function waitForResumeInstructions(methodName, args, cb, cberr) {
+  if (isFinished) {
+    cberr("test_suite_error", "this app has been finalized");
+    return;
+  }
   if (methodName in pendingCalls) {
     cberr("test_suite_error", "already a pending call for '" + methodName + "'\n");
     return;
