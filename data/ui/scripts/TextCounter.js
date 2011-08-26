@@ -32,7 +32,7 @@ function ($,        object,         fn) {
         init: function (node, countNode, limit) {
             this.dom = $(node);
             this.countDom = $(countNode);
-            this.limit = limit;
+            this.limit = limit; // may be undefined, meaning 'no limit'
             this.dom.bind('keyup', fn.bind(this, 'checkCount'));
             this.checkCount();
         },
@@ -40,6 +40,11 @@ function ($,        object,         fn) {
         checkCount: function () {
             var value = this.dom[0].value,
                 count;
+            if (this.limit === undefined) {
+                this.countDom.text('');
+                this.countDom.removeClass("TextCountOver");
+                return;
+            }
 
             count = this.limit - value.length;
             if (count < 0) {
@@ -56,7 +61,7 @@ function ($,        object,         fn) {
         },
 
         isOver: function () {
-            return this.dom[0].value.length > this.limit;
+            return this.limit !== undefined && this.dom[0].value.length > this.limit;
         }
     });
 });

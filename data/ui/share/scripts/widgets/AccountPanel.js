@@ -145,15 +145,8 @@ function (object,         Widget,         $,        template,
         }
 
         //Update the DOM.
-        root.find('[name="picture"]').val(jigFuncs.preview(opts));
-        root.find('[name="picture_base64"]').val(jigFuncs.preview_base64(opts));
         root.find('[name="link"]').val(formLink);
         root.find('[name="title"]').val(opts.title);
-        root.find('[name="caption"]').val(opts.caption);
-        root.find('[name="description"]').val(opts.description);
-        root.find('[name="medium"]').val(opts.medium);
-        root.find('[name="source"]').val(opts.source);
-
         this.toDom.val(opts.to);
         root.find('[name="subject"]').val(opts.subject);
         root.find('[name="message"]').val(opts.message);
@@ -182,10 +175,8 @@ function (object,         Widget,         $,        template,
             this.onShareTypeChange(evt);
           });
           this.select.dom.bind('change', this.selectChangeFunc);
-        }
-
-        if (this.characteristics.textLimit) {
-          this.startCounter();
+        } else {
+          this.changeShareType(shareTypes[0]);
         }
 
         //Create ellipsis for anything wanting ... overflow
@@ -276,25 +267,36 @@ function (object,         Widget,         $,        template,
         this.hideStatus();
       },
 
-      startCounter: function () {
+      startCounter: function (textLimit) {
         //Set up text counter
+        $('.counter', this.node).show();
         if (!this.counter) {
           this.counter = new TextCounter($('textarea.message', this.node),
-                                         $('.counter', this.node),
-                                         this.characteristics.textLimit - this.urlSize);
+                                         $('.counter', this.node));
         }
-        this.updateCounter();
+        this.updateCounter(textLimit);
       },
 
-      updateCounter: function () {
+      updateCounter: function (tl) {
         // Update counter. If using a short url from the web page itself, it could
         // potentially be a different length than a bit.ly url so account for
         // that. The + 1 is to account for a space before adding the URL to the
         // tweet.
-        var tl = this.characteristics.textLimit;
-        this.counter.updateLimit(this.options.shortUrl ?
-                                 tl - this.options.shortUrl.length + 1 :
-                                 tl - this.urlSize);
+        var realLimit;
+        if (tl !== undefined) {
+          realLimit = this.options.shortUrl ?
+                        tl - this.options.shortUrl.length + 1 :
+                        tl - this.urlSize
+        }
+        this.counter.updateLimit(realLimit);
+      },
+
+      stopCounter: function() {
+        $('.counter', this.node).hide();
+        if (this.counter) {
+          // tell the counter there is no limit.
+          this.counter.updateLimit(undefined);
+        }
       },
 
       /**
@@ -327,7 +329,7 @@ function (object,         Widget,         $,        template,
 
           node.value = trimmed;
 
-          if (node.value) {
+          if (node.value && node.attr("f1-disabled") !== 'true') {
             data[node.name] = node.value;
           }
         });
@@ -346,26 +348,68 @@ function (object,         Widget,         $,        template,
 
       changeShareType: function (shareType) {
         var toSectionDom = $('.toSection', this.node),
+            subjectSectionDom = $('.subjectSection', this.node),
             shareTypeDom = $('.shareTypeSection', this.node),
             actionsDom = $('.accountActions', this.node),
             shareTypeSelectDom = $('.shareTypeSelectSection', this.node),
-            toInputDom = $('.toSection input', this.node);
+            toInputDom = $('.toSection input', this.node),
+            root = $(this.node),
+            opts = this.options;
 
         //If there is a special to value (like linkedin my connections), drop it in
         toInputDom.val(shareType.specialTo ? shareType.specialTo : '');
+        var toFocus;
+
+        if (shareType.subjectLabel) {
+          subjectSectionDom.removeClass('hiddenImportant');
+          toFocus = subjectSectionDom;
+        } else {
+          subjectSectionDom.addClass('hiddenImportant');
+        }
 
         if (shareType.toLabel) {
           toSectionDom.removeClass('hiddenImportant');
           shareTypeDom.addClass('wide');
           actionsDom.addClass('wide');
           shareTypeSelectDom.addClass('fixedSize');
-          toInputDom.focus();
+          toFocus = toInputDom;
         } else {
           toSectionDom.addClass('hiddenImportant');
           actionsDom.removeClass('wide');
           shareTypeDom.removeClass('wide');
           shareTypeSelectDom.removeClass('fixedSize');
         }
+        if (toFocus) {
+          toInputDom.focus();
+        }
+        function show(selector, enabled) {
+          enabled = !!enabled;
+          var elt = root.find(selector);
+          if (elt.attr("type") === "hidden") {
+            // a hidden form field - .show() and .hide() don't do what we
+            // need here, so we just set a magic attribute so we can later
+            // check if it applies to this shareType when gathering the form
+            // data to send.
+            elt.attr("f1-disabled", !enabled);
+          } else {
+            if (enabled) {
+              elt.show();
+            } else {
+              elt.hide();
+            }
+          }
+          return elt;
+        }
+        show('[name="picture"]', shareType.picture).val(jigFuncs.preview(opts));
+        show('.thumbContainer', shareType.picture);
+        show('[name="picture_base64"]', shareType.image).val(jigFuncs.preview_base64(opts));
+        show('[name="caption"]', shareType.caption).val(opts.caption);
+        // source and medium are both based on just shareType.medium
+        show('[name="medium"]', shareType.medium).val(opts.medium);
+        show('[name="source"]', shareType.medium).val(opts.source);
+        show('.pageTitle', shareType.title).val(opts.title);
+        show('.pageDescription', shareType.description).val(opts.description);
+
         // Set up autocomplete and contacts used for autocomplete.
         var acNode = this.toDom[0];
         if (acNode) {
@@ -378,7 +422,13 @@ function (object,         Widget,         $,        template,
               this.resetError();
             }));
           }
-          this.autoComplete.shareTypeChanged(shareType.type);
+          this.autoComplete.shareTypeChanged(shareType);
+        }
+        // Setup the counter
+        if (shareType.textLimit) {
+          this.startCounter(shareType.textLimit);
+        } else {
+          this.stopCounter();
         }
       },
 

@@ -49,7 +49,7 @@ function ($,        object,         fn,         module,   dispatch,
       this.attachedWidget = false;
       this.acOptions = [];
       this.owasvc = owasvc;
-      this.orient = owasvc.characteristics.features.subject ? 'below' : 'above';
+      this.orient = 'above'; // a default
 
       // XXX - still relevant?
       dispatch.sub('optionsChanged', fn.bind(this, function (data) {
@@ -61,9 +61,10 @@ function ($,        object,         fn,         module,   dispatch,
     shareTypeChanged: function(shareType, forceRefresh /* = false */) {
       this.currentShareType = shareType;
 
+      this.orient = shareType.subjectLabel ? 'below' : 'above';
       // ask the service for its contacts.
       this.owasvc.call("getShareTypeRecipients",
-          {shareType: shareType, force: !!forceRefresh},
+          {shareType: shareType.type, force: !!forceRefresh},
           function(recips) {
             this._attachAutoComplete(recips);
           }.bind(this),
