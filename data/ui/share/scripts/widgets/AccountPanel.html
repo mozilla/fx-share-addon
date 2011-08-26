@@ -3,57 +3,55 @@
     <div class="user inactive col">
       <input type="hidden" name="userid" value="{profile.userid}" />
       <input type="hidden" name="username" value="{profile.username}" />
-      {svc.features.picture [}
-        <input type="hidden" name="picture" value="{preview(options)}" />
-      {]}
-      {svc.features.image [}
-        <input type="hidden" name="picture_base64" value="{preview_base64(options)}" />
-      {]}
-      <input type="hidden" name="link" value="{link(options)}" />
-      {svc.features.caption [}
-        <input type="hidden" name="caption" value="{options.caption}" />
-      {]}
-      {svc.features.medium [}
-        <input type="hidden" name="medium" value="{options.medium}" />
-        <input type="hidden" name="source" value="{options.source}" />
-      {]}
+      <input type="hidden" name="picture"/>
+      <input type="hidden" name="picture_base64"/>
+      <input type="hidden" name="link"/>
+      <input type="hidden" name="caption"/>
+      <input type="hidden" name="medium"/>
+      <input type="hidden" name="source"/>
       <img class="avatar" src="{profilePic(profile.photos)}" />
       <span class="username">{displayName}</span>
       <a class="remove" href="#">logout</a>
     </div>
     <div class="boxFlex addressing">
+      <!-- XXX - these heuristics are wrong - see bug 681880.
+           If only 1 share type, we add the 'to' and 'subject' to the top of
+           the widget.  If > 1 share types, they go at the end of the widget
+           next to the "ShareType" select.
+
+           This was almost certainly done for google etc - it only had 1 share
+           type, which was email, so the "to" and "subject" make sense at the
+           top.  But as soon as we add, say, "Google+" as a ShareType,
+           suddenly those fields will drop to the bottom, which will not be
+           what we want.
+      --->
       {lt(svc.shareTypes.length, 2)[}
-        {svc.features.direct [}
+        <div class="toSection hiddenImportant boxFlex">
           <input name="to" placeholder="to" type="text" value="{options.to}" autocomplete="off"/>
-          {svc.features.subject [}
-            <input name="subject" placeholder="subject" type="text" value="{options.subject}" autocomplete="off"/>
-          {]}
-        {]}
+        </div>
+        <div class="subjectSection hiddenImportant boxFlex">
+          <input name="subject" placeholder="subject" type="text" value="{options.subject}" autocomplete="off"/>
+        </div>
         <input type="hidden" name="shareType" value="{svc.shareTypes[0].type}" />
       {]}
       <textarea class="message compose" placeholder="Type your message here, and we'll attach the link when you send." name="message">{options.message}</textarea>
       
       <div id="pageInfo">
         <div class="hbox">
-            {svc.features.picture [}
-          <div class="thumbContainer">
+          <div class="thumbContainer" style="display: none">
             <div class="thumbnail"><img class="thumb" src="{thumb(options)}" /></div>
           </div>
-            {]}
           <div class="boxFlex1 shareInfo">
-            {svc.features.title [}
-              <input class="pageTitle" type="text" name="title" value="{options.title}" />
-            {]}
+            <input class="pageTitle" type="text" name="title" style="display: none"/>
             <div class="nofollow url overflow">{cleanLink(options.url)}</div>
-            {svc.features.description [}
-              <textarea class="pageDescription" name="description">{options.description}</textarea>
-            {]}
+              <textarea class="pageDescription" style="display: none" name="description">{options.description}</textarea>
       <!--      <a href="#" class="nofollow url overflow selected">{cleanLink(options.url)}</a>
             <a href="#" class="nofollow shorturl overflow surl">{cleanLink(options.shortUrl)}</a>-->
           </div>
         </div>
       </div>
 
+      <!--- XXX - see above re bug 681880 - this heuristic is wrong! -->
       {gt(svc.shareTypes.length, 1) [}
         <div class="shareTypeSection hbox">
           <div class="shareTypeSelectSection">
@@ -61,6 +59,9 @@
           <div class="toSection hiddenImportant boxFlex">
             {. lastType lastToShareType(svc.shareTypes)}
             <input name="to" placeholder="to" type="text" value="{options.to}" autocomplete="off"/>
+          </div>
+          <div class="subjectSection hiddenImportant boxFlex">
+            <input name="subject" placeholder="subject" type="text" value="{options.subject}" autocomplete="off"/>
           </div>
         </div>
       {]}
@@ -72,9 +73,7 @@
           <div class="status error invalidRecipient">
               Cannot share with all recipients
           </div>
-          {svc.features.counter [}
-            <div class="counter"></div>
-          {]}
+          <div class="counter" style="display: none"></div>
         </div>
         <button class="share" type="submit">share</button>
       </div>

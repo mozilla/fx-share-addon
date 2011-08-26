@@ -34,33 +34,39 @@ function (require,  common) {
   var characteristics = {
       type: 'facebook', // XXX - should be able to nuke this.
 
-      features: {
-        //TODO: remove direct when old UI is no longer in use,
-        //or remove it from use.
-        //direct: true,
-        subject: false,
-        counter: true,
+      shareTypes: [{
+        type: 'wall',
+        name: 'my wall',
+        textLimit: 420,
         medium: true,
         picture: true, // url to an image
         image: false, // base64 of image data
         title: true,
         caption: true,
-        description: true,
-        privacy: true
-      },
-      shareTypes: [{
-        type: 'wall',
-        name: 'my wall'
+        description: true
       }, {
         type: 'friendsWall',
         name: 'friends wall',
-        toLabel: 'type in the name of the person you want to write to'
+        textLimit: 420,
+        toLabel: 'type in the name of the person you want to write to',
+        medium: true,
+        picture: true, // url to an image
+        image: false, // base64 of image data
+        title: true,
+        caption: true,
+        description: true
       }, {
         type: 'groupWall',
         name: 'group wall',
-        toLabel: 'type in the name of the group'
+        textLimit: 420,
+        toLabel: 'type in the name of the group',
+        medium: true,
+        picture: true, // url to an image
+        image: false, // base64 of image data
+        title: true,
+        caption: true,
+        description: true
       }],
-      textLimit: 420,
       serviceUrl: 'http://facebook.com',
       revokeUrl: 'http://www.facebook.com/editapps.php?v=allowed',
       signOutUrl: 'http://facebook.com',

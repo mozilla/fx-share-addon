@@ -33,22 +33,16 @@ function (require,  common) {
   var characteristics = {
       type: 'twitter', // XXX - should be able to nuke this.
 
-      features: {
-        //TODO: remove direct when old UI is no longer in use,
-        //or remove it from use.
-        direct: true,
-        subject: false,
-        counter: true
-      },
       shareTypes: [{
         type: 'public',
-        name: 'Public timeline'
+        name: 'Public timeline',
+        textLimit: 140
       }, {
         type: 'direct',
         name: 'Direct Message',
+        textLimit: 140,
         toLabel: 'type in name of recipient'
       }],
-      textLimit: 140,
       shorten: true,
       /***
       serviceUrl: 'http://twitter.com',
