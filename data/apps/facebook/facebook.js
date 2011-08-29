@@ -32,66 +32,66 @@ function (require,  common) {
   var domain = "facebook.com";
 
   var characteristics = {
-      type: 'facebook', // XXX - should be able to nuke this.
+    type: 'facebook', // XXX - should be able to nuke this.
 
-      features: {
-        //TODO: remove direct when old UI is no longer in use,
-        //or remove it from use.
-        //direct: true,
-        subject: false,
-        counter: true,
-        medium: true,
-        picture: true, // url to an image
-        image: false, // base64 of image data
-        title: true,
-        caption: true,
-        description: true,
-        privacy: true
-      },
-      shareTypes: [{
-        type: 'wall',
-        name: 'my wall'
-      }, {
-        type: 'friendsWall',
-        name: 'friends wall',
-        toLabel: 'type in the name of the person you want to write to'
-      }, {
-        type: 'groupWall',
-        name: 'group wall',
-        toLabel: 'type in the name of the group'
-      }],
-      textLimit: 420,
-      serviceUrl: 'http://facebook.com',
-      revokeUrl: 'http://www.facebook.com/editapps.php?v=allowed',
-      signOutUrl: 'http://facebook.com',
-      /***
-      accountLink: function (account) {
-        return 'http://www.facebook.com/profile.php?id=' + account.userid;
-      },
-      overlays: {
-        'widgets/AccountPanel': 'widgets/AccountPanelFaceBook'
-      }
-      ***/
-      auth: {
-        type: "oauth",
-        name: "facebook",
-        displayName: "Facebook",
-        calls: {
-                  signatureMethod     : "HMAC-SHA1",
-                  userAuthorizationURL: "https://www.facebook.com/dialog/oauth",
-                  accessTokenURL      : ""
-                },
-        key: "110796232295543",
-        secret: "",
-        params: {
-            scope: "publish_stream,offline_access,user_groups",
-            response_type: "token"
-            },
-        completionURI: "http://www.oauthcallback.local/postauthorize",
-        version: "2.0",
-        tokenRx: "#access_token=([^&]*)"
-      }
-    };
+    features: {
+      //TODO: remove direct when old UI is no longer in use,
+      //or remove it from use.
+      //direct: true,
+      subject: false,
+      counter: true,
+      medium: true,
+      picture: true, // url to an image
+      image: false, // base64 of image data
+      title: true,
+      caption: true,
+      description: true,
+      privacy: true
+    },
+    shareTypes: [{
+      type: 'wall',
+      name: 'my wall'
+    }, {
+      type: 'friendsWall',
+      name: 'friends wall',
+      toLabel: 'type in the name of the person you want to write to'
+    }, {
+      type: 'groupWall',
+      name: 'group wall',
+      toLabel: 'type in the name of the group'
+    }],
+    textLimit: 420,
+    serviceUrl: 'http://facebook.com',
+    revokeUrl: 'http://www.facebook.com/editapps.php?v=allowed',
+    signOutUrl: 'http://facebook.com',
+    /***
+    accountLink: function (account) {
+      return 'http://www.facebook.com/profile.php?id=' + account.userid;
+    },
+    overlays: {
+      'widgets/AccountPanel': 'widgets/AccountPanelFaceBook'
+    }
+    ***/
+    auth: {
+      type: "oauth",
+      name: "facebook",
+      displayName: "Facebook",
+      calls: {
+                signatureMethod     : "HMAC-SHA1",
+                userAuthorizationURL: "https://www.facebook.com/dialog/oauth",
+                accessTokenURL      : ""
+              },
+      key: "110796232295543",
+      secret: "",
+      params: {
+          scope: "publish_stream,offline_access,user_groups",
+          response_type: "token"
+          },
+      completionURI: "http://www.oauthcallback.local/postauthorize",
+      version: "2.0",
+      tokenRx: "#access_token=([^&]*)"
+    }
+  };
 
 
   var api = {
