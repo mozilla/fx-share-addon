@@ -401,8 +401,8 @@ function (require,   $,        object,         fn,
             //mediator.reconfigure();
             dispatch.pub('serviceChanged', svcRec.app.origin);
           },
-          function(err, message) {
-            dump("failed to logout: " + err + ": " + message + "\n");
+          function(errob) {
+            dump("failed to logout: " + errob.code + ": " + errob.message + "\n");
             // may as well update the accounts anyway incase it really did work!
             //mediator.reconfigure();
             dispatch.pub('serviceChanged', svcRec.app.origin);
@@ -521,9 +521,9 @@ function (require,   $,        object,         fn,
 
   // tell OWA we are ready...
   window.navigator.apps.mediation.ready(
-    function(method, args, services) {
+    function(activity, services) {
       _deleteOldServices();
-      options = args;
+      options = activity.data;
       owaservices = services;
       onFirstShareState();
       displayAccounts();

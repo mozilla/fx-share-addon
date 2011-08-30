@@ -48,9 +48,13 @@ function getSharePanel() {
   // instead of constructing the object explicitly, we go via the services API
   // so it knows the created panel is associated with the contentWindow/service.
   let services = topWindow.apps._services;
-  let serviceName = "link.send";
+  let activity = {
+    action: "link.send",
+    type: "link.send", // fixme
+    data: {}
+  }
   // first pretend to invoke a service so our panel is created.
-  return services.get(browser.contentWindow, serviceName, {}, function () {;});
+  return services.get(browser.contentWindow, activity, function () {;});
 }
 exports.getSharePanel = getSharePanel;
 
