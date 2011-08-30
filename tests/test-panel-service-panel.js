@@ -5,11 +5,10 @@ exports.testAccountLoads = function(test) {
   test.waitUntilDone();
 
   getSharePanelWithApp(test, {}, function(appInfo) {
-    let {panel, panelContentWindow, appWidget} = appInfo;
-    let $ = panelContentWindow.$; // The jquery object *inside* the share content.
-    let accountLoadingDiv = $(appWidget).find(".accountLoading");
-    let accountLoginDiv = $(appWidget).find(".accountLogin");
-    let accountPanelDiv = $(appWidget).find(".accountPanel");
+    let {jqAppWidget} = appInfo;
+    let accountLoadingDiv = jqAppWidget.find(".accountLoading");
+    let accountLoginDiv = jqAppWidget.find(".accountLogin");
+    let accountPanelDiv = jqAppWidget.find(".accountPanel");
     // app is "blocked" in getCharacteristics, so only the "loading" div should be visible.
     test.assert(accountLoadingDiv.is(":visible"));
     test.assert(!accountLoginDiv.is(":visible"));
@@ -64,11 +63,10 @@ exports.testAccountLoadsTwice = function(test) {
       panel1.panel.hide();
       // and do it again in a new tab.
       getSharePanelWithApp(test, {}, function(appInfo2) {
-        let {panelContentWindow, appWidget} = appInfo2;
-        let $ = panelContentWindow.$; // The jquery object *inside* the share content.
-        let accountLoadingDiv = $(appWidget).find(".accountLoading");
-        let accountLoginDiv = $(appWidget).find(".accountLogin");
-        let accountPanelDiv = $(appWidget).find(".accountPanel");
+        let {jqAppWidget} = appInfo2;
+        let accountLoadingDiv = jqAppWidget.find(".accountLoading");
+        let accountLoginDiv = jqAppWidget.find(".accountLogin");
+        let accountPanelDiv = jqAppWidget.find(".accountPanel");
         // app is "blocked" in getCharacteristics, so only the "loading" div should be visible.
         test.assert(accountLoadingDiv.is(":visible"));
         test.assert(!accountLoginDiv.is(":visible"));
@@ -107,11 +105,10 @@ exports.testLoginPanelShows = function(test) {
   test.waitUntilDone();
 
   getSharePanelWithApp(test, {}, function(appInfo) {
-    let {panel, panelContentWindow, appWidget} = appInfo;
-    let $ = panelContentWindow.$; // The jquery object *inside* the share content.
-    let accountLoadingDiv = $(appWidget).find(".accountLoading");
-    let accountLoginDiv = $(appWidget).find(".accountLogin");
-    let accountPanelDiv = $(appWidget).find(".accountPanel");
+    let {jqAppWidget} = appInfo;
+    let accountLoadingDiv = jqAppWidget.find(".accountLoading");
+    let accountLoginDiv = jqAppWidget.find(".accountLogin");
+    let accountPanelDiv = jqAppWidget.find(".accountPanel");
     // app is "blocked" in getCharacteristics - and we've tested this state
     // above - so just kick off the sequence of unblocks and tests.
     let seq = [
