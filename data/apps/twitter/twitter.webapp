@@ -14,5 +14,13 @@
           "endpoint": "/twitter.html"
         }
       }
+    },
+  "services": {
+    "link.send": {
+      "path": "/twitter.html"
+    },
+    "http://webactivities.org/login": {
+      "path": "/twitter.html"
     }
+  }
 }

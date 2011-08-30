@@ -14,5 +14,13 @@
         "endpoint": "/facebook.html"
       }
     }
+  },
+  "services": {
+    "link.send": {
+      "path": "/facebook.html"
+    },
+    "http://webactivities.org/login": {
+      "path": "/facebook.html"
+    }
   }
 }

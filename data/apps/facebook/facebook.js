@@ -181,7 +181,8 @@ function (require,  common) {
       throw "invalid recipient '" + recipstr + "'";
     },
 
-    getProfile: function(oauthConfig, cb, cberr) {
+    getProfile: function(activity, credentials) {
+      var oauthConfig = activity.data;
       dump("calling https://graph.facebook.com/me\n");
       navigator.apps.oauth.call(oauthConfig, {
         method: "GET",
@@ -202,7 +203,7 @@ function (require,  common) {
         window.localStorage.removeItem(api.key+'.groups');
         window.localStorage.removeItem(api.key+'.friends');
 
-        cb(user);
+        activity.postResult(user);
 
         // initiate contact retreival now
         api.contacts({type: 'groups'});
@@ -210,17 +211,18 @@ function (require,  common) {
 
         } catch(e) {
           dump(e+"\n");
-          cberr(e);
+          activity.postException({code: "get.profile", message: e.toString()});
         }
       });
     },
 
-    send: function(data, cb, cberr) {
+    send: function(activity, credentials) {
       //dump("send data is "+JSON.stringify(data)+"\n")
       var strval = window.localStorage.getItem(api.key);
       var urec = JSON.parse(strval);
       var oauthConfig = urec.oauth;
       var url;
+      var data = activity.data;
       var to = data.to || [];
 
       if (data.shareType === 'groupWall') {
@@ -279,9 +281,9 @@ function (require,  common) {
       },function(json) {
         dump("got facebook send result "+JSON.stringify(json)+"\n");
         if ('error' in json) {
-            cberr("error", json)
+            activity.postException({code: "error", message: json});
         } else {
-            cb(json)
+            activity.postResult(json)
         }
       });
     },
@@ -339,28 +341,25 @@ function (require,  common) {
   };
 
   // Bind to OWA
-  navigator.apps.services.registerHandler('link.send', 'init', function(args, cb) {
+  navigator.apps.services.registerHandler('link.send', 'confirm', function(activity, credentials) {
+    api.send(activity, credentials);
   });
 
-  navigator.apps.services.registerHandler('link.send', 'confirm', function(args, cb, cberr) {
-    api.send(args, cb, cberr);
-  });
-
-  navigator.apps.services.registerHandler('link.send', 'getCharacteristics', function(args, cb, cberr) {
+  navigator.apps.services.registerHandler('link.send', 'getCharacteristics', function(activity, credentials) {
     // some if these need re-thinking.
-    cb(characteristics);
+    activity.postResult(characteristics);
   });
 
-  navigator.apps.services.registerHandler('link.send', 'getLogin', function(args, cb, cberr) {
-    common.getLogin(domain, characteristics, cb, cberr);
+  navigator.apps.services.registerHandler('link.send', 'getLogin', function(activity, credentials) {
+    common.getLogin(domain, activity, credentials);
   });
 
-  navigator.apps.services.registerHandler('link.send', 'setAuthorization', function(args, cb, cberr) {
-    api.getProfile(args, cb, cberr);
+  navigator.apps.services.registerHandler('link.send', 'setAuthorization', function(activity, credentials) {
+    api.getProfile(activity, credentials);
   });
 
-  navigator.apps.services.registerHandler('link.send', 'logout', function(args, cb, cberr) {
-    common.logout(domain, args, cb, cberr);
+  navigator.apps.services.registerHandler('link.send', 'logout', function(activity, credentials) {
+    common.logout(domain, activity, credentials);
   });
 
   // Get a list of recipient names for a specific shareType.  Only returns
@@ -370,14 +369,15 @@ function (require,  common) {
   // return an empty list.
   // This means the onus then falls back on us to match these names back up
   // with our PoCo records so we can extract the userid.
-  navigator.apps.services.registerHandler('link.send', 'getShareTypeRecipients', function(args, cb, cberr) {
+  navigator.apps.services.registerHandler('link.send', 'getShareTypeRecipients', function(activity, credentials) {
     var type;
+    var args = activity.data;
     // XXX - todo - handle 'force'
     if (args.force) {
       dump("XXX - TODO: facebook needs to implement 'force' support");
     }
     if (args.shareType === "wall") {
-      cb([]); // no possible values.
+      activity.postResult([]); // no possible values.
       return;
     } else if (args.shareType === "groupWall") {
       type = "groups";
@@ -394,7 +394,7 @@ function (require,  common) {
     for (var displayName in byName) {
       result.push(displayName);
     }
-    cb(result);
+    activity.postResult(result);
   });
 
   // Validate a list of strings which are intended to be recipient names.
@@ -405,8 +405,9 @@ function (require,  common) {
   // A super-anal service who thinks any resolution at all is leaking too much
   // into is free to return exactly the names which were passed in (then fail
   // at send time if appropriate)
-  navigator.apps.services.registerHandler('link.send', 'resolveRecipients', function(args, cb, cberr) {
+  navigator.apps.services.registerHandler('link.send', 'resolveRecipients', function(activity, credentials) {
     var type;
+    var args = activity.data;
     if (args.shareType === "groupWall") {
       type = "groups";
     } else
@@ -426,8 +427,46 @@ function (require,  common) {
         }
       }
     );
-    cb(results);
+    activity.postResult(results);
   });
+
+  navigator.apps.services.registerHandler('link.send', 'setAuthorization', function(activity, credentials) {
+    api.getProfile(activity, credentials);
+  });
+
+  
+  // LOGIN activity
+  navigator.apps.services.registerHandler('http://webactivities.org/login', 'getParameters', function(activity, credentials) {
+    activity.postResult({
+      type: "oauth",
+      name: "facebook",
+      displayName: "Facebook",
+      calls: {
+                signatureMethod     : "HMAC-SHA1",
+                userAuthorizationURL: "https://www.facebook.com/dialog/oauth",
+              },
+      key: "110796232295543",
+      params: {
+          scope: "publish_stream,offline_access,user_groups",
+          response_type: "token"
+          },
+      completionURI: "http://www.oauthcallback.local/postauthorize",
+      version: "2.0",
+      tokenRx: "#access_token=([^&]*)"
+    });
+  });
+
+  navigator.apps.services.registerHandler('http://webactivities.org/login', 'getCredentials', function(activity, credentials) {
+    common.getLogin(activity, credentials);
+  });
+
+  navigator.apps.services.registerHandler('http://webactivities.org/login', 'validateCredentials', function(activity, credentials) {
+  });
+
+  navigator.apps.services.registerHandler('http://webactivities.org/login', 'clearCredentials', function(activity, credentials) {
+    common.logout(activity, credentials);
+  });
+
 
   // Tell OWA we are now ready to be invoked.
   navigator.apps.services.ready();
