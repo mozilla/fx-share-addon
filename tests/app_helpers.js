@@ -124,9 +124,15 @@ exports.getSharePanelWithApp = function(test, args, cb) {
               let appFrame = cw[index];
               cw.$('.widgets-TabButton').eq(index).click();
               // and finally package up these bits to the test can use them.
-              let result = {panel: panel, panelContentWindow: cw,
+              // Use a 'jq' prefix for the jquery objects.
+              let appWidget = cw.$('#tabContent').children()[index]; // *sob* - why eq(index) doesn't work?
+              let jqAppWidget = cw.$(appWidget); // for convenience - most tests want this.
+              let result = {panel: panel,
+                            panelContentWindow: cw,
+                            jqPanelContentWindow: cw.$,
                             appFrame: appFrame,
-                            appWidget: cw.$('#tabContent').children()[index] // *sob* - why eq(index) doesn't work?
+                            appWidget: appWidget,
+                            jqAppWidget: jqAppWidget
               };
               cb(result);
               return;
