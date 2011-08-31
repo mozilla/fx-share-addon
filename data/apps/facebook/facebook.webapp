@@ -8,13 +8,6 @@
   "icons":{
     "32":"/facebook.png"
   },
-  "experimental": {
-    "services": {
-      "link.send": {
-        "endpoint": "/facebook.html"
-      }
-    }
-  },
   "services": {
     "link.send": {
       "path": "/facebook.html"

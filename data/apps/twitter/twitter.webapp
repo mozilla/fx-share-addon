@@ -8,19 +8,12 @@
     "icons":{
         "32":"/twitter_newbird_blue.png"
     },
-    "experimental": {
-      "services": {
-        "link.send": {
-          "endpoint": "/twitter.html"
-        }
+    "services": {
+      "link.send": {
+        "path": "/twitter.html"
+      },
+      "http://webactivities.org/login": {
+        "path": "/twitter.html"
       }
-    },
-  "services": {
-    "link.send": {
-      "path": "/twitter.html"
-    },
-    "http://webactivities.org/login": {
-      "path": "/twitter.html"
     }
-  }
 }
