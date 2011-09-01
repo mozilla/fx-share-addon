@@ -71,7 +71,6 @@ function (object,         Widget,         $,        template,
 
       onCreate: function (onAsynCreateDone) {
         var profile = this.owaservice.user,
-            onFinishCreate = this.makeCreateCallback(),
             name;
 
         this.profile = profile;
@@ -95,12 +94,6 @@ function (object,         Widget,         $,        template,
         this.base64PreviewSub = dispatch.sub('base64Preview', fn.bind(this, function (dataUrl) {
           $('[name="picture_base64"]', this.node).val(jigFuncs.rawBase64(dataUrl));
         }));
-
-        // indicate async creation is done.
-        onFinishCreate.resolve();
-        // return onFinishCreate to indicate this is an async creation
-        // XXX - actually this no longer *is* async, so we can drop this...
-        return onFinishCreate;
       },
 
       destroy: function () {
@@ -111,6 +104,18 @@ function (object,         Widget,         $,        template,
         this.select.destroy();
         this.select = null;
         parent(this, 'destroy');
+      },
+
+      focusAChild: function () {
+        var candidateNames = ["to", "subject", "message"];
+        for (var i=0; i < candidateNames.length; i++) {
+          var name = candidateNames[i];
+          var node = $('[name="' + name + '"]', this.node);
+          if (node.length && node.is(":visible")) {
+            node.focus();
+            break;
+          }
+        }
       },
 
       onRender: function () {

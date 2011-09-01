@@ -375,6 +375,7 @@ function (require,   $,        object,         fn,
         }, fragment);
 
         accountPanel.node.setAttribute("id", tabId);
+        accountPanel.node.setAttribute("appid", appid);
         accountPanels[appid] = accountPanel;
       }
     });
@@ -410,6 +411,15 @@ function (require,   $,        object,         fn,
         );
       });
 
+      // Listen for notifications about the service panel changing state - if
+      // the account is in the active tab, we ask it to focus.
+      dispatch.sub('servicePanelChanged', function(appid) {
+        var thePanel = accountPanels[appid];
+        if (thePanel && thePanel.node && $(thePanel.node).is(":visible")) {
+          thePanel.focusAChild();
+        }
+      });
+
       $('body')
         .delegate('.widgets-TabButton', 'click', function (evt) {
           evt.preventDefault();
@@ -423,7 +433,15 @@ function (require,   $,        object,         fn,
           $(node).addClass('selected');
 
           servicePanelsDom.addClass('hidden');
-          $('#' + target).removeClass('hidden');
+          var targetElement = $('#' + target);
+          targetElement.removeClass('hidden');
+
+          // Arrange for an appropriate widget in the panel to get focus.
+          var appid = targetElement.attr("appid");
+          var thePanel = accountPanels[appid];
+          if (thePanel && thePanel.node) {
+            thePanel.focusAChild();
+          }
 
           setTimeout(function () {
             mediator.sizeToContent();
