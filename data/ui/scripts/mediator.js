@@ -60,15 +60,6 @@ define(function () {
         },
         
         /**
-         * close
-         *
-         * close the mediator panel and do a hard reset of data in it
-         */
-        close: function() {
-            emit('close');
-        },
-        
-        /**
          * XXX prefs panel has been removed
          */
         openPrefs: function() {
