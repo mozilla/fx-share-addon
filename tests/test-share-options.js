@@ -1,6 +1,6 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
-const {getSharePanel, getTestUrl, getShareButton, createTab, removeCurrentTab} = require("./test_utils");
+const {getSharePanel, getTestUrl, getShareButton, createTab, removeCurrentTab, getContentWindow} = require("./test_utils");
 const Assert = require("test/assert").Assert;
 
 // each test object has the url and the expected options.  we only include
@@ -60,6 +60,38 @@ let tests = [
       canonicalUrl: "http://www.flickr.com/photos/mixedpuppy/5411147304/",
       shortUrl: "http://flic.kr/p/9faxzb"
     }
+  },
+  // Selection related tests.
+  // Simple selection of one element.
+  {
+    get url() {
+      return getTestUrl("page.html");
+    },
+    options: {
+      message: 'This is just another web page'
+    },
+    cbSetupPage: function(cw) {
+      let p1 = cw.document.getElementsByTagName("p")[0];
+      let range = cw.document.createRange();
+      range.selectNode(p1);
+      cw.getSelection().addRange(range);
+    }
+  },
+  // Selection of 2 <p> elements.
+  {
+    get url() {
+      return getTestUrl("page.html");
+    },
+    options: {
+      message: "This is just another web page with a couple of paragraphs"
+    },
+    cbSetupPage: function(cw) {
+      let [p1, p2] = cw.document.getElementsByTagName("p");
+      let range = cw.document.createRange();
+      range.setStartBefore(p1);
+      range.setEndAfter(p2);
+      cw.getSelection().addRange(range);
+    }
   }
 ];
 
@@ -89,6 +121,9 @@ function testOne(test, theTest) {
   }
 
   createTab(theTest.url, function(tab) {
+    if (theTest.cbSetupPage) {
+      theTest.cbSetupPage(getContentWindow());
+    }
     let panel = getSharePanel();
     let options = panel.updateargs();
     hasoptions(test, theTest.options, options);
