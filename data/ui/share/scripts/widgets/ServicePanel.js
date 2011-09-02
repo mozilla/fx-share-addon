@@ -120,7 +120,6 @@ function (object,         Widget,         $,        template,
         }
         var thisPanelDiv = $(".accountPanel", this.node);
         if (showPanel) {
-          // XXX - surely this can be simplified...
           if (!this.accountPanel) {
             // Get the contructor function for the panel.
             // XXX - overlay??
@@ -130,20 +129,26 @@ function (object,         Widget,         $,        template,
                 owaservice: this.owaservice,
                 savedState: this.savedState
                 }, thisPanelDiv[0]);
-            if (this.accountPanel.asyncCreate) {
-              this.accountPanel.asyncCreate.then(function(){
-                thisPanelDiv.show();
-              });
-            } else {
-              thisPanelDiv.show();
-            }
-          } else {
-            thisPanelDiv.show();
           }
+          thisPanelDiv.show();
         } else {
           thisPanelDiv.hide();
         }
         mediator.sizeToContent();
+        dispatch.pub("servicePanelChanged", this.owaservice.app.origin);
+      },
+
+      /** The main UI wants us to focus a relevant child...
+       *
+       */
+      focusAChild: function () {
+        if ($(".accountPanel", this.node).is(":visible")) {
+          // account panel is showing, so ask it to select a good field.
+          this.accountPanel.focusAChild();
+        } else if ($(".accountLogin", this.node).is(":visible")) {
+          // find and focus the login button...
+          $(".login", ".accountLogin", this.node).focus();
+        } // else the "loading" panel is showing - nothing to focus there...
       },
 
       onRemove: function (evt) {
