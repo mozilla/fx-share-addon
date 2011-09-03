@@ -82,9 +82,6 @@ function (require,   $,        object,         fn,
     });
   });
 
-  //For debug tab purpose, make it global.
-  window.closeShare = mediator.close;
-
   function updateChromeStatus(statusCode) {
     mediator.updateChromeStatus({statusCode: statusCode});
   }
@@ -460,10 +457,6 @@ function (require,   $,        object,         fn,
           evt.preventDefault();
           mediator.openPrefs();
         })
-        .delegate('.close', 'click', function (evt) {
-          evt.preventDefault();
-          mediator.close();
-        });
 
       $('#authOkButton').click(function (evt) {
         // just incase the service doesn't detect the logout automatically
