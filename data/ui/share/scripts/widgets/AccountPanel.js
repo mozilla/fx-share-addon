@@ -73,6 +73,7 @@ function (object,         Widget,         $,        template,
         var profile = this.owaservice.user,
             name;
 
+        this.hadFocusRequest = false;
         this.profile = profile;
         this.characteristics = this.owaservice.characteristics;
         this.svc = this.characteristics // just for the jig template...
@@ -107,6 +108,19 @@ function (object,         Widget,         $,        template,
       },
 
       focusAChild: function () {
+        if (!this.hadFocusRequest) {
+          // this is the first time we've seen a focus request, so now is
+          // a good time to select all the text in the "message" field - we
+          // don't want to auto-select it each time the panel get focus,
+          // just the first time - but sadly we can't create it in _onRender
+          // as setSelectionRange fails unless the field itself is visible
+          // (ie, it fails even if the fields parent isn't visible.)
+          // See bug 650670 for why we bother at all...
+          // It's quite possible that in the future more fields will need this.
+          var msgElt = $(this.node).find('[name="message"]');
+          msgElt.get(0).setSelectionRange(0, msgElt.val().length);
+          this.hadFocusRequest = true;
+        }
         var candidateNames = ["to", "subject", "message"];
         for (var i=0; i < candidateNames.length; i++) {
           var name = candidateNames[i];
