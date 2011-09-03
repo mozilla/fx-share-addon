@@ -13,6 +13,12 @@ exports.finalize = function(test, fn) {
   }
 }
 
+exports.getContentWindow = function() {
+  let wm = Cc["@mozilla.org/appshell/window-mediator;1"]
+            .getService(Ci.nsIWindowMediator);
+  return wm.getMostRecentWindow("navigator:browser").document.commandDispatcher.focusedWindow;
+}
+
 // Return the URL of content in our 'test' directory.
 exports.getTestUrl = function(testPage) {
   let lastSlash = this.module.id.lastIndexOf("/");
