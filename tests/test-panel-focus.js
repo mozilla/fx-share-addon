@@ -1,17 +1,17 @@
 const {getSharePanelWithApp, testAppSequence} = require("./app_helpers");
 
-testAccountFocusLoadHelper = function(test, characteristics, expected_focus_name, cbdone) {
+testAccountFocusLoadHelper = function(test, preferences, expected_focus_name, cbdone) {
   test.waitUntilDone();
 
   getSharePanelWithApp(test, {}, function(appInfo) {
     let {jqAppWidget, panelContentWindow} = appInfo;
     let accountPanelDiv = jqAppWidget.find(".accountPanel");
     let seq = [
-      {method: 'getCharacteristics', successArgs: characteristics},
+      {method: 'getPreferences', successArgs: preferences},
       {method: 'getLogin', successArgs: {user: {displayName: 'test user'}},
        callback: function(cbresume) {
         // We returned a user, so the account panel should become visible.
-        // Our characteristics prevent 'to' etc fields, so the message field
+        // Our preferences prevent 'to' etc fields, so the message field
         // should be Focused.
         test.waitUntil(function() {
           return accountPanelDiv.is(":visible") &&
@@ -31,47 +31,47 @@ testAccountFocusLoadHelper = function(test, characteristics, expected_focus_name
 }
 
 exports.testToFocused = function(test) {
-  // these characteristics mean "to" is shown so should get focus
-  let chars = {
+  // these preferences mean "to" is shown so should get focus
+  let prefs = {
     features: {direct: true},
     shareTypes: [{type: 'somewhere', name: 'somewhere'}]
   };
-  testAccountFocusLoadHelper(test, chars, "to");
+  testAccountFocusLoadHelper(test, prefs, "to");
 };
 
 exports.testToFocused2 = function(test) {
-  // these characteristics mean "to" and "subject" are shown - but "to"
+  // these preferences mean "to" and "subject" are shown - but "to"
   // should still win.
-  let chars = {
+  let prefs = {
     features: {direct: true, subject: true},
     shareTypes: [{type: 'somewhere', name: 'somewhere'}]
   };
-  testAccountFocusLoadHelper(test, chars, "to");
+  testAccountFocusLoadHelper(test, prefs, "to");
 };
 
 exports.testSubjectFocused = function(test) {
-  // these characteristics mean "subject" is shown, so it should get focus
-  let chars = {
+  // these preferences mean "subject" is shown, so it should get focus
+  let prefs = {
     features: {subject: true},
     shareTypes: [{type: 'somewhere', name: 'somewhere'}]
   };
-  testAccountFocusLoadHelper(test, chars, "subject");
+  testAccountFocusLoadHelper(test, prefs, "subject");
 };
 
 exports.testMessageFocused = function(test) {
-  // these characteristics mean "to" and "subject" are both hidden, so
+  // these preferences mean "to" and "subject" are both hidden, so
   // "message" should get the focus
-  let chars = {shareTypes: [{type: 'somewhere', name: 'somewhere'}]};
-  testAccountFocusLoadHelper(test, chars, "message");
+  let prefs = {shareTypes: [{type: 'somewhere', name: 'somewhere'}]};
+  testAccountFocusLoadHelper(test, prefs, "message");
 };
 
 // Test that after hiding and reshowing the panel that focus is still where
 // we expect.
 exports.testFocusAfterHide = function(test) {
-  // these characteristics mean "to" and "subject" are both hidden, so
+  // these preferences mean "to" and "subject" are both hidden, so
   // "message" should get the focus
-  let chars = {shareTypes: [{type: 'somewhere', name: 'somewhere'}]};
-  testAccountFocusLoadHelper(test, chars, "message", function(appInfo, cbresume) {
+  let prefs = {shareTypes: [{type: 'somewhere', name: 'somewhere'}]};
+  testAccountFocusLoadHelper(test, prefs, "message", function(appInfo, cbresume) {
     let {panel, panelContentWindow, jqAppWidget} = appInfo;
     let accountPanelDiv = jqAppWidget.find(".accountPanel");
     panel.panel.hide();
@@ -96,13 +96,13 @@ exports.testFocusAfterHide = function(test) {
 // Test that when the account is not logged in the "login" button has focus.
 exports.testLoginFocus = function(test) {
   test.waitUntilDone();
-  let chars = {shareTypes: [{type: 'somewhere', name: 'somewhere'}]};
+  let prefs = {shareTypes: [{type: 'somewhere', name: 'somewhere'}]};
 
   getSharePanelWithApp(test, {}, function(appInfo) {
     let {jqAppWidget, panelContentWindow} = appInfo;
     let loginPanelDiv = jqAppWidget.find(".accountLogin");
     let seq = [
-      {method: 'getCharacteristics', successArgs: chars},
+      {method: 'getPreferences', successArgs: prefs},
       {method: 'getLogin', successArgs: {auth: {something: 'something'}},
        callback: function(cbresume) {
         // Not logged in so the login panel should become visible.

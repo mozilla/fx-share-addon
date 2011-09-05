@@ -235,7 +235,7 @@ function (require,   $,        object,         fn,
 
     // get any shortener prefs before trying to send.
     store.get('shortenPrefs', function (shortenPrefs) {
-          var svcConfig = svcRec.characteristics,
+          var svcConfig = svcRec.preferences,
               shortenData;
 
           // hide the panel now, but only if the extension can show status
@@ -544,8 +544,8 @@ function (require,   $,        object,         fn,
         owaservicesbyid[svc.app.origin] = svc;
         svc.on("ready", function() {
           var readyService = this;
-          readyService.call("getCharacteristics", {}, function(chars) {
-            readyService.characteristics = chars;
+          readyService.call("getPreferences", {}, function(prefs) {
+            readyService.preferences = prefs;
             dispatch.pub('serviceChanged', readyService.app.origin);
           });
         }.bind(svc));

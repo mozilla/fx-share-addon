@@ -30,9 +30,7 @@ define([ "require", "../common"],
 
 function (require,  common) {
   var domain = "twitter.com"
-  var characteristics = {
-      type: 'twitter', // XXX - should be able to nuke this.
-
+  var properties = {
       features: {
         //TODO: remove direct when old UI is no longer in use,
         //or remove it from use.
@@ -270,13 +268,12 @@ function (require,  common) {
     api.send(args, cb, cberr);
   });
 
-  navigator.apps.services.registerHandler('link.send', 'getCharacteristics', function(args, cb, cberr) {
-    // some if these need re-thinking.
-    cb(characteristics);
+  navigator.apps.services.registerHandler('link.send', 'getPreferences', function(args, cb, cberr) {
+    cb(preferences);
   });
 
   navigator.apps.services.registerHandler('link.send', 'getLogin', function(args, cb, cberr) {
-    common.getLogin(domain, characteristics, cb, cberr);
+    common.getLogin(domain, preferences, cb, cberr);
   });
 
   navigator.apps.services.registerHandler('link.send', 'setAuthorization', function(args, cb, cberr) {
