@@ -43,7 +43,7 @@ exports.testToFocused2 = function(test) {
   // these preferences mean "to" and "subject" are shown - but "to"
   // should still win.
   let prefs = {
-    features: {direct: true, subject: true},
+    features: {direct: true, subjectLabel: "the subject"},
     shareTypes: [{type: 'somewhere', name: 'somewhere'}]
   };
   testAccountFocusLoadHelper(test, prefs, "to");
@@ -52,7 +52,7 @@ exports.testToFocused2 = function(test) {
 exports.testSubjectFocused = function(test) {
   // these preferences mean "subject" is shown, so it should get focus
   let prefs = {
-    features: {subject: true},
+    features: {subjectLabel: "the subkect"},
     shareTypes: [{type: 'somewhere', name: 'somewhere'}]
   };
   testAccountFocusLoadHelper(test, prefs, "subject");

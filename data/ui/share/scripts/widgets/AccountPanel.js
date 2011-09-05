@@ -203,7 +203,7 @@ function (object,         Widget,         $,        template,
           this.select.dom.bind('change', this.selectChangeFunc);
         }
 
-        if (this.preferences.textLimit) {
+        if (this.preferences.constraints.textLimit) {
           this.startCounter();
         }
 
@@ -300,7 +300,7 @@ function (object,         Widget,         $,        template,
         if (!this.counter) {
           this.counter = new TextCounter($('textarea.message', this.node),
                                          $('.counter', this.node),
-                                         this.preferences.textLimit - this.urlSize);
+                                         this.preferences.constraints.textLimit - this.urlSize);
         }
         this.updateCounter();
       },
@@ -310,7 +310,7 @@ function (object,         Widget,         $,        template,
         // potentially be a different length than a bit.ly url so account for
         // that. The + 1 is to account for a space before adding the URL to the
         // tweet.
-        var tl = this.preferences.textLimit;
+        var tl = this.preferences.constraints.textLimit;
         this.counter.updateLimit(this.options.shortUrl ?
                                  tl - this.options.shortUrl.length + 1 :
                                  tl - this.urlSize);

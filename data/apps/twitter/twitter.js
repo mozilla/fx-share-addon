@@ -30,13 +30,8 @@ define([ "require", "../common"],
 
 function (require,  common) {
   var domain = "twitter.com"
-  var properties = {
+  var preferences = {
       features: {
-        //TODO: remove direct when old UI is no longer in use,
-        //or remove it from use.
-        direct: true,
-        subject: false,
-        counter: true
       },
       shareTypes: [{
         type: 'public',
@@ -46,24 +41,11 @@ function (require,  common) {
         name: 'Direct Message',
         toLabel: 'type in name of recipient'
       }],
-      textLimit: 140,
-      shorten: true,
-      /***
-      serviceUrl: 'http://twitter.com',
-      revokeUrl: 'http://twitter.com/settings/connections',
-      signOutUrl: 'http://twitter.com/logout',
-      accountLink: function (account) {
-        return 'http://twitter.com/' + account.username;
+      constraints: {
+        textLimit: 140,
+        editableURLInMessage: true,
+        shortURLLength: 20
       },
-      forceLogin: {
-        name: 'force_login',
-        value: true
-      },
-      overlays: {
-        'Contacts': 'ContactsTwitter',
-        'widgets/AccountPanel': 'widgets/AccountPanelTwitter'
-      }
-      ***/
       auth: {
         type: "oauth",
         name: "twitter",
