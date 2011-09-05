@@ -46,7 +46,7 @@ define(function () {
           //Useful for sending previews in email.
           var preview = options.previews && options.previews[0];
           if (preview && preview.http_url && !preview.base64) {
-            emit('generateBase64Preview', preview.http_url);
+            emit('fxshare.generateBase64Preview', preview.http_url);
           }
         },
         
@@ -67,24 +67,20 @@ define(function () {
         },
 
         sizeToContent: function() {
-            emit('sizeToContent');
-        },
-        
-        reconfigure: function() {
-            emit('reconfigure');
+            emit('owa.mediation.sizeToContent');
         },
         
         updateChromeStatus: function(status) {
-            emit('updateStatus', status);
+            emit('fxshare.updateStatus', status);
         },
 
         // This is the 'success' notification defined by OWA.
         result: function(resultInfo) {
-            emit('result', resultInfo);
+            emit('owa.success', resultInfo);
         },
         
         error: function(appid) {
-            emit('error', {app:appid, result: "error"});
+            emit('owa.failure', {app:appid, result: "error"});
         }
     }
     return m;
