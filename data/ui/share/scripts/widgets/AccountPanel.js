@@ -70,8 +70,7 @@ function (object,         Widget,         $,        template,
       template: template,
 
       onCreate: function (onAsynCreateDone) {
-        var profile = this.owaservice.user,
-            name;
+        var profile = this.owaservice.user;
 
         this.hadFocusRequest = false;
         this.profile = profile;
@@ -84,12 +83,7 @@ function (object,         Widget,         $,        template,
         //Set up nicer display name
         // XXX for email services, we should show the email account, but we
         // cannot rely on userid being a 'pretty' name we can display
-        name = profile.username;
-        if (!name) {
-          name = profile.displayName;
-        }
-
-        this.displayName = name;
+        this.displayName = profile.displayName || profile.username;
 
         //Listen for updates to base64Preview
         this.base64PreviewSub = dispatch.sub('base64Preview', fn.bind(this, function (dataUrl) {

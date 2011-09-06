@@ -101,7 +101,7 @@ exports.getSharePanelWithApp = function(test, args, cb) {
       });
 
       let panel = getSharePanel();
-      panel.panel.port.once("ready", function() {
+      panel.panel.port.once("owa.mediation.ready", function() {
         // The mediator reported it is ready - now find the contentWindow for the mediator.
         // We can't get it via the panel, so we use our knowledge of the panel
         // implementation - it appended a XUL panel to the mainPopupSet.
