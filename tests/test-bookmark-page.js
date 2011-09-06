@@ -40,7 +40,7 @@ exports.testBookmarkPage = function(test) {
     }
     Services.prefs.setBoolPref("services.share.bookmarking", true);
     try {
-      sharePanel.onResult(shareMessage);
+      sharePanel.onOWASuccess(shareMessage);
     } finally {
       if (typeof oldPrefVal !== 'undefined') {
         Services.prefs.setBoolPref("services.share.bookmarking", oldPrefVal);
