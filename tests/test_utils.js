@@ -44,7 +44,7 @@ exports.removeCurrentTab = function(callback) {
   tab.close();
 }
 
-function getSharePanel() {
+function getSharePanel(args) {
   let wm = Cc["@mozilla.org/appshell/window-mediator;1"]
                 .getService(Ci.nsIWindowMediator);
 
@@ -56,7 +56,7 @@ function getSharePanel() {
   let services = topWindow.apps._services;
   let serviceName = "link.send";
   // first pretend to invoke a service so our panel is created.
-  return services.get(browser.contentWindow, serviceName, {}, function () {;});
+  return services.get(browser.contentWindow, serviceName, args || {}, function () {;});
 }
 exports.getSharePanel = getSharePanel;
 

@@ -84,6 +84,7 @@ exports.ensureNoTestApp = function(test, appPath, callback) {
 exports.getSharePanelWithApp = function(test, args, cb) {
   let appPath = args.appPath || "apps/basic/basic.webapp";
   let pageUrl = args.pageUrl || getTestUrl("page.html");
+  let shareArgs = args.shareArgs;
   exports.installTestApp(test, appPath, function(appOrigin) {
     // ensure a teardown method to unregister it!
     finalize(test, function(finish) {
@@ -100,7 +101,7 @@ exports.getSharePanelWithApp = function(test, args, cb) {
         })
       });
 
-      let panel = getSharePanel();
+      let panel = getSharePanel(shareArgs);
       panel.panel.port.once("owa.mediation.ready", function() {
         // The mediator reported it is ready - now find the contentWindow for the mediator.
         // We can't get it via the panel, so we use our knowledge of the panel

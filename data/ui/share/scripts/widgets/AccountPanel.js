@@ -65,7 +65,6 @@ function (object,         Widget,         $,        template,
 
       // text counter support
       counter: null,
-      urlSize: 26,
 
       template: template,
 
@@ -294,20 +293,8 @@ function (object,         Widget,         $,        template,
         if (!this.counter) {
           this.counter = new TextCounter($('textarea.message', this.node),
                                          $('.counter', this.node),
-                                         this.preferences.constraints.textLimit - this.urlSize);
+                                         this.preferences);
         }
-        this.updateCounter();
-      },
-
-      updateCounter: function () {
-        // Update counter. If using a short url from the web page itself, it could
-        // potentially be a different length than a bit.ly url so account for
-        // that. The + 1 is to account for a space before adding the URL to the
-        // tweet.
-        var tl = this.preferences.constraints.textLimit;
-        this.counter.updateLimit(this.options.shortUrl ?
-                                 tl - this.options.shortUrl.length + 1 :
-                                 tl - this.urlSize);
       },
 
       /**
