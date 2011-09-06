@@ -27,27 +27,43 @@
 
 define([ 'jquery', 'blade/object', 'blade/fn'],
 function ($,        object,         fn) {
+    // Note this is very similar to the regex in panel.js but with a few
+    // tweaks to better handle '?', '#' etc chars, allow a URL to finish on
+    // whitespace and the global flag.
+    var urlRegex = /\w+?:\/\/\w+(\.\w+)*(:\d+)?[^\d]+?(\s|$)/g;
 
     return object(null, null, {
-        init: function (node, countNode, limit) {
+        init: function (node, countNode, preferences) {
             this.dom = $(node);
             this.countDom = $(countNode);
-            this.limit = limit;
+            this.preferences = preferences;
             this.dom.bind('keyup', fn.bind(this, 'checkCount'));
             this.checkCount();
         },
 
         checkCount: function () {
             var value = this.dom[0].value,
-                count;
+                limit = this.preferences.constraints.textLimit,
+                effectiveLen = value.length,
+                remaining;
 
-            count = this.limit - value.length;
-            if (count < 0) {
+            if (this.preferences.constraints.shortURLLength && value) {
+                // we must find all URLs in the message and assume they will only
+                // actually take up shortURLLength chars.
+                var urlsInMsg = value.match(urlRegex);
+                for (var i=0; i<urlsInMsg.length; i++) {
+                    // trim whitespace.
+                    var thisMatch = urlsInMsg[i].replace(/^\s+|\s+$/g, '');
+                    effectiveLen += this.preferences.constraints.shortURLLength - thisMatch.length;
+                }
+            }
+            remaining = this.preferences.constraints.textLimit - effectiveLen;
+            if (remaining < 0) {
                 this.countDom.addClass("TextCountOver");
             } else {
                 this.countDom.removeClass("TextCountOver");
             }
-            this.countDom.text(count === this.limit ? '' : count);
+            this.countDom.text(remaining);
         },
 
         updateLimit: function (limit) {

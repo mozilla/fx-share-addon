@@ -54,9 +54,9 @@ function (object,         Widget,         $,        template,
    * This widget assumes its member variables include the following objects:
    *
    * options: the options for the URL/page being shared.
-   * owaservice: the owa service record (ie, with 'channel', 'characteristics',
+   * owaservice: the owa service record (ie, with 'channel', 'preferences',
    *             'login' etc elements).
-   * svc: The share service characteristics (from owaservice)
+   * svc: The share service preferences (from owaservice)
    */
   return object(Widget, null, function (parent) {
     return {
@@ -65,7 +65,6 @@ function (object,         Widget,         $,        template,
 
       // text counter support
       counter: null,
-      urlSize: 26,
 
       template: template,
 
@@ -74,8 +73,8 @@ function (object,         Widget,         $,        template,
 
         this.hadFocusRequest = false;
         this.profile = profile;
-        this.characteristics = this.owaservice.characteristics;
-        this.svc = this.characteristics // just for the jig template...
+        this.preferences = this.owaservice.preferences;
+        this.svc = this.preferences; // just for the jig template...
 
         //Set up the photo property
         this.photo = profile.photos && profile.photos[0] && profile.photos[0].value;
@@ -104,15 +103,16 @@ function (object,         Widget,         $,        template,
       focusAChild: function () {
         if (!this.hadFocusRequest) {
           // this is the first time we've seen a focus request, so now is
-          // a good time to select all the text in the "message" field - we
-          // don't want to auto-select it each time the panel get focus,
-          // just the first time - but sadly we can't create it in _onRender
-          // as setSelectionRange fails unless the field itself is visible
-          // (ie, it fails even if the fields parent isn't visible.)
-          // See bug 650670 for why we bother at all...
-          // It's quite possible that in the future more fields will need this.
+          // a good time to select all the default "message" text (ie, without
+          // the URL etc if it exists) - we don't want to auto-select it each
+          // time the panel get focus, just the first time - but sadly we
+          // can't create it in _onRender as setSelectionRange fails unless
+          // the field itself is visible (ie, it fails even if the fields
+          // parent isn't visible.) See bug 650670 for why we bother at all...
+          // It's quite possible that in the future more fields will need
+          // this.
           var msgElt = $(this.node).find('[name="message"]');
-          msgElt.get(0).setSelectionRange(0, msgElt.val().length);
+          msgElt.get(0).setSelectionRange(0, (this.options.message || '').length);
           this.hadFocusRequest = true;
         }
         var candidateNames = ["to", "subject", "message"];
@@ -169,9 +169,26 @@ function (object,         Widget,         $,        template,
 
         this.toDom.val(opts.to);
         root.find('[name="subject"]').val(opts.subject);
-        root.find('[name="message"]').val(opts.message);
+        var message = opts.message || '';
+        var constraints = this.preferences.constraints || {};
+        if (constraints.editableURLInMessage) {
+          // so we need some URL in the message itself - if the service doesn't
+          // do its own shortening we prefer a short url if we already have one.
+          var url;
+          if (constraints.shortURLLength) {
+            url = formLink; // prefers canonicalUrl over url.
+          } else {
+            url = opts.shortUrl || formLink;
+          }
+          if (url) {
+            // just use a single space to separate them - that is what
+            // twitter's intents does and it sounds reasonable...
+            message += " " + url;
+          }
+        }
+        root.find('[name="message"]').val(message);
 
-        var shareTypes = this.characteristics.shareTypes;
+        var shareTypes = this.preferences.shareTypes;
         if (shareTypes.length > 1) {
           var initialShareType = opts.shareType || this.options.shareType ||
                                  shareTypes[0].type;
@@ -197,7 +214,7 @@ function (object,         Widget,         $,        template,
           this.select.dom.bind('change', this.selectChangeFunc);
         }
 
-        if (this.characteristics.textLimit) {
+        if (this.preferences.constraints.textLimit) {
           this.startCounter();
         }
 
@@ -294,20 +311,8 @@ function (object,         Widget,         $,        template,
         if (!this.counter) {
           this.counter = new TextCounter($('textarea.message', this.node),
                                          $('.counter', this.node),
-                                         this.characteristics.textLimit - this.urlSize);
+                                         this.preferences);
         }
-        this.updateCounter();
-      },
-
-      updateCounter: function () {
-        // Update counter. If using a short url from the web page itself, it could
-        // potentially be a different length than a bit.ly url so account for
-        // that. The + 1 is to account for a space before adding the URL to the
-        // tweet.
-        var tl = this.characteristics.textLimit;
-        this.counter.updateLimit(this.options.shortUrl ?
-                                 tl - this.options.shortUrl.length + 1 :
-                                 tl - this.urlSize);
       },
 
       /**
@@ -349,7 +354,7 @@ function (object,         Widget,         $,        template,
       },
 
       getShareType: function (shareTypeValue) {
-        for (var i = 0, item; (item = this.characteristics.shareTypes[i]); i++) {
+        for (var i = 0, item; (item = this.preferences.shareTypes[i]); i++) {
           if (item.type === shareTypeValue) {
             return item;
           }
@@ -425,7 +430,8 @@ function (object,         Widget,         $,        template,
 
         if (this.options.shortUrl) {
           sendData.shorturl = this.options.shortUrl;
-        } else if (this.characteristics.shorten) {
+        } else if (this.preferences.shorten) {
+          // XXX - this is currently unused...
           sendData.shorten = true;
         }
 

@@ -31,20 +31,9 @@ function (require,  common) {
 
   var domain = "facebook.com";
 
-  var characteristics = {
-    type: 'facebook', // XXX - should be able to nuke this.
-
+  var preferences = {
     features: {
-      //TODO: remove direct when old UI is no longer in use,
-      //or remove it from use.
-      //direct: true,
-      subject: false,
-      counter: true,
-      medium: true,
-      picture: true, // url to an image
-      image: false, // base64 of image data
       title: true,
-      caption: true,
       description: true,
       privacy: true
     },
@@ -60,18 +49,9 @@ function (require,  common) {
       name: 'group wall',
       toLabel: 'type in the name of the group'
     }],
-    textLimit: 420,
-    serviceUrl: 'http://facebook.com',
-    revokeUrl: 'http://www.facebook.com/editapps.php?v=allowed',
-    signOutUrl: 'http://facebook.com',
-    /***
-    accountLink: function (account) {
-      return 'http://www.facebook.com/profile.php?id=' + account.userid;
+    constraints: {
+      textLimit: 420
     },
-    overlays: {
-      'widgets/AccountPanel': 'widgets/AccountPanelFaceBook'
-    }
-    ***/
     auth: {
       type: "oauth",
       name: "facebook",
@@ -346,13 +326,12 @@ function (require,  common) {
     api.send(args, cb, cberr);
   });
 
-  navigator.apps.services.registerHandler('link.send', 'getCharacteristics', function(args, cb, cberr) {
-    // some if these need re-thinking.
-    cb(characteristics);
+  navigator.apps.services.registerHandler('link.send', 'getPreferences', function(args, cb, cberr) {
+    cb(preferences);
   });
 
   navigator.apps.services.registerHandler('link.send', 'getLogin', function(args, cb, cberr) {
-    common.getLogin(domain, characteristics, cb, cberr);
+    common.getLogin(domain, preferences, cb, cberr);
   });
 
   navigator.apps.services.registerHandler('link.send', 'setAuthorization', function(args, cb, cberr) {
