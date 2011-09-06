@@ -155,43 +155,13 @@ function (object,         Widget,         $,        template,
       onLogin: function (evt) {
         // hrmph - tried to dispatch.pub back to the main panel but then
         // the popup was blocked.
-        var self = this,
-            app = this.owaservice.app,
-            auth = this.owaservice.characteristics.auth;
-        if (auth) {
-          if (auth.type == 'oauth') {
-            try {
-              var messageData = {app: app.origin,
-                                 oauth: auth};
-              navigator.apps.oauth.authorize(messageData, function(svc) {
-                self.owaservice.call("setAuthorization", svc,
-                        function(result) {
-                          dispatch.pub('serviceChanged', app.origin);
-                        },
-                        function(err, msg) {
-                          dump("error getting setting authorization" + err + "/" + msg + "\n");
-                        }
-                );
-              });
-            } catch(e) {
-              dump(e+"\n");
-            }
-          } else
-          if (auth.type == 'dialog') {
-            var url = auth.url,
-              w = auth.width || 600,
-              h = auth.height || 600,
-              win = window.open(url,
-                  "ffshareAuth",
-                  "dialog=yes, modal=yes, width="+w+", height="+h+", scrollbars=yes");
-            win.focus();
-          } else {
-            dump("XXX UNSUPPORTED LOGIN TYPE\n");
-          }
-          localStorage["last-app-selected"] = app.origin;
-        } else {
-          dump("XXX UNSUPPORTED AUTH TYPE\n");
+        try {
+          var app = this.owaservice.app;
+          navigator.apps.mediation.startLogin(app.origin);
+        } catch (e) {
+          dump("ex "+e.toString()+"\n");
         }
+        localStorage["last-app-selected"] = app.origin;
       },
 
       getRestoreState: function () {

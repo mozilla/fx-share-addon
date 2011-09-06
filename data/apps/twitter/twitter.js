@@ -355,6 +355,38 @@ function (require,  common) {
     activity.postResult(results);
   });
 
+
+  navigator.apps.services.registerHandler('link.send', 'getParameters', function(activity, credentials) {
+    activity.postResult({
+      type: "oauth",
+      name: "twitter",
+      displayName: "Twitter",
+      calls: {
+                signatureMethod     : "HMAC-SHA1",
+                requestTokenURL     : "https://twitter.com/oauth/request_token",
+                userAuthorizationURL: "https://twitter.com/oauth/authorize",
+                accessTokenURL      : "https://twitter.com/oauth/access_token"
+              },
+      key: "lppkBgcpuhe2TKZIRVoQg",
+      secret: "M6hwPkgEyqxkDz583LFYAv5dTVg1AsKIXHFPiIFhsM",
+      params: null,
+      completionURI: "http://oauthcallback.local/access.xhtml",
+      version: "1.0",
+      tokenRx: "oauth_verifier=([^&]*)"
+    });
+  });
+
+  navigator.apps.services.registerHandler('link.send', 'getCredentials', function(activity, credentials) {
+    common.getLogin(activity, credentials);
+  });
+
+  navigator.apps.services.registerHandler('link.send', 'validateCredentials', function(activity, credentials) {
+  });
+
+  navigator.apps.services.registerHandler('link.send', 'clearCredentials', function(activity, credentials) {
+    common.logout(activity, credentials);
+  });
+
   // Tell OWA we are now ready to be invoked.
   navigator.apps.services.ready();
 });

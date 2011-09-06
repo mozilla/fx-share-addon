@@ -431,12 +431,13 @@ function (require,  common) {
   });
 
   navigator.apps.services.registerHandler('link.send', 'setAuthorization', function(activity, credentials) {
+    dump("in setAuthorization "+JSON.stringify(activity)+"\n");
     api.getProfile(activity, credentials);
   });
 
   
   // LOGIN activity
-  navigator.apps.services.registerHandler('http://webactivities.org/login', 'getParameters', function(activity, credentials) {
+  navigator.apps.services.registerHandler('link.send', 'getParameters', function(activity, credentials) {
     activity.postResult({
       type: "oauth",
       name: "facebook",
@@ -456,14 +457,14 @@ function (require,  common) {
     });
   });
 
-  navigator.apps.services.registerHandler('http://webactivities.org/login', 'getCredentials', function(activity, credentials) {
+  navigator.apps.services.registerHandler('link.send', 'getCredentials', function(activity, credentials) {
     common.getLogin(activity, credentials);
   });
 
-  navigator.apps.services.registerHandler('http://webactivities.org/login', 'validateCredentials', function(activity, credentials) {
+  navigator.apps.services.registerHandler('link.send', 'validateCredentials', function(activity, credentials) {
   });
 
-  navigator.apps.services.registerHandler('http://webactivities.org/login', 'clearCredentials', function(activity, credentials) {
+  navigator.apps.services.registerHandler('link.send', 'clearCredentials', function(activity, credentials) {
     common.logout(activity, credentials);
   });
 

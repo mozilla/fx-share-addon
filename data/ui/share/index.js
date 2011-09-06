@@ -549,6 +549,10 @@ function (require,   $,        object,         fn,
             dispatch.pub('serviceChanged', readyService.app.origin);
           });
         }.bind(svc));
+        // listen for any serviceChanged notification specific to this service, happens during login flow
+        svc.on("serviceChanged", function() {
+          dispatch.pub('serviceChanged', this.app.origin);
+        }.bind(svc));
       }
     }
   );
