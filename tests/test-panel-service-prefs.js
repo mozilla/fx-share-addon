@@ -1,4 +1,5 @@
 // Test the F1 "ServicePanel" WRT how the service 'preferences' change its behaviour.
+const {getTestUrl} = require("./test_utils");
 const {getSharePanelWithApp, testAppSequence} = require("./app_helpers");
 const keys = require("dom/events/keys");
 
@@ -62,3 +63,57 @@ exports.testTextCounterMultipleShortUrl = function(test) {
   let expectedCounter = 140 - prefix.length - 20 - 3;
   testTextCounterHelper(test, constraints, testVal, expectedCounter);
 };
+
+function testEditableUrlInMessageHelper(test, appArgs, constraints, expectedMessage)
+{
+  test.waitUntilDone();
+  getSharePanelWithApp(test, appArgs, function(appInfo) {
+    let {jqAppWidget, jqPanelContentWindow} = appInfo;
+    let accountPanelDiv = jqAppWidget.find(".accountPanel");
+    let seq = [
+      {method: 'getPreferences', successArgs:
+          {constraints: constraints,
+           shareTypes: [{type: 'type', name: 'name'}]
+          }
+      },
+      {method: 'getLogin', successArgs: {user: {displayName: 'test user'}}
+      }
+    ];
+    testAppSequence(test, appInfo, seq, function () {
+      test.waitUntil(function() {
+        return accountPanelDiv.is(":visible");
+      }).then(function () {
+        // check the text in the field.
+        let message = accountPanelDiv.find('[name="message"]');
+        test.assertEqual(message.val(), expectedMessage);
+        test.done();
+      });
+    });
+  });
+}
+
+exports.testEditableUrlInMessageNoDefault = function(test) {
+  let pageUrl = getTestUrl("page.html");
+  let appArgs = {pageUrl: pageUrl};
+  let constraints = {editableURLInMessage: true};
+  let expected = " " + pageUrl;
+  testEditableUrlInMessageHelper(test, appArgs, constraints, expected);
+}
+
+exports.testEditableUrlInMessageNullDefault = function(test) {
+  let pageUrl = getTestUrl("page.html");
+  let appArgs = {shareArgs: {message: null},
+                 pageUrl: pageUrl};
+  let constraints = {editableURLInMessage: true};
+  let expected = " " + pageUrl;
+  testEditableUrlInMessageHelper(test, appArgs, constraints, expected);
+}
+
+exports.testEditableUrlInMessageDefault = function(test) {
+  let pageUrl = getTestUrl("page.html");
+  let appArgs = {shareArgs: {message: "the message"},
+                 pageUrl: pageUrl};
+  let constraints = {editableURLInMessage: true};
+  let expected = "the message " + pageUrl;
+  testEditableUrlInMessageHelper(test, appArgs, constraints, expected);
+}

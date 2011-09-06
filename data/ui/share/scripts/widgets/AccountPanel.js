@@ -103,15 +103,16 @@ function (object,         Widget,         $,        template,
       focusAChild: function () {
         if (!this.hadFocusRequest) {
           // this is the first time we've seen a focus request, so now is
-          // a good time to select all the text in the "message" field - we
-          // don't want to auto-select it each time the panel get focus,
-          // just the first time - but sadly we can't create it in _onRender
-          // as setSelectionRange fails unless the field itself is visible
-          // (ie, it fails even if the fields parent isn't visible.)
-          // See bug 650670 for why we bother at all...
-          // It's quite possible that in the future more fields will need this.
+          // a good time to select all the default "message" text (ie, without
+          // the URL etc if it exists) - we don't want to auto-select it each
+          // time the panel get focus, just the first time - but sadly we
+          // can't create it in _onRender as setSelectionRange fails unless
+          // the field itself is visible (ie, it fails even if the fields
+          // parent isn't visible.) See bug 650670 for why we bother at all...
+          // It's quite possible that in the future more fields will need
+          // this.
           var msgElt = $(this.node).find('[name="message"]');
-          msgElt.get(0).setSelectionRange(0, msgElt.val().length);
+          msgElt.get(0).setSelectionRange(0, (this.options.message || '').length);
           this.hadFocusRequest = true;
         }
         var candidateNames = ["to", "subject", "message"];
@@ -168,7 +169,24 @@ function (object,         Widget,         $,        template,
 
         this.toDom.val(opts.to);
         root.find('[name="subject"]').val(opts.subject);
-        root.find('[name="message"]').val(opts.message);
+        var message = opts.message || '';
+        var constraints = this.preferences.constraints || {};
+        if (constraints.editableURLInMessage) {
+          // so we need some URL in the message itself - if the service doesn't
+          // do its own shortening we prefer a short url if we already have one.
+          var url;
+          if (constraints.shortURLLength) {
+            url = formLink; // prefers canonicalUrl over url.
+          } else {
+            url = opts.shortUrl || formLink;
+          }
+          if (url) {
+            // just use a single space to separate them - that is what
+            // twitter's intents does and it sounds reasonable...
+            message += " " + url;
+          }
+        }
+        root.find('[name="message"]').val(message);
 
         var shareTypes = this.preferences.shareTypes;
         if (shareTypes.length > 1) {
