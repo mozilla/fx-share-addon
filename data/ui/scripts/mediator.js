@@ -67,7 +67,14 @@ define(function () {
     },
 
     sizeToContent: function() {
-      emit('owa.mediation.sizeToContent');
+      // use our wrapper to get the right size, using the body element
+      // for sizing is not working since body.style.overflow=hidden.
+      var wrapper = document.getElementById("wrapper");
+      var args = {
+        width: wrapper.scrollWidth +4,
+        height: wrapper.scrollHeight +4
+      };
+      emit('owa.mediation.sizeToContent', args);
     },
 
     updateChromeStatus: function(status) {
