@@ -189,7 +189,7 @@ function (object,         Widget,         $,        template,
         root.find('[name="message"]').val(message);
 
         var shareTypes = this.parameters.shareTypes;
-        if (shareTypes.length > 1) {
+        if (shareTypes && shareTypes.length > 1) {
           var initialShareType = opts.shareType || this.options.shareType ||
                                  shareTypes[0].type;
           //Insert a Select widget if it is desired.
