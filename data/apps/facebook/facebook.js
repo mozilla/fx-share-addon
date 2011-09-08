@@ -35,7 +35,8 @@ function (require,  common) {
     features: {
       title: true,
       description: true,
-      privacy: true
+      privacy: true,
+      picture: true
     },
     shareTypes: [{
       type: 'wall',
@@ -408,7 +409,7 @@ function (require,  common) {
     api.getProfile(activity, credentials);
   });
 
-  
+
   // LOGIN activity
   navigator.apps.services.registerHandler('link.send', 'getParameters', function(activity, credentials) {
     // This is currently slightly confused - it is both link.send parameters and auth parameters.
