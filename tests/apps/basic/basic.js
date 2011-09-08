@@ -8,18 +8,19 @@ var pendingCalls = {};
 var isFinished = false;
 
 // A 'test' service used by the tests to control this app.
-navigator.apps.services.registerHandler('test', 'resume', function(args, cb, cberr) {
+navigator.apps.services.registerHandler('test', 'resume', function(activity, credentials) {
   // resume from a 'blocked' call.
+  var args = activity.data;
   var attemptNum = 0;
   function doit() {
     if (isFinished) {
-      cberr("test_suite_error", "this app has been finalized");
+      activity.postException({code: "test_suite_error", message: "this app has been finalized"});
       return;
     }
     if (!(args.method in pendingCalls)) {
       // so the call hasn't yet been made to the app - sleep and retry later.
       if (++attemptNum > 100) {
-        cberr("test_error", "gave up waiting for a call to '" + args.method + "'");
+        activity.postException({code: "test_error", message: "gave up waiting for a call to '" + args.method + "'"});
         return;
       }
       setTimeout(doit, 100);
@@ -30,48 +31,48 @@ navigator.apps.services.registerHandler('test', 'resume', function(args, cb, cbe
   
     // make the pending callback with the args supplied by the test suite
     if (args.successArgs) {
-      pendingRec.cb(args.successArgs);
+      pendingRec.postResult(args.successArgs);
     } else {
-      pendingRec.cberr(args.errorType, args.errorValue);
+      pendingRec.postException({code: args.errorType, message: args.errorValue});
     }
     // and return ther original args presented to the method back to the test
     // suite so it can validate if necessary.
-    cb(pendingRec.methodArgs);
+    activity.postResult(pendingRec.data);
   }
   doit();
 });
 
-navigator.apps.services.registerHandler('test', 'finish', function(args, cb, cberr) {
+navigator.apps.services.registerHandler('test', 'finish', function(activity, credentials) {
   isFinished = true;
   if (pendingCalls.length) {
-    cberr("test_suite_error", "finalized while pending calls are available")
+    activity.postException({code:"test_suite_error", message:"finalized while pending calls are available"})
   } else {
-    cb();
+    activity.postResult();
   }
 });
 
 // The helper for all the "real" methods to wait for instructions from the
 // test suite.
-function waitForResumeInstructions(methodName, args, cb, cberr) {
+function waitForResumeInstructions(methodName, activity, credentials) {
   if (isFinished) {
-    cberr("test_suite_error", "this app has been finalized");
+    activity.postException({code:"test_suite_error", message:"this app has been finalized"});
     return;
   }
   if (methodName in pendingCalls) {
-    cberr("test_suite_error", "already a pending call for '" + methodName + "'\n");
+    activity.postException({code:"test_suite_error", message:"already a pending call for '" + methodName + "'\n"});
     return;
   }
-  pendingCalls[methodName] = {methodArgs: args, cb: cb, cberr: cberr};
+  pendingCalls[methodName] = activity;
 };
 
 
 // The 'link.send' service used by F1 while under test.
-navigator.apps.services.registerHandler('link.send', 'getCharacteristics', function(args, cb, cberr) {
-  waitForResumeInstructions('getCharacteristics', args, cb, cberr);
+navigator.apps.services.registerHandler('link.send', 'getCharacteristics', function(activity, credentials) {
+  waitForResumeInstructions('getCharacteristics', activity, credentials);
 });
 
-navigator.apps.services.registerHandler('link.send', 'getLogin', function(args, cb, cberr) {
-  waitForResumeInstructions('getLogin', args, cb, cberr);
+navigator.apps.services.registerHandler('link.send', 'getLogin', function(activity, credentials) {
+  waitForResumeInstructions('getLogin', activity, credentials);
 });
 
 navigator.apps.services.ready();

@@ -203,6 +203,17 @@ function (object,         Widget,         $,        template,
 
         //Create ellipsis for anything wanting ... overflow
         $(".overflow", this.node).textOverflow();
+
+        // we're resizing the page description via css, but we also need to
+        // notify the panel to resize, otherwise part of our panel will get
+        // hidden.
+        $('textarea.pageDescription', this.node).bind('focus', function (e) {
+          mediator.sizeToContent();
+        });
+        $('textarea.pageDescription', this.node).bind('blur', function (e) {
+          mediator.sizeToContent();
+        });
+
       },
 
       validate: function (sendData) {

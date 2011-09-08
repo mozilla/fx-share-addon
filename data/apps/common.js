@@ -33,47 +33,8 @@ function (require,   $) {
     
   };
   common.prototype = {
-    send: function(data, cb, cberr) {
-      // first we need to "graft" the account data with the send data.
-      var key = "ff-share-" + data.domain;
-      var strval = window.localStorage.getItem(key);
-      if (strval) {
-        data.account = strval;
-      }
-      // Do the send!
-      $.ajax('/api/send', {
-        type: 'POST',
-        domain: data.domain,
-        data: data,
-        dataType: 'json',
-        success: function (json, textStatus, jqXHR) {
-          if (json.error && json.error.status) {
-            var code = json.error.status;
-            // XXX need to find out what error codes everyone uses
-            // oauth+smtp will return a 535 on authentication failure
-            if (code ===  401 || code === 535) {
-              t.error("authentication");
-            } else if (json.error.code === 'Client.HumanVerificationRequired') {
-              t.error("captcha", [json.error.detail, null])
-            } else if (json.error.code === 'Client.WrongInput') {
-              t.error("captcha", [json.error.detail, json.error])
-            } else {
-              t.error("error", json.error.message)
-            }
-          } else if (json.error) {
-            t.error("error", json.error.message)
-          } else {
-            // it worked!
-            cb(json);
-          }
-        },
-        error: function (xhr, textStatus, err) {
-          cberr("http_error", xhr.status);
-        }
-      });
-    },
 
-    getLogin: function(domain, config, cb, cberr) {
+    getLogin: function(domain, activity, credentials) {
       var key = "ff-share-" + domain;
       var strval = window.localStorage.getItem(key);
       var result = {};
@@ -91,9 +52,6 @@ function (require,   $) {
             if (acct.hasOwnProperty(attr)) retUser[attr] = acct[attr];
           }
           result.user = retUser;
-        } else
-        if (config.auth) {
-          result.auth = config.auth;
         }
       } catch(e) {
         dump("common.getLogin error "+e+"\n");
@@ -102,13 +60,13 @@ function (require,   $) {
         cberr(e);
         return;
       }
-      cb(result);
+      activity.postResult(result);
     },
 
-    logout: function(domain, args, cb, cberr) {
+    logout: function(domain, activity, credentials) {
       var key = "ff-share-" + domain;
       window.localStorage.removeItem(key);
-      cb({status: "ok"});
+      activity.postResult({status: "ok"});
     }
   }
 

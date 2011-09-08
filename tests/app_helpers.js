@@ -192,13 +192,21 @@ function _testAppSequence(test, appInfo, seq, cbdone) {
                     errorType: item.errorType, errorValue: item.errorValue};
   // invoke our special "test.resume" method.
   // console.log("test is unblocking call to", item.method);
-  invokeService(appFrame, "test", "resume", resumeArgs,
+  let activity = {
+    action: "test",
+    data: resumeArgs
+  };
+  let finish_activity = {
+    action: "test",
+    data: {}
+  }
+  invokeService(appFrame, activity, "resume",
     function(result) {
       // The previously blocked call has returned.
       function cbresume() {
         if (seq.length === 0) {
           // out of items - tell the app we are done and to check itself.
-          invokeService(appFrame, "test", "finish", {},
+          invokeService(appFrame, finish_activity, "finish",
             function() {
               // call the final callback or just finish the test if not specified.
               if (cbdone) {

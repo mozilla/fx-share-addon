@@ -86,13 +86,11 @@ function (object,         Widget,         $,        template,
         var self = this;
         this.owaservice.call("getLogin", {},
           function(result) {
-            self.owaservice.auth = result.auth;
             self.owaservice.user = result.user;
             self.updateServicePanel();
           },
-          function(err, message) {
-            dump("failed to get owa login info: " + err + ": " + message + "\n");
-            self.owaservice.auth = null;
+          function(errob) {
+            dump("failed to get owa login info: " + errob.code + ": " + errob.message + "\n");
             self.updateServicePanel();
           }
         );
@@ -157,42 +155,13 @@ function (object,         Widget,         $,        template,
       onLogin: function (evt) {
         // hrmph - tried to dispatch.pub back to the main panel but then
         // the popup was blocked.
-        var self = this,
-            app = this.owaservice.app;
-        if (this.owaservice.auth) {
-          if (this.owaservice.auth.type == 'oauth') {
-            try {
-              var messageData = {app: app.origin,
-                                 oauth: this.owaservice.auth};
-              navigator.apps.oauth.authorize(messageData, function(svc) {
-                self.owaservice.call("setAuthorization", svc,
-                        function(result) {
-                          dispatch.pub('serviceChanged', app.origin);
-                        },
-                        function(err, msg) {
-                          dump("error getting setting authorization" + err + "/" + msg + "\n");
-                        }
-                );
-              });
-            } catch(e) {
-              dump(e+"\n");
-            }
-          } else
-          if (this.owaservice.auth.type == 'dialog') {
-            var url = this.owaservice.auth.url,
-              w = this.owaservice.auth.width || 600,
-              h = this.owaservice.auth.height || 600,
-              win = window.open(url,
-                  "ffshareAuth",
-                  "dialog=yes, modal=yes, width="+w+", height="+h+", scrollbars=yes");
-            win.focus();
-          } else {
-            dump("XXX UNSUPPORTED LOGIN TYPE\n");
-          }
-          localStorage["last-app-selected"] = app.origin;
-        } else {
-          dump("XXX UNSUPPORTED AUTH TYPE\n");
+        try {
+          var app = this.owaservice.app;
+          navigator.apps.mediation.startLogin(app.origin);
+        } catch (e) {
+          dump("ex "+e.toString()+"\n");
         }
+        localStorage["last-app-selected"] = app.origin;
       },
 
       getRestoreState: function () {

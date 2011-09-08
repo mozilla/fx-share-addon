@@ -399,8 +399,8 @@ function (require,   $,        object,         fn,
             //mediator.reconfigure();
             dispatch.pub('serviceChanged', svcRec.app.origin);
           },
-          function(err, message) {
-            dump("failed to logout: " + err + ": " + message + "\n");
+          function(errob) {
+            dump("failed to logout: " + errob.code + ": " + errob.message + "\n");
             // may as well update the accounts anyway incase it really did work!
             //mediator.reconfigure();
             dispatch.pub('serviceChanged', svcRec.app.origin);
@@ -532,9 +532,9 @@ function (require,   $,        object,         fn,
 
   // tell OWA we are ready...
   window.navigator.apps.mediation.ready(
-    function(method, args, services) {
+    function(activity, services) {
       _deleteOldServices();
-      options = args;
+      options = activity.data;
       owaservices = services;
       onFirstShareState();
       displayAccounts();
@@ -548,6 +548,10 @@ function (require,   $,        object,         fn,
             readyService.characteristics = chars;
             dispatch.pub('serviceChanged', readyService.app.origin);
           });
+        }.bind(svc));
+        // listen for any serviceChanged notification specific to this service, happens during login flow
+        svc.on("serviceChanged", function() {
+          dispatch.pub('serviceChanged', this.app.origin);
         }.bind(svc));
       }
     }
