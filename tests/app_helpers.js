@@ -84,6 +84,7 @@ exports.ensureNoTestApp = function(test, appPath, callback) {
 exports.getSharePanelWithApp = function(test, args, cb) {
   let appPath = args.appPath || "apps/basic/basic.webapp";
   let pageUrl = args.pageUrl || getTestUrl("page.html");
+  let shareArgs = args.shareArgs;
   exports.installTestApp(test, appPath, function(appOrigin) {
     // ensure a teardown method to unregister it!
     finalize(test, function(finish) {
@@ -100,7 +101,7 @@ exports.getSharePanelWithApp = function(test, args, cb) {
         })
       });
 
-      let panel = getSharePanel();
+      let panel = getSharePanel(shareArgs);
       panel.panel.port.once("owa.mediation.ready", function() {
         // The mediator reported it is ready - now find the contentWindow for the mediator.
         // We can't get it via the panel, so we use our knowledge of the panel
@@ -152,7 +153,7 @@ The basic mechanism is this:
 
 * Mediator loads app, app responds with the normal navigator.apps.services.ready()
 * Mediator calls first method on the app (in our case, that will normally be
-  link.send.getCharacteristics)
+  link.send.getParameters)
 * App "blocks" on this call - it doesn't call the callback - so the mediator
   itself is "blocked" waiting for the callback to happen - which means we
   can test initial state of the mediator while it is waiting for the response.

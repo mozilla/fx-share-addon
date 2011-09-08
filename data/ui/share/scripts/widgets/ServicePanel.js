@@ -50,7 +50,7 @@ function (object,         Widget,         $,        template,
    * Define the widget.
    * This widget assumes its member variables include the following objects:
    *
-   * owaservice: the owa service record (ie, with 'channel', 'characteristics',
+   * owaservice: the owa service record (ie, with 'channel', 'parameters',
    *             'login' etc elements).
    */
   return object(Widget, null, function (parent) {
@@ -97,12 +97,12 @@ function (object,         Widget,         $,        template,
       },
 
       updateServicePanel: function () {
-        // If either 'characteristics' or 'login' are null, we are waiting
+        // If either 'parameters' or 'login' are null, we are waiting
         // for those methods to return.
         $(".accountLoading", this.node).hide();
         $(".accountLogin", this.node).show();
         var showPanel = false;
-        if (!this.owaservice.characteristics) {
+        if (!this.owaservice.parameters) {
           // waiting for the app to load and respond.
           $(".accountLoading", this.node).show();
           $(".accountLogin", this.node).hide();

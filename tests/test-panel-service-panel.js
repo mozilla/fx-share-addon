@@ -9,14 +9,14 @@ exports.testAccountLoads = function(test) {
     let accountLoadingDiv = jqAppWidget.find(".accountLoading");
     let accountLoginDiv = jqAppWidget.find(".accountLogin");
     let accountPanelDiv = jqAppWidget.find(".accountPanel");
-    // app is "blocked" in getCharacteristics, so only the "loading" div should be visible.
+    // app is "blocked" in getParameters, so only the "loading" div should be visible.
     test.assert(accountLoadingDiv.is(":visible"));
     test.assert(!accountLoginDiv.is(":visible"));
     test.assert(!accountPanelDiv.is(":visible"));
 
     // now kick off the sequence of "unblocking" calls and testing each state.
     let seq = [
-      {method: 'getCharacteristics', successArgs: {},
+      {method: 'getParameters', successArgs: {},
        callback: function(cbresume, results) {
         // only 'loading' should still be visible as getLogin is "blocked"
         test.assert(accountLoadingDiv.is(":visible"));
@@ -54,7 +54,7 @@ exports.testAccountLoadsTwice = function(test) {
     // We've tested this first state above.
     // so kick off the sequence of "unblocking" calls and testing each state.
     let seq = [
-      {method: 'getCharacteristics', successArgs: {}
+      {method: 'getParameters', successArgs: {}
       },
       {method: 'getLogin', successArgs: {user: {displayName: 'test user'}}
       }
@@ -67,14 +67,14 @@ exports.testAccountLoadsTwice = function(test) {
         let accountLoadingDiv = jqAppWidget.find(".accountLoading");
         let accountLoginDiv = jqAppWidget.find(".accountLogin");
         let accountPanelDiv = jqAppWidget.find(".accountPanel");
-        // app is "blocked" in getCharacteristics, so only the "loading" div should be visible.
+        // app is "blocked" in getParameters, so only the "loading" div should be visible.
         test.assert(accountLoadingDiv.is(":visible"));
         test.assert(!accountLoginDiv.is(":visible"));
         test.assert(!accountPanelDiv.is(":visible"));
 
         // now kick off the sequence of "unblocking" calls and testing each state.
         let seq2 = [
-          {method: 'getCharacteristics', successArgs: {},
+          {method: 'getParameters', successArgs: {},
            callback: function(cbresume, results) {
             // only 'loading' should still be visible as getLogin is "blocked"
             test.assert(accountLoadingDiv.is(":visible"));
@@ -109,11 +109,11 @@ exports.testLoginPanelShows = function(test) {
     let accountLoadingDiv = jqAppWidget.find(".accountLoading");
     let accountLoginDiv = jqAppWidget.find(".accountLogin");
     let accountPanelDiv = jqAppWidget.find(".accountPanel");
-    // app is "blocked" in getCharacteristics - and we've tested this state
+    // app is "blocked" in getParameters - and we've tested this state
     // above - so just kick off the sequence of unblocks and tests.
     let seq = [
-      // no callback for getCharacteristics - we've tested this above.
-      {method: 'getCharacteristics', successArgs: {}
+      // no callback for getParameters - we've tested this above.
+      {method: 'getParameters', successArgs: {}
       },
       {method: 'getLogin', successArgs: {auth: "something"},
        callback: function(cbresume) {

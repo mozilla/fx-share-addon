@@ -30,15 +30,8 @@ define([ "require", "../common"],
 
 function (require,  common) {
   var domain = "twitter.com"
-  var characteristics = {
-      type: 'twitter', // XXX - should be able to nuke this.
-
+  var parameters = {
       features: {
-        //TODO: remove direct when old UI is no longer in use,
-        //or remove it from use.
-        direct: true,
-        subject: false,
-        counter: true
       },
       shareTypes: [{
         type: 'public',
@@ -48,24 +41,11 @@ function (require,  common) {
         name: 'Direct Message',
         toLabel: 'type in name of recipient'
       }],
-      textLimit: 140,
-      shorten: true,
-      /***
-      serviceUrl: 'http://twitter.com',
-      revokeUrl: 'http://twitter.com/settings/connections',
-      signOutUrl: 'http://twitter.com/logout',
-      accountLink: function (account) {
-        return 'http://twitter.com/' + account.username;
+      constraints: {
+        textLimit: 140,
+        editableURLInMessage: true,
+        shortURLLength: 20
       },
-      forceLogin: {
-        name: 'force_login',
-        value: true
-      },
-      overlays: {
-        'Contacts': 'ContactsTwitter',
-        'widgets/AccountPanel': 'widgets/AccountPanelTwitter'
-      }
-      ***/
       auth: {
         type: "oauth",
         name: "twitter",
@@ -83,7 +63,6 @@ function (require,  common) {
         version: "1.0",
         tokenRx: "oauth_verifier=([^&]*)"
       }
-      
     };
 
   var api = {
@@ -269,11 +248,6 @@ function (require,  common) {
     api.send(activity, credentials);
   });
 
-  navigator.apps.services.registerHandler('link.send', 'getCharacteristics', function(activity, credentials) {
-    // some if these need re-thinking.
-    activity.postResult(characteristics);
-  });
-
   navigator.apps.services.registerHandler('link.send', 'getLogin', function(activity, credentials) {
     common.getLogin(domain, activity, credentials);
   });
@@ -357,25 +331,8 @@ function (require,  common) {
 
 
   navigator.apps.services.registerHandler('link.send', 'getParameters', function(activity, credentials) {
-    activity.postResult({
-     auth: {
-      type: "oauth",
-      name: "twitter",
-      displayName: "Twitter",
-      calls: {
-                signatureMethod     : "HMAC-SHA1",
-                requestTokenURL     : "https://twitter.com/oauth/request_token",
-                userAuthorizationURL: "https://twitter.com/oauth/authorize",
-                accessTokenURL      : "https://twitter.com/oauth/access_token"
-              },
-      key: "lppkBgcpuhe2TKZIRVoQg",
-      secret: "M6hwPkgEyqxkDz583LFYAv5dTVg1AsKIXHFPiIFhsM",
-      params: null,
-      completionURI: "http://oauthcallback.local/access.xhtml",
-      version: "1.0",
-      tokenRx: "oauth_verifier=([^&]*)"
-     }
-    });
+    // This is currently slightly confused - it is both link.send parameters and auth parameters.
+    activity.postResult(parameters);
   });
 
   navigator.apps.services.registerHandler('link.send', 'getCredentials', function(activity, credentials) {

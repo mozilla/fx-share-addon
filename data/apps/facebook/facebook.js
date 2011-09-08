@@ -31,20 +31,9 @@ function (require,  common) {
 
   var domain = "facebook.com";
 
-  var characteristics = {
-    type: 'facebook', // XXX - should be able to nuke this.
-
+  var parameters = {
     features: {
-      //TODO: remove direct when old UI is no longer in use,
-      //or remove it from use.
-      //direct: true,
-      subject: false,
-      counter: true,
-      medium: true,
-      picture: true, // url to an image
-      image: false, // base64 of image data
       title: true,
-      caption: true,
       description: true,
       privacy: true
     },
@@ -60,29 +49,18 @@ function (require,  common) {
       name: 'group wall',
       toLabel: 'type in the name of the group'
     }],
-    textLimit: 420,
-    serviceUrl: 'http://facebook.com',
-    revokeUrl: 'http://www.facebook.com/editapps.php?v=allowed',
-    signOutUrl: 'http://facebook.com',
-    /***
-    accountLink: function (account) {
-      return 'http://www.facebook.com/profile.php?id=' + account.userid;
+    constraints: {
+      textLimit: 420
     },
-    overlays: {
-      'widgets/AccountPanel': 'widgets/AccountPanelFaceBook'
-    }
-    ***/
     auth: {
       type: "oauth",
       name: "facebook",
       displayName: "Facebook",
       calls: {
                 signatureMethod     : "HMAC-SHA1",
-                userAuthorizationURL: "https://www.facebook.com/dialog/oauth",
-                accessTokenURL      : ""
+                userAuthorizationURL: "https://www.facebook.com/dialog/oauth"
               },
       key: "110796232295543",
-      secret: "",
       params: {
           scope: "publish_stream,offline_access,user_groups",
           response_type: "token"
@@ -345,11 +323,6 @@ function (require,  common) {
     api.send(activity, credentials);
   });
 
-  navigator.apps.services.registerHandler('link.send', 'getCharacteristics', function(activity, credentials) {
-    // some if these need re-thinking.
-    activity.postResult(characteristics);
-  });
-
   navigator.apps.services.registerHandler('link.send', 'getLogin', function(activity, credentials) {
     common.getLogin(domain, activity, credentials);
   });
@@ -438,25 +411,8 @@ function (require,  common) {
   
   // LOGIN activity
   navigator.apps.services.registerHandler('link.send', 'getParameters', function(activity, credentials) {
-    activity.postResult({
-     auth: {
-      type: "oauth",
-      name: "facebook",
-      displayName: "Facebook",
-      calls: {
-                signatureMethod     : "HMAC-SHA1",
-                userAuthorizationURL: "https://www.facebook.com/dialog/oauth"
-              },
-      key: "110796232295543",
-      params: {
-          scope: "publish_stream,offline_access,user_groups",
-          response_type: "token"
-          },
-      completionURI: "http://www.oauthcallback.local/postauthorize",
-      version: "2.0",
-      tokenRx: "#access_token=([^&]*)"
-     }
-    });
+    // This is currently slightly confused - it is both link.send parameters and auth parameters.
+    activity.postResult(parameters);
   });
 
   navigator.apps.services.registerHandler('link.send', 'getCredentials', function(activity, credentials) {

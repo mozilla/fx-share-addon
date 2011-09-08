@@ -67,8 +67,8 @@ function waitForResumeInstructions(methodName, activity, credentials) {
 
 
 // The 'link.send' service used by F1 while under test.
-navigator.apps.services.registerHandler('link.send', 'getCharacteristics', function(activity, credentials) {
-  waitForResumeInstructions('getCharacteristics', activity, credentials);
+navigator.apps.services.registerHandler('link.send', 'getParameters', function(activity, credentials) {
+  waitForResumeInstructions('getParameters', activity, credentials);
 });
 
 navigator.apps.services.registerHandler('link.send', 'getLogin', function(activity, credentials) {
