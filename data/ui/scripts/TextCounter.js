@@ -51,10 +51,12 @@ function ($,        object,         fn) {
                 // we must find all URLs in the message and assume they will only
                 // actually take up shortURLLength chars.
                 var urlsInMsg = value.match(urlRegex);
-                for (var i=0; i<urlsInMsg.length; i++) {
-                    // trim whitespace.
-                    var thisMatch = urlsInMsg[i].replace(/^\s+|\s+$/g, '');
-                    effectiveLen += this.parameters.constraints.shortURLLength - thisMatch.length;
+                if (urlsInMsg) {
+                    for (var i=0; i<urlsInMsg.length; i++) {
+                        // trim whitespace.
+                        var thisMatch = urlsInMsg[i].replace(/^\s+|\s+$/g, '');
+                        effectiveLen += this.parameters.constraints.shortURLLength - thisMatch.length;
+                    }
                 }
             }
             remaining = this.parameters.constraints.textLimit - effectiveLen;
