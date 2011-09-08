@@ -153,7 +153,7 @@ The basic mechanism is this:
 
 * Mediator loads app, app responds with the normal navigator.apps.services.ready()
 * Mediator calls first method on the app (in our case, that will normally be
-  link.send.getPreferences)
+  link.send.getParameters)
 * App "blocks" on this call - it doesn't call the callback - so the mediator
   itself is "blocked" waiting for the callback to happen - which means we
   can test initial state of the mediator while it is waiting for the response.

@@ -30,7 +30,7 @@ define([ "require", "../common"],
 
 function (require,  common) {
   var domain = "twitter.com"
-  var preferences = {
+  var parameters = {
       features: {
       },
       shareTypes: [{
@@ -250,12 +250,12 @@ function (require,  common) {
     api.send(args, cb, cberr);
   });
 
-  navigator.apps.services.registerHandler('link.send', 'getPreferences', function(args, cb, cberr) {
-    cb(preferences);
+  navigator.apps.services.registerHandler('link.send', 'getParameters', function(args, cb, cberr) {
+    cb(parameters);
   });
 
   navigator.apps.services.registerHandler('link.send', 'getLogin', function(args, cb, cberr) {
-    common.getLogin(domain, preferences, cb, cberr);
+    common.getLogin(domain, parameters, cb, cberr);
   });
 
   navigator.apps.services.registerHandler('link.send', 'setAuthorization', function(args, cb, cberr) {

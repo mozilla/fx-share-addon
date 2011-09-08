@@ -1,4 +1,4 @@
-// Test the F1 "ServicePanel" WRT how the service 'preferences' change its behaviour.
+// Test the F1 "ServicePanel" WRT how the service 'parameters' change its behaviour.
 const {getTestUrl} = require("./test_utils");
 const {getSharePanelWithApp, testAppSequence} = require("./app_helpers");
 const keys = require("dom/events/keys");
@@ -10,7 +10,7 @@ function testTextCounterHelper(test, constraints, testVal, expectedCounter)
     let {jqAppWidget, jqPanelContentWindow} = appInfo;
     let accountPanelDiv = jqAppWidget.find(".accountPanel");
     let seq = [
-      {method: 'getPreferences', successArgs:
+      {method: 'getParameters', successArgs:
           {constraints: constraints,
            shareTypes: [{type: 'type', name: 'name'}]
           }
@@ -71,7 +71,7 @@ function testEditableUrlInMessageHelper(test, appArgs, constraints, expectedMess
     let {jqAppWidget, jqPanelContentWindow} = appInfo;
     let accountPanelDiv = jqAppWidget.find(".accountPanel");
     let seq = [
-      {method: 'getPreferences', successArgs:
+      {method: 'getParameters', successArgs:
           {constraints: constraints,
            shareTypes: [{type: 'type', name: 'name'}]
           }

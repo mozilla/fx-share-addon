@@ -54,9 +54,9 @@ function (object,         Widget,         $,        template,
    * This widget assumes its member variables include the following objects:
    *
    * options: the options for the URL/page being shared.
-   * owaservice: the owa service record (ie, with 'channel', 'preferences',
+   * owaservice: the owa service record (ie, with 'channel', 'parameters',
    *             'login' etc elements).
-   * svc: The share service preferences (from owaservice)
+   * svc: The share service parameters (from owaservice)
    */
   return object(Widget, null, function (parent) {
     return {
@@ -73,8 +73,8 @@ function (object,         Widget,         $,        template,
 
         this.hadFocusRequest = false;
         this.profile = profile;
-        this.preferences = this.owaservice.preferences;
-        this.svc = this.preferences; // just for the jig template...
+        this.parameters = this.owaservice.parameters;
+        this.svc = this.parameters; // just for the jig template...
 
         //Set up the photo property
         this.photo = profile.photos && profile.photos[0] && profile.photos[0].value;
@@ -170,7 +170,7 @@ function (object,         Widget,         $,        template,
         this.toDom.val(opts.to);
         root.find('[name="subject"]').val(opts.subject);
         var message = opts.message || '';
-        var constraints = this.preferences.constraints || {};
+        var constraints = this.parameters.constraints || {};
         if (constraints.editableURLInMessage) {
           // so we need some URL in the message itself - if the service doesn't
           // do its own shortening we prefer a short url if we already have one.
@@ -188,7 +188,7 @@ function (object,         Widget,         $,        template,
         }
         root.find('[name="message"]').val(message);
 
-        var shareTypes = this.preferences.shareTypes;
+        var shareTypes = this.parameters.shareTypes;
         if (shareTypes.length > 1) {
           var initialShareType = opts.shareType || this.options.shareType ||
                                  shareTypes[0].type;
@@ -214,7 +214,7 @@ function (object,         Widget,         $,        template,
           this.select.dom.bind('change', this.selectChangeFunc);
         }
 
-        if (this.preferences.constraints.textLimit) {
+        if (this.parameters.constraints && this.parameters.constraints.textLimit) {
           this.startCounter();
         }
 
@@ -311,7 +311,7 @@ function (object,         Widget,         $,        template,
         if (!this.counter) {
           this.counter = new TextCounter($('textarea.message', this.node),
                                          $('.counter', this.node),
-                                         this.preferences);
+                                         this.parameters);
         }
       },
 
@@ -354,7 +354,7 @@ function (object,         Widget,         $,        template,
       },
 
       getShareType: function (shareTypeValue) {
-        for (var i = 0, item; (item = this.preferences.shareTypes[i]); i++) {
+        for (var i = 0, item; (item = this.parameters.shareTypes[i]); i++) {
           if (item.type === shareTypeValue) {
             return item;
           }
@@ -430,7 +430,7 @@ function (object,         Widget,         $,        template,
 
         if (this.options.shortUrl) {
           sendData.shorturl = this.options.shortUrl;
-        } else if (this.preferences.shorten) {
+        } else if (this.parameters.shorten) {
           // XXX - this is currently unused...
           sendData.shorten = true;
         }

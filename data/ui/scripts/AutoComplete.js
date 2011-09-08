@@ -49,7 +49,7 @@ function ($,        object,         fn,         module,   dispatch,
       this.attachedWidget = false;
       this.acOptions = [];
       this.owasvc = owasvc;
-      this.orient = owasvc.preferences.features.subject ? 'below' : 'above';
+      this.orient = owasvc.parameters.features.subject ? 'below' : 'above';
 
       // XXX - still relevant?
       dispatch.sub('optionsChanged', fn.bind(this, function (data) {
