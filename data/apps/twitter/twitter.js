@@ -358,6 +358,7 @@ function (require,  common) {
 
   navigator.apps.services.registerHandler('link.send', 'getParameters', function(activity, credentials) {
     activity.postResult({
+     auth: {
       type: "oauth",
       name: "twitter",
       displayName: "Twitter",
@@ -373,6 +374,7 @@ function (require,  common) {
       completionURI: "http://oauthcallback.local/access.xhtml",
       version: "1.0",
       tokenRx: "oauth_verifier=([^&]*)"
+     }
     });
   });
 

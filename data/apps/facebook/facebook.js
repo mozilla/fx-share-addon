@@ -439,12 +439,13 @@ function (require,  common) {
   // LOGIN activity
   navigator.apps.services.registerHandler('link.send', 'getParameters', function(activity, credentials) {
     activity.postResult({
+     auth: {
       type: "oauth",
       name: "facebook",
       displayName: "Facebook",
       calls: {
                 signatureMethod     : "HMAC-SHA1",
-                userAuthorizationURL: "https://www.facebook.com/dialog/oauth",
+                userAuthorizationURL: "https://www.facebook.com/dialog/oauth"
               },
       key: "110796232295543",
       params: {
@@ -454,6 +455,7 @@ function (require,  common) {
       completionURI: "http://www.oauthcallback.local/postauthorize",
       version: "2.0",
       tokenRx: "#access_token=([^&]*)"
+     }
     });
   });
 
