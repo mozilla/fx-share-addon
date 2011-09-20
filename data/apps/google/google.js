@@ -32,9 +32,14 @@ function (require,  common) {
   var domain = "google.com"
   var parameters = {
       features: {
+        direct: true,
+        subjectLabel: true,
+        picture: true,
+        title: true,
+        description: true
       },
       shareTypes: [{
-          type: 'direct',
+          type: 'email',
           name: 'direct',
           toLabel: 'type in name of recipient'
       }],
@@ -67,23 +72,49 @@ function (require,  common) {
   var api = {
     key: "ff-share-" + domain,
 
-    profileToPoco: function(profile) {
-      var poco = {
-          displayName: profile.name || profile.screen_name
+    _getNsPrefix: function(feed, url) {
+      var ns;
+      for (ns in feed) {
+        if (feed[ns] == url) break;
       }
-      if (profile.url)
-          poco['urls'] = [{"primary": false, "value": profile.url}]
-      if (profile.profile_image_url)
-          poco['photos'] = [{'type': 'profile',
-                             "value": profile.profile_image_url}]
-      if (profile.created_at)
-          poco['published'] = profile.created_at
+      if (ns)
+        return ns.split('$')[1] + "$";
+      return "";
+    },
 
+    /**
+     * we receive the first page of the contacts reply, which will have the
+     * id and some other basic details on who is logged in.  parse that out
+     * and return a profile object.
+     */
+    profileToPoco: function(feed) {
+      var poco = {
+          displayName: feed.author[0].name.$t
+      }
       poco['accounts'] = [{'domain': 'gmail.com',
-                           'userid': profile.id,
-                           'username': profile.screen_name}]
+                           'userid': feed.id.$t,
+                           'username': feed.author[0].name.$t}]
 
       return poco
+    },
+
+    contactToPoco: function(contact, gd) {
+      var emailNs = gd+"email";
+      var poco = {
+          displayName: contact.title.$t,
+          emails: []
+      }
+      //dump("emails: "+JSON.stringify(contact[emailNs])+"\n");
+      if (contact[emailNs]) {
+        for (var e=0; e < contact[emailNs].length; e++) {
+          poco.emails.push({
+            'value': contact[emailNs][e].address,
+            'type': contact[emailNs][e].label || contact[emailNs][e].rel.split('#')[1],
+            'primary': contact[emailNs][e].primary
+          });
+        }
+      }
+      return poco;
     },
 
     // Given a PoCo record, return the 'account' element for my domain.
@@ -128,15 +159,13 @@ function (require,  common) {
     },
 
     getProfile: function(activity, credentials) {
-      dump("try to get the profile now\n");
       var oauthConfig = activity.data;
       navigator.apps.oauth.call(oauthConfig, {
         method: "GET",
         action: "https://www.google.com/m8/feeds/contacts/default/full",
         parameters: {alt:'json'}
       },function(json) {
-        dump("got profile "+JSON.stringify(json)+"\n");
-        var me = api.profileToPoco(json);
+        var me = api.profileToPoco(json.feed);
         var user = {
           profile: me,
           oauth: oauthConfig
@@ -149,86 +178,38 @@ function (require,  common) {
         window.localStorage.removeItem(api.key+'.following');
         activity.postResult(user);
 
-        // initiate contact retreival now
-        //api.contacts({type: 'followers'});
-        //api.contacts({type: 'following'});
+        // handle the first page of contacts now
+        api._handleContacts(json.feed, 'email', oauthConfig);
       });
     },
 
-    send: function(activity, credentials) {
-      dump("send data is "+JSON.stringify(data)+"\n")
-      return;
-
-      var strval = window.localStorage.getItem(api.key);
-      var urec = JSON.parse(strval);
-      var oauthConfig = urec.oauth;
-      var url, body;
-      var data = activity.data;
-      var to = data.to || [];
-
-      if (data.shareType == 'direct') {
-        if (to.length === 0) {
-          throw "direct message recipient missing";
-        }
-        if (to.length != 1) {
-          throw "can only send to a single recipient";
-        }
-        var poco = api.resolveRecipient(to[0], "followers")
-        var userid = api.getDomainAccount(poco).userid;
-        url = 'https://api.twitter.com/1/direct_messages/new.json';
-        body = { user: api.getDomainAccount(poco).userid, text: data.message };
-      } else
-      if (data.shareType == 'public') {
-          url = 'https://api.twitter.com/1/statuses/update.json'
-          body = { status: data.message }
-      } else {
-        throw "invalid shareType";
-      }
-
-      //dump("send ["+url+"] args "+JSON.stringify(body)+"\n");
-
-      navigator.apps.oauth.call(oauthConfig, {
-        method: "POST",
-        action: url,
-        parameters: body
-      },function(json) {
-        dump("got twitter send result "+JSON.stringify(json)+"\n");
-        if ('error' in json) {
-            activity.postException({code:"error", message:json});
-        } else {
-            activity.postResult(json)
-        }
-      });
-    },
-
-    _handleContacts: function(data, type) {
+    _handleContacts: function(data, type, oauthConfig) {
+      var prefix = api._getNsPrefix(data, "http://schemas.google.com/g/2005");
       var ckey = api.key+'.'+type;
       var strval = window.localStorage.getItem(ckey);
       var users = strval && JSON.parse(strval) || {};
       // We store in a keyed object so we can easily re-fetch contacts and
       // not wind up with duplicates.  Keyed by screen_name.
-      data.users.forEach(function(user) {
-        users[user.screen_name] = api.profileToPoco(user);
+      data.entry.forEach(function(entry) {
+        var poco = api.contactToPoco(entry, prefix);
+        poco.emails.forEach(function (email) {
+          users[email.value] = poco;
+        });
       });
       window.localStorage.setItem(ckey, JSON.stringify(users));
-    },
 
-    contacts: function(options) {
-      var strval = window.localStorage.getItem(api.key);
-      var urec = JSON.parse(strval);
+      var os = api._getNsPrefix(data, "http://a9.com/-/spec/opensearchrss/1.0/");
 
       var params = {
-          cursor: options && options.cursor || -1,
-          screen_name: urec.profile.username,
-          type: options.type
-      };
-      var url = "https://www.google.com/m8/feeds/contacts/default/full";
-      if (options.type == 'following') {
-        throw("NOT YET IMPLEMENTED");
+        'max-results': 25,
+        'start-index': parseInt(data[os+'startIndex'].$t) + parseInt(data[os+'itemsPerPage'].$t),
+        'alt': 'json'
       }
-
-      var oauthConfig = urec.oauth;
-      this._pagedContacts(url, params, oauthConfig);
+      data.link.forEach(function(link) {
+        if (link.rel == 'next') {
+          window.setTimeout(api._pagedContacts, 0, link.href.split('?')[0], params, oauthConfig);
+        }
+      });
     },
 
     _pagedContacts: function(url, params, oauthConfig) {
@@ -237,12 +218,13 @@ function (require,  common) {
         action: url,
         parameters: params
       },function(json) {
-        api._handleContacts(json, params.type)
-        if (json.next_cursor) {
-          params.cursor = json.next_cursor;
-          setTimeout(api._pagedContacts, 0, url, params, oauthConfig);
-        }
+        api._handleContacts(json.feed, 'email', oauthConfig);
       });
+    },
+
+    send: function(activity, credentials) {
+      dump("send data is "+JSON.stringify(data)+"\n")
+      return;
     }
   }
 
@@ -273,60 +255,26 @@ function (require,  common) {
   navigator.apps.services.registerHandler('link.send', 'getShareTypeRecipients', function(activity, credentials) {
     var type;
     var args = activity.data;
-    // XXX - todo - handle 'force'
-    if (args.force) {
-      dump("XXX - TODO: google needs to implement 'force' support");
-    }
-    if (args.shareType === "public") {
-      activity.postResult([]); // no possible values.
-      return;
-    } else if (args.shareType === "direct") {
-      type = "followers";
-    } else {
-      throw("invalid shareType " + args.shareType + "\n");
-    }
-    var ckey = api.key+'.'+type;
+    var ckey = api.key+'.email';
     var strval = window.localStorage.getItem(ckey);
     var byName = JSON.parse(strval);
     // convert back to a simple array of names to use for auto-complete.
     var result = [];
     for (var name in byName) { // name is the screen_name
       var poco = byName[name];
-      if (poco.displayName !== name) {
-        result.push(poco.displayName);
-      }
-      result.push('@' + name);
+      result.push(name);
     }
     activity.postResult(result);
   });
 
-  // Validate a list of strings which are intended to be recipient names.
-  // The names possibly came back from getShareTypeRecipients() or were typed.
-  // Returns a string (but that string would resolve to itself - ie, passing
-  // 'Display Name' would resolve to @username, while @username always
-  // resolves to @username.)
-  // A super-anal service who thinks any resolution at all is leaking too much
-  // into is free to return exactly the names which were passed in (then fail
-  // at send time if appropriate)
+  // TODO validate the names passed in are valid email addresses
   navigator.apps.services.registerHandler('link.send', 'resolveRecipients', function(activity, credentials) {
     var type;
     var args = activity.data;
-    if (args.shareType === "direct") {
-      type = "followers";
-    } else {
-      throw("invalid shareType " + args.shareType + "\n");
-    }
-    // XXX - should we just check for @username and return that without
-    // checking our current list of followers?
     var results = [];
     args.names.forEach(
       function(recipstr) {
-        try {
-          var poco = api.resolveRecipient(recipstr, type)
-          results.push({result: '@' + api.getDomainAccount(poco).username});
-        } catch (e) {
-          results.push({error: e.toString()});
-        }
+        results.push({result: recipstr});
       }, this
     );
     activity.postResult(results);
