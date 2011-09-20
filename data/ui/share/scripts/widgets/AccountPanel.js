@@ -189,9 +189,9 @@ function (object,         Widget,         $,        template,
         root.find('[name="message"]').val(message);
 
         var shareTypes = this.parameters.shareTypes;
+        var initialShareType = opts.shareType || this.options.shareType ||
+                               shareTypes[0].type;
         if (shareTypes && shareTypes.length > 1) {
-          var initialShareType = opts.shareType || this.options.shareType ||
-                                 shareTypes[0].type;
           //Insert a Select widget if it is desired.
           this.select = new Select({
             name: 'shareType',
@@ -206,13 +206,13 @@ function (object,         Widget,         $,        template,
 
           // Update anything which depends on the share state and do the same
           // as it changes.
-          this.changeShareType(this.getShareType(initialShareType));
           // Listen to changes in the Select
           this.selectChangeFunc = fn.bind(this, function (evt) {
             this.onShareTypeChange(evt);
           });
           this.select.dom.bind('change', this.selectChangeFunc);
         }
+        this.changeShareType(this.getShareType(initialShareType));
 
         if (this.parameters.constraints && this.parameters.constraints.textLimit) {
           this.startCounter();
@@ -286,7 +286,9 @@ function (object,         Widget,         $,        template,
             names.push(to)
           }
         });
-        var shareType = this.getShareType(this.select.val()).type;
+        var shareType = this.parameters.shareTypes[0].type;
+        if (this.select)
+          shareType = this.getShareType(this.select.val()).type;
         this.owaservice.call('resolveRecipients',
           {shareType: shareType, names: names},
           function(results) {
