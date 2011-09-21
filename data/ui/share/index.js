@@ -300,6 +300,7 @@ function (require,   $,        object,         fn,
     function finishCreate() {
       var addButton, addAccountWidget;
 
+/** disable add tab for fx-share alpha release
       // Add tab button for add account
       addButton = new TabButton({
         target: 'addAccount',
@@ -311,6 +312,7 @@ function (require,   $,        object,         fn,
       addAccountWidget = new AddAccount({
         id: 'addAccount', owaservices: owaservices
       }, fragment);
+*/
 
       // add the tabs and tab contents now
       tabsDom.append(tabFragment);
