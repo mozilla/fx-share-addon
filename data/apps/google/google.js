@@ -160,7 +160,7 @@ function (require,  common) {
 
     getProfile: function(activity, credentials) {
       var oauthConfig = activity.data;
-      navigator.apps.oauth.call(oauthConfig, {
+      navigator.mozApps.oauth.call(oauthConfig, {
         method: "GET",
         action: "https://www.google.com/m8/feeds/contacts/default/full",
         parameters: {alt:'json'}
@@ -213,7 +213,7 @@ function (require,  common) {
     },
 
     _pagedContacts: function(url, params, oauthConfig) {
-      navigator.apps.oauth.call(oauthConfig, {
+      navigator.mozApps.oauth.call(oauthConfig, {
         method: "GET",
         action: url,
         parameters: params
@@ -233,19 +233,19 @@ function (require,  common) {
   }
 
   // Bind the OWA messages
-  navigator.apps.services.registerHandler('link.send', 'confirm', function(activity, credentials) {
+  navigator.mozApps.services.registerHandler('link.send', 'confirm', function(activity, credentials) {
     api.send(activity, credentials);
   });
 
-  navigator.apps.services.registerHandler('link.send', 'getLogin', function(activity, credentials) {
+  navigator.mozApps.services.registerHandler('link.send', 'getLogin', function(activity, credentials) {
     common.getLogin(domain, activity, credentials);
   });
 
-  navigator.apps.services.registerHandler('link.send', 'setAuthorization', function(activity, credentials) {
+  navigator.mozApps.services.registerHandler('link.send', 'setAuthorization', function(activity, credentials) {
     api.getProfile(activity, credentials);
   });
 
-  navigator.apps.services.registerHandler('link.send', 'logout', function(activity, credentials) {
+  navigator.mozApps.services.registerHandler('link.send', 'logout', function(activity, credentials) {
     common.logout(domain, activity, credentials);
   });
 
@@ -256,7 +256,7 @@ function (require,  common) {
   // return an empty list.
   // This means the onus then falls back on us to match these names back up
   // with our PoCo records so we can extract the userid.
-  navigator.apps.services.registerHandler('link.send', 'getShareTypeRecipients', function(activity, credentials) {
+  navigator.mozApps.services.registerHandler('link.send', 'getShareTypeRecipients', function(activity, credentials) {
     var type;
     var args = activity.data;
     var ckey = api.key+'.email';
@@ -272,7 +272,7 @@ function (require,  common) {
   });
 
   // TODO validate the names passed in are valid email addresses
-  navigator.apps.services.registerHandler('link.send', 'resolveRecipients', function(activity, credentials) {
+  navigator.mozApps.services.registerHandler('link.send', 'resolveRecipients', function(activity, credentials) {
     var type;
     var args = activity.data;
     var results = [];
@@ -285,22 +285,22 @@ function (require,  common) {
   });
 
 
-  navigator.apps.services.registerHandler('link.send', 'getParameters', function(activity, credentials) {
+  navigator.mozApps.services.registerHandler('link.send', 'getParameters', function(activity, credentials) {
     // This is currently slightly confused - it is both link.send parameters and auth parameters.
     activity.postResult(parameters);
   });
 
-  navigator.apps.services.registerHandler('link.send', 'getCredentials', function(activity, credentials) {
+  navigator.mozApps.services.registerHandler('link.send', 'getCredentials', function(activity, credentials) {
     common.getLogin(activity, credentials);
   });
 
-  navigator.apps.services.registerHandler('link.send', 'validateCredentials', function(activity, credentials) {
+  navigator.mozApps.services.registerHandler('link.send', 'validateCredentials', function(activity, credentials) {
   });
 
-  navigator.apps.services.registerHandler('link.send', 'clearCredentials', function(activity, credentials) {
+  navigator.mozApps.services.registerHandler('link.send', 'clearCredentials', function(activity, credentials) {
     common.logout(activity, credentials);
   });
 
   // Tell OWA we are now ready to be invoked.
-  navigator.apps.services.ready();
+  navigator.mozApps.services.ready();
 });
