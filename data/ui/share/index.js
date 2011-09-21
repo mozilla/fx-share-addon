@@ -531,7 +531,7 @@ function (require,   $,        object,         fn,
   };
 
   // tell OWA we are ready...
-  window.navigator.apps.mediation.ready(
+  window.navigator.mozApps.mediation.ready(
     function(activity, services) {
       _deleteOldServices();
       options = activity.data;
