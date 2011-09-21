@@ -1,5 +1,5 @@
 APPNAME = fx-share-addon
-DEPS = github:addon-sdk,github:oauthorizer,github:openwebapps
+DEPS = mixedpuppy:addon-sdk,github:oauthorizer,github:openwebapps
 PYTHON = python
 
 ifeq ($(TOPSRCDIR),)

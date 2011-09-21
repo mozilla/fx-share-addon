@@ -170,7 +170,7 @@ body {
   min-height: 120px;
   color: @color;
   /*background: @background;*/
-  padding: 2px;
+  /*padding: 2px;*/
 }
 
 noscript {
