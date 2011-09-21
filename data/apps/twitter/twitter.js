@@ -61,7 +61,8 @@ function (require,  common) {
         params: null,
         completionURI: "http://oauthcallback.local/access.xhtml",
         version: "1.0",
-        tokenRx: "oauth_verifier=([^&]*)"
+        tokenRx: "oauth_verifier=([^&]*)",
+        deniedRx: "denied=([^&]*)"
       }
     };
 
@@ -79,11 +80,11 @@ function (require,  common) {
                              "value": profile.profile_image_url}]
       if (profile.created_at)
           poco['published'] = profile.created_at
-  
+
       poco['accounts'] = [{'domain': 'twitter.com',
                            'userid': profile.id,
                            'username': profile.screen_name}]
-  
+
       return poco
     },
 
@@ -181,7 +182,7 @@ function (require,  common) {
       } else {
         throw "invalid shareType";
       }
-      
+
       //dump("send ["+url+"] args "+JSON.stringify(body)+"\n");
 
       navigator.apps.oauth.call(oauthConfig, {
@@ -195,9 +196,9 @@ function (require,  common) {
         } else {
             activity.postResult(json)
         }
-      });      
+      });
     },
-    
+
     _handleContacts: function(data, type) {
       var ckey = api.key+'.'+type;
       var strval = window.localStorage.getItem(ckey);
@@ -239,7 +240,7 @@ function (require,  common) {
           params.cursor = json.next_cursor;
           setTimeout(api._pagedContacts, 0, url, params, oauthConfig);
         }
-      }); 
+      });
     }
   }
 
