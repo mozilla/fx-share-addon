@@ -59,7 +59,7 @@ function (require,  common) {
       key: "anonymous",
       secret: "anonymous",
       params: {
-        xoauth_displayname: "GMail for F1",
+        xoauth_displayname: "GMail for Firefox Share",
         scope: "https://mail.google.com/ http://www.google.com/m8/feeds/",
         response_type: "token"
         },
