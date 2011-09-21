@@ -151,7 +151,7 @@ exports.getSharePanelWithApp = function(test, args, cb) {
 /** Test a "sequence" of app calls.
 The basic mechanism is this:
 
-* Mediator loads app, app responds with the normal navigator.apps.services.ready()
+* Mediator loads app, app responds with the normal navigator.mozApps.services.ready()
 * Mediator calls first method on the app (in our case, that will normally be
   link.send.getParameters)
 * App "blocks" on this call - it doesn't call the callback - so the mediator

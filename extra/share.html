@@ -5,13 +5,13 @@
 <script>
 
 function doit(args) {
-  if (!navigator.apps || !navigator.apps.startActivity)
+  if (!navigator.mozApps || !navigator.mozApps.startActivity)
   {
     showResult("Can't invoke service: not supported by current browser");
     return;
   }
 
-  navigator.apps.startActivity({
+  navigator.mozApps.startActivity({
       action: "link.send",
       type: "",
       message: "",
