@@ -68,7 +68,8 @@ function (require,  common) {
           },
       completionURI: "http://www.oauthcallback.local/postauthorize",
       version: "2.0",
-      tokenRx: "#access_token=([^&]*)"
+      tokenRx: "#access_token=([^&]*)",
+      deniedRx: "error=access_denied"
     }
   };
 
