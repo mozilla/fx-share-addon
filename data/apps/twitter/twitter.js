@@ -56,8 +56,8 @@ function (require,  common) {
                   userAuthorizationURL: "https://twitter.com/oauth/authorize",
                   accessTokenURL      : "https://twitter.com/oauth/access_token"
                 },
-        key: "lppkBgcpuhe2TKZIRVoQg",
-        secret: "M6hwPkgEyqxkDz583LFYAv5dTVg1AsKIXHFPiIFhsM",
+        key: "gCJztnXN3X4F17STMDcg",
+        secret: "YgcDMRo03RYlLIZq95AdJZBhaY6qTtsaWHFDiQ",
         params: null,
         completionURI: "http://oauthcallback.local/access.xhtml",
         version: "1.0",

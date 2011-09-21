@@ -61,7 +61,7 @@ function (require,  common) {
                 signatureMethod     : "HMAC-SHA1",
                 userAuthorizationURL: "https://www.facebook.com/dialog/oauth"
               },
-      key: "110796232295543",
+      key: "195438150530043",
       params: {
           scope: "publish_stream,offline_access,user_groups",
           response_type: "token"
