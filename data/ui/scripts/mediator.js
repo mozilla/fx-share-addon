@@ -35,7 +35,7 @@
  */
 
 define(function () {
-  var emit = window.navigator.apps.mediation.emit;
+  var emit = window.navigator.mozApps.mediation.emit;
   var m = {
     /**
      * checkBase64Preview

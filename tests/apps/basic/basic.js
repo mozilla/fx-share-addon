@@ -8,7 +8,7 @@ var pendingCalls = {};
 var isFinished = false;
 
 // A 'test' service used by the tests to control this app.
-navigator.apps.services.registerHandler('test', 'resume', function(activity, credentials) {
+navigator.mozApps.services.registerHandler('test', 'resume', function(activity, credentials) {
   // resume from a 'blocked' call.
   var args = activity.data;
   var attemptNum = 0;
@@ -42,7 +42,7 @@ navigator.apps.services.registerHandler('test', 'resume', function(activity, cre
   doit();
 });
 
-navigator.apps.services.registerHandler('test', 'finish', function(activity, credentials) {
+navigator.mozApps.services.registerHandler('test', 'finish', function(activity, credentials) {
   isFinished = true;
   if (pendingCalls.length) {
     activity.postException({code:"test_suite_error", message:"finalized while pending calls are available"})
@@ -67,12 +67,12 @@ function waitForResumeInstructions(methodName, activity, credentials) {
 
 
 // The 'link.send' service used by F1 while under test.
-navigator.apps.services.registerHandler('link.send', 'getParameters', function(activity, credentials) {
+navigator.mozApps.services.registerHandler('link.send', 'getParameters', function(activity, credentials) {
   waitForResumeInstructions('getParameters', activity, credentials);
 });
 
-navigator.apps.services.registerHandler('link.send', 'getLogin', function(activity, credentials) {
+navigator.mozApps.services.registerHandler('link.send', 'getLogin', function(activity, credentials) {
   waitForResumeInstructions('getLogin', activity, credentials);
 });
 
-navigator.apps.services.ready();
+navigator.mozApps.services.ready();
