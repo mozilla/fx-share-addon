@@ -653,6 +653,7 @@ body .toSection input[type="text"] {
   box-shadow: 0 0 5px #577894;
 }
 
+.servicePanel button.login,
 .widgets-AccountPanel button.share {
   border: @buttonShareBorder;
   color: @buttonShareColor;

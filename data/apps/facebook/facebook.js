@@ -32,6 +32,9 @@ function (require,  common) {
   var domain = "facebook.com";
 
   var parameters = {
+      domain: "facebook.com",
+      name: "facebook",
+      displayName: "Facebook",
     features: {
       title: true,
       description: true,
