@@ -676,6 +676,10 @@ span.icon.twitter {
     facebook styles
 */
 
+.facebook.widgets-AccountPanel .shareTypeSection .Select.open ul {
+  top: -40px;
+}
+
 .facebook .facebookActions {
   margin: 0 0 10px 0;
   width: 100%;
