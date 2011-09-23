@@ -26,6 +26,7 @@ let authArgs = {
 
 
 exports.testSmtpSuccessfulSend = function(test) {
+  dump("testSmtpSuccessfulSend\n");
   // first sort out the auth stuff.
   if (environ.get("FXSHARE_TEST_OAUTH_TOKEN")) {
     // looks like oauth.
@@ -34,16 +35,16 @@ exports.testSmtpSuccessfulSend = function(test) {
     let {OAuth} = require("OAuth");
     let accessor = {
       consumerSecret: environ.get("FXSHARE_TEST_OAUTH_CONSUMER_SECRET") || 'anonymous',
-      tokenSecret: environ.get("FXSHARE_TEST_OAUTH_TOKEN_SECRET")
+      consumerKey: environ.get("FXSHARE_TEST_OAUTH_CONSUMER_KEY") || 'anonymous',
+      tokenSecret: environ.get("FXSHARE_TEST_OAUTH_TOKEN_SECRET"),
+      token: environ.get("FXSHARE_TEST_OAUTH_TOKEN")
     };
     let action = "https://mail.google.com/mail/b/" + smtpArgs.email + "/smtp/";
-    let message = {method: 'GET', parameters: {}, action: action};
-    OAuth.setParameter(message, 'oauth_token', environ.get("FXSHARE_TEST_OAUTH_TOKEN"));
-    OAuth.setParameter(message, 'oauth_consumer_key', environ.get("FXSHARE_TEST_OAUTH_CONSUMER_KEY") || 'anonymous');
-    OAuth.setParameter(message, 'oauth_signature_method', environ.get("FXSHARE_TEST_OAUTH_SIGNATURE_METHOD") || "HMAC-SHA1");
-    OAuth.setParameter(message, 'oauth_version', environ.get("FXSHARE_TEST_OAUTH_VERSION") || "1.0");
-    OAuth.setTimestampAndNonce(message);
-    OAuth.SignatureMethod.sign(message, accessor);
+    let message = {method: 'GET', parameters: {
+            'oauth_signature_method': "HMAC-SHA1",
+            'oauth_token': environ.get("FXSHARE_TEST_OAUTH_TOKEN")
+      }, action: action};
+    OAuth.completeRequest(message, accessor);
 
     // much like OAuth.getAuthorizationHeader except that does the realm etc.
     let data = [];
@@ -61,6 +62,7 @@ exports.testSmtpSuccessfulSend = function(test) {
     ;
   } else {
     // no concept of skipping a test, so just say it passed.
+    dump("skipping the test!\n");
     test.pass("skipping test as required environment variables not configured");
     return;
   }
@@ -75,7 +77,7 @@ exports.testSmtpSuccessfulSend = function(test) {
       test.pass("apparently we worked!");
     }
   }
-
+dump("try to send an email!\n");
   let client = new SslSmtpClient(on_disconnect);
   let on_connected = function() {
     console.log("connected - starting login");
