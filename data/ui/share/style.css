@@ -340,6 +340,34 @@ h3 {
   box-sizing: border-box;
   margin: 14px;
   text-align: center;
+  padding: 0px 40px;
+}
+
+.ServiceAccountPanel .accountName {
+  font-weight: bold;
+  font-size: 150%;
+  line-height: 160%;
+  text-align: left;
+}
+
+.ServiceAccountPanel .login {
+  min-height: 29px;
+  line-height: 27px;
+  font-size: 11px;
+  border-radius: 2px;
+  color: #666;
+  text-align: center;
+  font-weight: bold;
+}
+
+.ServiceAccountPanel .login:hover {
+  border: 1px solid #C6C6C6;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+  color: #333;
+}
+
+.ServiceAccountPanel .accountDescription {
+  margin: 20px auto;
 }
 
 /* Account panel widgets */
@@ -653,7 +681,6 @@ body .toSection input[type="text"] {
   box-shadow: 0 0 5px #577894;
 }
 
-.servicePanel button.login,
 .widgets-AccountPanel button.share {
   border: @buttonShareBorder;
   color: @buttonShareColor;
