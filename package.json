@@ -1,6 +1,6 @@
 {
-    "name": "ffshare",
-    "id": "ffshare@mozilla.org",
+    "name": "fx-share-addon",
+    "id": "fx-share-addon@mozilla.org",
     "description": "Share things",
     "author": "Mozilla",
     "version": "0.001",
