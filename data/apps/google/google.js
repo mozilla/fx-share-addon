@@ -31,6 +31,9 @@ define([ "require", "../common", "jquery", "jquery.tmpl"],
 function (require,  common,      $) {
   var domain = "google.com"
   var parameters = {
+      domain: "google.com",
+      name: "gmail",
+      displayName: "Gmail",
       features: {
         direct: true,
         subjectLabel: true,
