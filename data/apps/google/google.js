@@ -26,9 +26,9 @@
   document: false, setTimeout: false, localStorage: false */
 "use strict";
 
-define([ "require", "../common"],
+define([ "require", "../common", "jquery", "jquery.tmpl"],
 
-function (require,  common) {
+function (require,  common,      $) {
   var domain = "google.com"
   var parameters = {
       features: {
@@ -227,8 +227,16 @@ function (require,  common) {
       var strval = window.localStorage.getItem(api.key);
       var urec = JSON.parse(strval);
       var oauthConfig = urec.oauth;
-      //dump("send data is "+JSON.stringify(activity.data)+"\n")
-      //dump("oauthConfig is "+JSON.stringify(oauthConfig)+"\n")
+      dump("send data is "+JSON.stringify(activity.data)+"\n");
+      //dump("oauthConfig is "+JSON.stringify(oauthConfig)+"\n");
+
+  // XXX jquery.template is not working as I had hoped for the text template.
+  // prepare templates
+  var textTmpl = $("#text_message").tmpl(activity.data).text();
+  //dump("text: "+textTmpl+"\n");
+  var htmlTmpl = "<html><body>"+$("#html_message").tmpl(activity.data).html()+"</body></html>";
+  //dump("html: "+htmlTmpl+"\n");
+
       var smtpArgs = {
         xoauth: oauthConfig,
         server: 'smtp.gmail.com',
@@ -242,8 +250,8 @@ function (require,  common) {
         {
           to: activity.data.to,
           subject: activity.data.subject,
-          html: "this is <b>html</b>",
-          text: "this is text"
+          html: htmlTmpl,
+          text: textTmpl
         },
         function result(json) {
           dump("got gmail send result "+JSON.stringify(json)+"\n");
