@@ -13,55 +13,73 @@ let smtpArgs = {
   port: environ.get("FXSHARE_TEST_SMTP_PORT") || 587,
   connectionType: environ.get("FXSHARE_TEST_SMTP_CONNECTION_TYPE") || 'starttls',
   email: environ.get("FXSHARE_TEST_SMTP_EMAIL"),
-  userName: environ.get("FXSHARE_TEST_SMTP_USERNAME"), // will default based on 'email'
-  senderName: environ.get("FXSHARE_TEST_SMTP_SENDER_NAME"),
-  password: environ.get("FXSHARE_TEST_SMTP_PASSWORD")
-}
+  senderName: environ.get("FXSHARE_TEST_SMTP_SENDER_NAME")
+};
+
+let authArgs = {
+  basic: {
+    username: environ.get("FXSHARE_TEST_SMTP_USERNAME"),
+    password: environ.get("FXSHARE_TEST_SMTP_PASSWORD")
+  },
+  xoauth: {
+    oauth_consumer_key: environ.get("FXSHARE_TEST_OAUTH_CONSUMER_KEY"),
+    oauth_signature_method: environ.get("FXSHARE_TEST_OAUTH_") || "HMAC-SHA1",
+    //oauth_timestamp="1260933683",
+    oauth_token: environ.get("FXSHARE_TEST_OAUTH_TOKEN"),
+    oauth_version: environ.get("FXSHARE_TEST_OAUTH_") || "1.0"
+  }
+};
+
 
 exports.testSmtpSuccessfulSend = function(test) {
-  if (!smtpArgs.email || !smtpArgs.password) {
+  if ((!authArgs.basic.username || !authArgs.basic.password) &&
+      (!authArgs.oauth_token || !authArgs.xoauth.oauth_consumer_key)) {
     // no concept of skipping a test, so just say it passed.
-    test.pass("skipping test as environment variables not configured");
+    test.pass("skipping test as required environment variables not configured");
     return;
   }
   // smtp module uses a 15 second connection timeout, so we use a little more.
   test.waitUntilDone(20000);
   let finished = false;
-  let client = new SslSmtpClient();
-  let on_login = function() {
-    console.log("logged in");
-    // now we can send the message.
-    let to = [environ.get("FXSHARE_TEST_EMAIL_TO") || environ.get("FXSHARE_TEST_SMTP_EMAIL")];
-    client.sendMessage(to, "test message from fx-share",
-                       "Hello <b>there</b>", // html
-                       "Hello there", // txt
-                       function() {
-                        finished = true;
-                        test.pass("message sent");
-                        test.done();
-                       },
-                       function(why) {
-                        test.fail("message delivery failed: " + why);
-                        test.done();
-                       }
-                       );
-  }
-  let on_bad_password = function(reply) {
-    test.fail("password rejected: " + reply);
-    test.done();
-  }
-  let on_error = function(err) {
-    test.fail("error callback called: " + err);
-    test.done();
-  }
   let on_disconnect = function() {
     if (!finished) {
       test.fail("premature disconnection");
     } else {
       test.pass("apparently we worked!");
     }
+  }
+
+  let client = new SslSmtpClient(on_disconnect);
+  let on_connected = function() {
+    console.log("connected - starting login");
+    client.authenticate(authArgs,
+      function() {
+        // now we can send the message.
+        let to = [environ.get("FXSHARE_TEST_EMAIL_TO") || environ.get("FXSHARE_TEST_SMTP_EMAIL")];
+        client.sendMessage(to, "test message from fx-share",
+                           "Hello <b>there</b>", // html
+                           "Hello there", // txt
+                           function() {
+                            finished = true;
+                            test.pass("message sent");
+                            test.done();
+                           },
+                           function(why) {
+                            test.fail("message delivery failed: " + why);
+                            test.done();
+                           }
+                           );
+      },
+      function(err) {
+        test.fail("authentication failed: " + err.reply);
+        test.done();
+      }
+    )
+  }
+  let on_error = function(err) {
+    test.fail("connection failed: " + err.type + "/" + err.message + "/" + err.reply);
     test.done();
   }
   let logging = true;
-  client.connect(smtpArgs, on_login, on_bad_password, on_error, on_disconnect, logging);
+  client.connect(smtpArgs, on_connected, on_error, logging);
 }
