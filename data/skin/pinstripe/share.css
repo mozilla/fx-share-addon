@@ -11,20 +11,20 @@ panel[type="arrow"].link_send .panel-arrowcontent,
   padding: 2px;
 }
 #share-button {
-  list-style-image: url("resource://ffshare-at-mozilla-dot-org-ffshare-data/skin/pinstripe/share-button.png");
+  list-style-image: url("../pinstripe/share-button.png");
   width: auto;
   height: auto;
   padding: 1px;
 }
 
 #share-button[checked] {
-  list-style-image: url("resource://ffshare-at-mozilla-dot-org-ffshare-data/skin/pinstripe/share-button-active.png");
+  list-style-image: url("../pinstripe/share-button-active.png");
 }
 
 #share-button[status="start"] {
-  list-style-image: url("resource://ffshare-at-mozilla-dot-org-ffshare-data/skin/pinstripe/share-button-sharing.png");
+  list-style-image: url("../pinstripe/share-button-sharing.png");
 }
 
 #share-button[status="finished"] {
-  list-style-image: url("resource://ffshare-at-mozilla-dot-org-ffshare-data/skin/pinstripe/share-button-shared.png");
+  list-style-image: url("../pinstripe/share-button-shared.png");
 }
