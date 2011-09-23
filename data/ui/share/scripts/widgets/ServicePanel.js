@@ -97,6 +97,13 @@ function (object,         Widget,         $,        template,
       },
 
       updateServicePanel: function () {
+        if (this.owaservice.parameters) {
+          var root = $(this.node);
+          root.find('[name="name"]').text(this.owaservice.parameters.name);
+          root.find('[name="domain"]').text(this.owaservice.parameters.domain);
+          root.find('[name="displayName"]').text(this.owaservice.parameters.displayName);
+          
+        }
         // If either 'parameters' or 'login' are null, we are waiting
         // for those methods to return.
         $(".accountLoading", this.node).hide();

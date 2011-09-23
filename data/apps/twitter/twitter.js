@@ -31,6 +31,9 @@ define([ "require", "../common"],
 function (require,  common) {
   var domain = "twitter.com"
   var parameters = {
+      domain: "twitter.com",
+      name: "twitter",
+      displayName: "Twitter",
       features: {
       },
       shareTypes: [{
