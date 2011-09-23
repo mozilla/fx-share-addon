@@ -227,9 +227,32 @@ function (require,  common) {
       var strval = window.localStorage.getItem(api.key);
       var urec = JSON.parse(strval);
       var oauthConfig = urec.oauth;
-      dump("send data is "+JSON.stringify(activity.data)+"\n")
-      dump("oauthConfig is "+JSON.stringify(oauthConfig)+"\n")
-      return;
+      //dump("send data is "+JSON.stringify(activity.data)+"\n")
+      //dump("oauthConfig is "+JSON.stringify(oauthConfig)+"\n")
+      var smtpArgs = {
+        xoauth: oauthConfig,
+        server: 'smtp.gmail.com',
+        port: 587,
+        connectionType: 'starttls',
+        email: activity.data.userid,
+        username: activity.data.username,
+        senderName: activity.data.username
+      };
+      navigator.mozApps.services.sendEmail.call(smtpArgs,
+        {
+          to: activity.data.to,
+          subject: activity.data.subject,
+          html: "this is <b>html</b>",
+          text: "this is text"
+        },
+        function result(json) {
+          dump("got gmail send result "+JSON.stringify(json)+"\n");
+          if ('error' in json) {
+              activity.postException({code:"error", message:json});
+          } else {
+              activity.postResult(json)
+          }
+        });
     }
   }
 
