@@ -7,21 +7,21 @@ panel[type="arrow"].link_send browser,
 }
 
 #share-button {
-  list-style-image: url("resource://ffshare-at-mozilla-dot-org-ffshare-data/skin/winstripe/share-button.png");
+  list-style-image: url("../winstripe/share-button.png");
   width: auto;
   height: auto;
 }
 
 #share-button[checked] {
-  list-style-image: url("resource://ffshare-at-mozilla-dot-org-ffshare-data/skin/winstripe/share-button-active.png");
+  list-style-image: url("../winstripe/share-button-active.png");
 }
 
 #share-button[status="start"] {
-  list-style-image: url("resource://ffshare-at-mozilla-dot-org-ffshare-data/skin/winstripe/share-button-sharing.png");
+  list-style-image: url("../winstripe/share-button-sharing.png");
 }
 
 #share-button[status="finished"] {
-  list-style-image: url("resource://ffshare-at-mozilla-dot-org-ffshare-data/skin/winstripe/share-button-shared.png");
+  list-style-image: url("../winstripe/share-button-shared.png");
 }
 
 #share-popup .panel-inner-arrowcontent {
