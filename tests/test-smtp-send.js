@@ -17,27 +17,54 @@ let smtpArgs = {
 };
 
 let authArgs = {
-  basic: {
+  plain: {
     username: environ.get("FXSHARE_TEST_SMTP_USERNAME"),
     password: environ.get("FXSHARE_TEST_SMTP_PASSWORD")
   },
-  xoauth: {
-    oauth_consumer_key: environ.get("FXSHARE_TEST_OAUTH_CONSUMER_KEY"),
-    oauth_signature_method: environ.get("FXSHARE_TEST_OAUTH_") || "HMAC-SHA1",
-    //oauth_timestamp="1260933683",
-    oauth_token: environ.get("FXSHARE_TEST_OAUTH_TOKEN"),
-    oauth_version: environ.get("FXSHARE_TEST_OAUTH_") || "1.0"
-  }
+  xoauth: null // we build this manually...
 };
 
 
 exports.testSmtpSuccessfulSend = function(test) {
-  if ((!authArgs.basic.username || !authArgs.basic.password) &&
-      (!authArgs.oauth_token || !authArgs.xoauth.oauth_consumer_key)) {
+  // first sort out the auth stuff.
+  if (environ.get("FXSHARE_TEST_OAUTH_TOKEN")) {
+    // looks like oauth.
+    // We keep the actual signing process out of smtp itself to keep the
+    // signing mechanism from being a dependency of the smtp api.
+    let {OAuth} = require("OAuth");
+    let accessor = {
+      consumerSecret: environ.get("FXSHARE_TEST_OAUTH_CONSUMER_SECRET") || 'anonymous',
+      tokenSecret: environ.get("FXSHARE_TEST_OAUTH_TOKEN_SECRET")
+    };
+    let action = "https://mail.google.com/mail/b/" + smtpArgs.email + "/smtp/";
+    let message = {method: 'GET', parameters: {}, action: action};
+    OAuth.setParameter(message, 'oauth_token', environ.get("FXSHARE_TEST_OAUTH_TOKEN"));
+    OAuth.setParameter(message, 'oauth_consumer_key', environ.get("FXSHARE_TEST_OAUTH_CONSUMER_KEY") || 'anonymous');
+    OAuth.setParameter(message, 'oauth_signature_method', environ.get("FXSHARE_TEST_OAUTH_SIGNATURE_METHOD") || "HMAC-SHA1");
+    OAuth.setParameter(message, 'oauth_version', environ.get("FXSHARE_TEST_OAUTH_VERSION") || "1.0");
+    OAuth.setTimestampAndNonce(message);
+    OAuth.SignatureMethod.sign(message, accessor);
+
+    // much like OAuth.getAuthorizationHeader except that does the realm etc.
+    let data = [];
+    let list = OAuth.getParameterList(message.parameters);
+    list.sort();
+    for (var p = 0; p < list.length; ++p) {
+      let value = list[p][1];
+      if (value == null) value = "";
+      data.push(OAuth.percentEncode(list[p][0]) + '="' + OAuth.percentEncode(value) + '"');
+    }
+    authArgs.xoauth = "GET " + action + " " + data.join(",");
+    console.log("xoauth data is", authArgs.xoauth);
+  } else if (authArgs.plain.username && authArgs.plain.password) {
+    // the auth structure is ready to go for plain authentication
+    ;
+  } else {
     // no concept of skipping a test, so just say it passed.
     test.pass("skipping test as required environment variables not configured");
     return;
   }
+
   // smtp module uses a 15 second connection timeout, so we use a little more.
   test.waitUntilDone(20000);
   let finished = false;
