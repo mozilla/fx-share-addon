@@ -226,7 +226,7 @@ function (require,  common) {
       var strval = window.localStorage.getItem(api.key);
       var urec = JSON.parse(strval);
       var oauthConfig = urec.oauth;
-      dump("send data is "+JSON.stringify(data)+"\n")
+      dump("send data is "+JSON.stringify(activity.data)+"\n")
       dump("oauthConfig is "+JSON.stringify(oauthConfig)+"\n")
       return;
     }
