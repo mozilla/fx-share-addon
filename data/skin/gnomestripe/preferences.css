@@ -1,5 +1,5 @@
 radio[pane=paneShare] {
-  list-style-image: url("resource://ffshare-at-mozilla-dot-org-ffshare-data/skin/gnomestripe/Options-share.png") !important;
+  list-style-image: url("../gnomestripe/Options-share.png") !important;
 }
 
 /* Share Pane */
