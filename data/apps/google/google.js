@@ -54,7 +54,8 @@ function (require,  common) {
         signatureMethod     : "HMAC-SHA1",
         requestTokenURL     : "https://www.google.com/accounts/OAuthGetRequestToken",
         userAuthorizationURL: "https://www.google.com/accounts/OAuthAuthorizeToken",
-        accessTokenURL      : "https://www.google.com/accounts/OAuthGetAccessToken"
+        accessTokenURL      : "https://www.google.com/accounts/OAuthGetAccessToken",
+        emailUrl: "https://mail.google.com/mail/b/%s/smtp/"
       },
       key: "anonymous",
       secret: "anonymous",

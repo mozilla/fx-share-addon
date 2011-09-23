@@ -29,34 +29,17 @@ exports.testSmtpSuccessfulSend = function(test) {
   dump("testSmtpSuccessfulSend\n");
   // first sort out the auth stuff.
   if (environ.get("FXSHARE_TEST_OAUTH_TOKEN")) {
-    // looks like oauth.
-    // We keep the actual signing process out of smtp itself to keep the
-    // signing mechanism from being a dependency of the smtp api.
-    let {OAuth} = require("OAuth");
-    let accessor = {
+    // this matches the oauthConfig structure that is used in fx-share
+    authArgs.xoauth = {
       consumerSecret: environ.get("FXSHARE_TEST_OAUTH_CONSUMER_SECRET") || 'anonymous',
       consumerKey: environ.get("FXSHARE_TEST_OAUTH_CONSUMER_KEY") || 'anonymous',
       tokenSecret: environ.get("FXSHARE_TEST_OAUTH_TOKEN_SECRET"),
-      token: environ.get("FXSHARE_TEST_OAUTH_TOKEN")
+      token: environ.get("FXSHARE_TEST_OAUTH_TOKEN"),
+      serviceProvider: {
+        signatureMethod: "HMAC-SHA1",
+        emailUrl: "https://mail.google.com/mail/b/%s/smtp/"
+      }
     };
-    let action = "https://mail.google.com/mail/b/" + smtpArgs.email + "/smtp/";
-    let message = {method: 'GET', parameters: {
-            'oauth_signature_method': "HMAC-SHA1",
-            'oauth_token': environ.get("FXSHARE_TEST_OAUTH_TOKEN")
-      }, action: action};
-    OAuth.completeRequest(message, accessor);
-
-    // much like OAuth.getAuthorizationHeader except that does the realm etc.
-    let data = [];
-    let list = OAuth.getParameterList(message.parameters);
-    list.sort();
-    for (var p = 0; p < list.length; ++p) {
-      let value = list[p][1];
-      if (value == null) value = "";
-      data.push(OAuth.percentEncode(list[p][0]) + '="' + OAuth.percentEncode(value) + '"');
-    }
-    authArgs.xoauth = "GET " + action + " " + data.join(",");
-    console.log("xoauth data is", authArgs.xoauth);
   } else if (authArgs.plain.username && authArgs.plain.password) {
     // the auth structure is ready to go for plain authentication
     ;
