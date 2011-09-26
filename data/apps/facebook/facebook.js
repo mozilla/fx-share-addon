@@ -77,6 +77,18 @@ function (require,  common) {
   };
 
 
+  // Used to be sure to clear out any localStorage values.
+  // Add to it if any new localStorage items are added.
+  function clearStorage(activity, credentials) {
+    var storage = window.localStorage;
+
+    //This takes care of api.key localStorage
+    common.logout(domain, activity, credentials);
+
+    storage.removeItem(api.key + '.groups');
+    storage.removeItem(api.key + '.friends');
+  }
+
   var api = {
     key: "ff-share-" + domain,
 
@@ -337,7 +349,7 @@ function (require,  common) {
   });
 
   navigator.mozApps.services.registerHandler('link.send', 'logout', function(activity, credentials) {
-    common.logout(domain, activity, credentials);
+    clearStorage(activity, credentials);
   });
 
   // Get a list of recipient names for a specific shareType.  Only returns
@@ -428,7 +440,7 @@ function (require,  common) {
   });
 
   navigator.mozApps.services.registerHandler('link.send', 'clearCredentials', function(activity, credentials) {
-    common.logout(activity, credentials);
+    clearStorage(activity, credentials);
   });
 
 

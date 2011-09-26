@@ -102,7 +102,7 @@ function (object,         Widget,         $,        template,
           root.find('[name="name"]').text(this.owaservice.parameters.name);
           root.find('[name="domain"]').text(this.owaservice.parameters.domain);
           root.find('[name="displayName"]').text(this.owaservice.parameters.displayName);
-          
+
         }
         // If either 'parameters' or 'login' are null, we are waiting
         // for those methods to return.
@@ -157,7 +157,6 @@ function (object,         Widget,         $,        template,
       },
 
       onRemove: function (evt) {
-        dump("TODO: This needs to remove the entire account, not just logout");
       },
       onLogin: function (evt) {
         // hrmph - tried to dispatch.pub back to the main panel but then
