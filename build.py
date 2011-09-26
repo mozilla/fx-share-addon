@@ -121,7 +121,9 @@ def build_deps(deps, latest_tags):
             os.mkdir(deps_dir)
 
         for dep in deps:
-            root, name = dep.split(':')
+            r = dep.split(':')
+            root, name = r[:2]
+            branch = len(r) > 2 and r[2] or None
             repo_type, repo_root = REPOS[root]
             repo = repo_root % name
             target = os.path.join(deps_dir, name)
@@ -129,11 +131,15 @@ def build_deps(deps, latest_tags):
                 os.chdir(target)
                 if repo_type == 'git':
                     _run('git pull')
+                    if branch:
+                        _run('git checkout %s' % branch)
                 else:
                     _run('hg pull')
             else:
                 if repo_type == 'git':
                     _run('git clone %s %s' % (repo, target))
+                    if branch:
+                        _run('git checkout %s' % branch)
                 else:
                     _run('hg clone %s %s' % (repo, target))
 
