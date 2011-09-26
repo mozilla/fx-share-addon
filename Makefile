@@ -1,5 +1,5 @@
 APPNAME = fx-share-addon
-DEPS = github:addon-sdk,github:oauthorizer,github:openwebapps
+DEPS = github:addon-sdk:master,github:oauthorizer:develop,github:openwebapps:develop
 PYTHON = python
 
 ifeq ($(TOPSRCDIR),)
