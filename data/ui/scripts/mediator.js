@@ -35,19 +35,22 @@
  */
 
 define(function () {
-  var emit = window.navigator.mozApps.mediation.emit;
+  var port = window.navigator.mozApps.mediation.port;
   var m = {
+    on: port.on,
+    removeListener: port.removeListener,
+
     /**
      * checkBase64Preview
      * the current result will be sent via a post message to base64Preview
      */
     checkBase64Preview: function(options) {
-    //Ask extension to generate base64 data if none available.
-    //Useful for sending previews in email.
-    var preview = options.previews && options.previews[0];
-    if (preview && preview.http_url && !preview.base64) {
-      emit('fxshare.generateBase64Preview', preview.http_url);
-    }
+      //Ask extension to generate base64 data if none available.
+      //Useful for sending previews in email.
+      var preview = options.previews && options.previews[0];
+      if (preview && preview.http_url && !preview.base64) {
+        port.emit('fxshare.generateBase64Preview', preview.http_url);
+      }
     },
 
     /**
@@ -56,14 +59,14 @@ define(function () {
      * hide the mediator panel
      */
     hide: function() {
-      emit('hide');
+      port.emit('hide');
     },
 
     /**
      * XXX prefs panel has been removed
      */
     openPrefs: function() {
-      emit('openPrefs');
+      port.emit('openPrefs');
     },
 
     sizeToContent: function() {
@@ -74,20 +77,20 @@ define(function () {
         width: wrapper.scrollWidth +4,
         height: wrapper.scrollHeight +4
       };
-      emit('owa.mediation.sizeToContent', args);
+      port.emit('owa.mediation.sizeToContent', args);
     },
 
     updateChromeStatus: function(status) {
-      emit('fxshare.updateStatus', status);
+      port.emit('fxshare.updateStatus', status);
     },
 
     // This is the 'success' notification defined by OWA.
     result: function(resultInfo) {
-      emit('owa.success', resultInfo);
+      port.emit('owa.success', resultInfo);
     },
 
     error: function(appid) {
-      emit('owa.failure', {app:appid, result: "error"});
+      port.emit('owa.failure', {app:appid, result: "error"});
     }
   }
   return m;
