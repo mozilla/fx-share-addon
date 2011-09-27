@@ -131,19 +131,17 @@ def build_deps(deps, latest_tags):
                 os.chdir(target)
                 if repo_type == 'git':
                     _run('git pull')
-                    if branch:
-                        _run('git checkout %s' % branch)
                 else:
                     _run('hg pull')
             else:
                 if repo_type == 'git':
                     _run('git clone %s %s' % (repo, target))
-                    if branch:
-                        _run('git checkout %s' % branch)
                 else:
                     _run('hg clone %s %s' % (repo, target))
 
                 os.chdir(target)
+            if repo_type == 'git' and branch:
+                _run('git checkout %s' % branch)
             update_cmd = _update_cmd(dep, latest_tags, repo_type)
             _run(update_cmd)
             #_run('%s setup.py develop' % PYTHON)
