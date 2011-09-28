@@ -4,7 +4,7 @@
 // are set.
 const {Cc, Ci} = require("chrome")
 const {SslSmtpClient} = require("email/smtp");
-const {MimeMultipart, MimeText, MimeEncoded} = require("email/mime");
+const {MimeMultipart, MimeText, MimeBinary} = require("email/mime");
 
 var environ = Cc["@mozilla.org/process/environment;1"]
               .getService(Ci.nsIEnvironment);
@@ -99,11 +99,7 @@ exports.testSmtpSimpleSend = function(test) {
   msg.addHeader('Subject', "simple test message from fx-share with funny \u00a9 char");
 
   let part1 = new MimeText("hello there funny \u00a9har", 'plain')
-  part1.setCharset('utf-8')
-
   let part2 = new MimeText("<b>hello</b> there funny \u00a9har", 'html')
-  part2.setCharset('utf-8')
-
   msg.attach(part1);
   msg.attach(part2);
   sendEmail(test, msg);
@@ -115,18 +111,16 @@ exports.testSmtpImageSend = function(test) {
 
   let part2 = new MimeMultipart('related')
   let html = new MimeText('<b>hello</b><img src="cid:thumbnail">', 'html')
-  html.setCharset('utf-8');
 
   // a small red dot.
   let b64image = "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w\r\n38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==";
-  let image = new MimeEncoded("image", "png", b64image, "base64")
+  let image = new MimeBinary("image", "png", b64image, "base64")
   image.addHeader('Content-Id', '<thumbnail>');
   image.addHeader('Content-Disposition', 'inline; filename=thumbnail.png');
   part2.attach(html)
   part2.attach(image)
 
   let part1 = new MimeText("hello", 'plain')
-  part1.setCharset('utf-8')
 
   msg.attach(part1)
   msg.attach(part2)
