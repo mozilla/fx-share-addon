@@ -107,7 +107,7 @@ exports.testSmtpSimpleSend = function(test) {
 
 exports.testSmtpImageSend = function(test) {
   let msg = new MimeMultipart('alternative');
-  msg.addHeader('Subject', "image test message from fx-share with funny \u00a9 char");
+  msg.addHeader('Subject', "image test message from fx-share with funny \u00a9har");
 
   let part2 = new MimeMultipart('related')
   let html = new MimeText('<b>hello</b><img src="cid:thumbnail">', 'html')
