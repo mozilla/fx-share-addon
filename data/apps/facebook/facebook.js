@@ -178,8 +178,8 @@ function (require,  common) {
 
     getProfile: function(activity, credentials) {
       var oauthConfig = activity.data;
-      dump("calling https://graph.facebook.com/me\n");
-      navigator.mozApps.oauth.call(oauthConfig, {
+      //dump("calling https://graph.facebook.com/me\n");
+      navigator.mozApps.services.oauth.call(oauthConfig, {
         method: "GET",
         action: "https://graph.facebook.com/me",
         parameters: {}
@@ -267,14 +267,14 @@ function (require,  common) {
         if (data[n])
           body[map[n]] = data[n];
       }
-      dump("send ["+url+"] args "+JSON.stringify(body)+"\n");
+      //dump("send ["+url+"] args "+JSON.stringify(body)+"\n");
 
-      navigator.mozApps.oauth.call(oauthConfig, {
+      navigator.mozApps.services.oauth.call(oauthConfig, {
         method: "POST",
         action: url,
         parameters: body
       },function(json) {
-        dump("got facebook send result "+JSON.stringify(json)+"\n");
+        //dump("got facebook send result "+JSON.stringify(json)+"\n");
         if ('error' in json) {
             activity.postException({code: "error", message: json});
         } else {
@@ -321,7 +321,7 @@ function (require,  common) {
     },
 
     _pagedContacts: function(url, params, oauthConfig) {
-      navigator.mozApps.oauth.call(oauthConfig, {
+      navigator.mozApps.services.oauth.call(oauthConfig, {
         method: "GET",
         action: url,
         parameters: params
@@ -403,6 +403,9 @@ function (require,  common) {
     } else
     if (args.shareType === "friendsWall") {
       type = "friends";
+    } else
+    if (args.shareType === "wall") {
+      activity.postResult([]);
     } else {
       throw("invalid shareType " + args.shareType + "\n");
     }
@@ -421,7 +424,6 @@ function (require,  common) {
   });
 
   navigator.mozApps.services.registerHandler('link.send', 'setAuthorization', function(activity, credentials) {
-    dump("in setAuthorization "+JSON.stringify(activity)+"\n");
     api.getProfile(activity, credentials);
   });
 
