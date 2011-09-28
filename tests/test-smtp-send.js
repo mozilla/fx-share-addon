@@ -4,6 +4,7 @@
 // are set.
 const {Cc, Ci} = require("chrome")
 const {SslSmtpClient} = require("email/smtp");
+const {MimeMultipart, MimeText, MimeBinary} = require("email/mime");
 
 var environ = Cc["@mozilla.org/process/environment;1"]
               .getService(Ci.nsIEnvironment);
@@ -24,9 +25,7 @@ let authArgs = {
   xoauth: null // we build this manually...
 };
 
-
-exports.testSmtpSuccessfulSend = function(test) {
-  dump("testSmtpSuccessfulSend\n");
+function sendEmail(test, payload) {
   // first sort out the auth stuff.
   if (environ.get("FXSHARE_TEST_OAUTH_TOKEN")) {
     // this matches the oauthConfig structure that is used in fx-share
@@ -45,7 +44,6 @@ exports.testSmtpSuccessfulSend = function(test) {
     ;
   } else {
     // no concept of skipping a test, so just say it passed.
-    dump("skipping the test!\n");
     test.pass("skipping test as required environment variables not configured");
     return;
   }
@@ -60,7 +58,7 @@ exports.testSmtpSuccessfulSend = function(test) {
       test.pass("apparently we worked!");
     }
   }
-dump("try to send an email!\n");
+
   let client = new SslSmtpClient(on_disconnect);
   let on_connected = function() {
     console.log("connected - starting login");
@@ -68,9 +66,9 @@ dump("try to send an email!\n");
       function() {
         // now we can send the message.
         let to = [environ.get("FXSHARE_TEST_EMAIL_TO") || environ.get("FXSHARE_TEST_SMTP_EMAIL")];
-        client.sendMessage(to, "test message from fx-share",
-                           "Hello <b>there</b>", // html
-                           "Hello there", // txt
+        payload.addHeader('To', to);
+        payload.addHeader('From', to);
+        client.sendMessage(to, payload,
                            function() {
                             finished = true;
                             test.pass("message sent");
@@ -94,4 +92,37 @@ dump("try to send an email!\n");
   }
   let logging = true;
   client.connect(smtpArgs, on_connected, on_error, logging);
+}
+
+exports.testSmtpSimpleSend = function(test) {
+  let msg = new MimeMultipart('alternative');
+  msg.addHeader('Subject', "simple test message from fx-share with funny \u00a9 char");
+
+  let part1 = new MimeText("hello there funny \u00a9har", 'plain')
+  let part2 = new MimeText("<b>hello</b> there funny \u00a9har", 'html')
+  msg.attach(part1);
+  msg.attach(part2);
+  sendEmail(test, msg);
+}
+
+exports.testSmtpImageSend = function(test) {
+  let msg = new MimeMultipart('alternative');
+  msg.addHeader('Subject', "image test message from fx-share with funny \u00a9har");
+
+  let part2 = new MimeMultipart('related')
+  let html = new MimeText('<b>hello</b><img src="cid:thumbnail">', 'html')
+
+  // a small red dot.
+  let b64image = "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w\r\n38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==";
+  let image = new MimeBinary("image", "png", b64image, "base64")
+  image.addHeader('Content-Id', '<thumbnail>');
+  image.addHeader('Content-Disposition', 'inline; filename=thumbnail.png');
+  part2.attach(html)
+  part2.attach(image)
+
+  let part1 = new MimeText("hello", 'plain')
+
+  msg.attach(part1)
+  msg.attach(part2)
+  sendEmail(test, msg);
 }

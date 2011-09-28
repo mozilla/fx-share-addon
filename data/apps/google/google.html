@@ -87,10 +87,13 @@ shared via Firefox Share -- http://mozillalabs.com/
 {{else link}}
             <a target="_blank" style="color:#00A0FF;font-size:16px;" href="${link}">
 {{/if}}
-{{if picture}}
-            <img src="${picture}" style="padding:1px;border:1px solid #ccc;margin:5px;"/></a>
-{{else}}
+
+{{if picture_base64}}
             <img src="cid:thumbnail" style="padding:1px;border:1px solid #ccc;margin:5px;"/></a>
+{{else}}
+    {{if picture}}
+                <img src="${picture}" style="padding:1px;border:1px solid #ccc;margin:5px;"/></a>
+    {{/if}}
 {{/if}}
         </td>
         </tr></tbody>
