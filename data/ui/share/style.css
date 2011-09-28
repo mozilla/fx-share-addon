@@ -207,15 +207,29 @@ noscript {
     width: 180px;
 }
 
-#pageInfo .thumb {
+#pageInfo .thumbContainer {
+    /* Set to be the max values for .thumbnail img */
     width: 75px;
     height: 75px;
-  border: 1px solid #383838;
-  border-radius: 4px;
+    overflow: hidden;
+    margin-right: 5px;
 }
 
-#pageInfo .thumbContainer {
-    margin-right: 5px;
+#pageInfo .thumbnail {
+    margin: 0 auto;
+}
+
+#pageInfo .thumbnail img {
+    border: none;
+    margin: 0 auto;
+
+    /* See .thumbContainer styles if these values changed. */
+    max-width: 75px;
+    max-height: 75px;
+    display: block;
+
+    border: 1px solid #383838;
+    border-radius: 4px;
 }
 
 #pageInfo .pageTitle {

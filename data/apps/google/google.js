@@ -266,7 +266,8 @@ function (require,  common,      $) {
           to: activity.data.to,
           subject: activity.data.subject,
           html: htmlTmpl,
-          text: textTmpl
+          text: textTmpl,
+          thumbnail: activity.data.picture_base64
         },
         function result(json) {
           dump("got gmail send result "+JSON.stringify(json)+"\n");
