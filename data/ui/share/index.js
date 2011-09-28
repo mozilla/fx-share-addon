@@ -463,7 +463,7 @@ function (require,   $,        object,         fn,
       $('#authOkButton').click(function (evt) {
         // just incase the service doesn't detect the logout automatically
         // (ie, incase it returns the stale user info), force a logout.
-        
+
         // XXX FIXME.  need to test this use case somehow.  We really should
         // not reproduce the opening of an auth dialog here, we do that in
         // servicepanel.js.  We probably should do something like:
@@ -531,6 +531,20 @@ function (require,   $,        object,         fn,
     }
     accountPanels = {};
   };
+
+
+  // listen for changes in the base64Preview, and update options accordingly,
+  // since the this call could happen before AccountPanels are ready, which
+  // also listen for base64Preview.
+  function onBase64Preview(url) {
+    if (options) {
+      var preview = options.previews && options.previews[0];
+      if (preview) {
+        preview.base64 = url;
+      }
+    }
+  }
+  mediator.on('base64Preview', onBase64Preview);
 
   // tell OWA we are ready...
   window.navigator.mozApps.mediation.ready(

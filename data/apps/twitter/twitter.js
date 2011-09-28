@@ -147,7 +147,7 @@ function (require,  common) {
 
     getProfile: function(activity, credentials) {
       var oauthConfig = activity.data;
-      navigator.mozApps.oauth.call(oauthConfig, {
+      navigator.mozApps.services.oauth.call(oauthConfig, {
         method: "GET",
         action: "https://api.twitter.com/1/account/verify_credentials.json",
         parameters: {}
@@ -201,12 +201,11 @@ function (require,  common) {
 
       //dump("send ["+url+"] args "+JSON.stringify(body)+"\n");
 
-      navigator.mozApps.oauth.call(oauthConfig, {
+      navigator.mozApps.services.oauth.call(oauthConfig, {
         method: "POST",
         action: url,
         parameters: body
       },function(json) {
-        dump("got twitter send result "+JSON.stringify(json)+"\n");
         if ('error' in json) {
             activity.postException({code:"error", message:json});
         } else {
@@ -246,7 +245,7 @@ function (require,  common) {
     },
 
     _pagedContacts: function(url, params, oauthConfig) {
-      navigator.mozApps.oauth.call(oauthConfig, {
+      navigator.mozApps.services.oauth.call(oauthConfig, {
         method: "GET",
         action: url,
         parameters: params

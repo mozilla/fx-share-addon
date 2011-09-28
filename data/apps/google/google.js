@@ -176,7 +176,7 @@ function (require,  common,      $) {
 
     getProfile: function(activity, credentials) {
       var oauthConfig = activity.data;
-      navigator.mozApps.oauth.call(oauthConfig, {
+      navigator.mozApps.services.oauth.call(oauthConfig, {
         method: "GET",
         action: "https://www.google.com/m8/feeds/contacts/default/full",
         parameters: {alt:'json'}
@@ -229,7 +229,7 @@ function (require,  common,      $) {
     },
 
     _pagedContacts: function(url, params, oauthConfig) {
-      navigator.mozApps.oauth.call(oauthConfig, {
+      navigator.mozApps.services.oauth.call(oauthConfig, {
         method: "GET",
         action: url,
         parameters: params
@@ -266,7 +266,8 @@ function (require,  common,      $) {
           to: activity.data.to,
           subject: activity.data.subject,
           html: htmlTmpl,
-          text: textTmpl
+          text: textTmpl,
+          thumbnail: activity.data.picture_base64
         },
         function result(json) {
           dump("got gmail send result "+JSON.stringify(json)+"\n");

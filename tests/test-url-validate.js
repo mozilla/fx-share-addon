@@ -1,7 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-let {validateURL} = require("ffshare/panel");
+let {validateURL} = require("fx-share-addon/panel");
 
 let bad_urls = [
   "http://invalid.comhttp://invalid.com",
