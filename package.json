@@ -4,7 +4,7 @@
     "id": "fx-share-addon@mozilla.org",
     "description": "Share things",
     "author": "Mozilla",
-    "version": "0.001",
+    "version": "0.0.2",
     "dependencies": ["api-utils", "addon-kit", "openwebapps", "oauthorizer"],
     "main": "./main.js"
 }
