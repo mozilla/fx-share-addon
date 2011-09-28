@@ -89,12 +89,10 @@ shared via Firefox Share -- http://mozillalabs.com/
 {{/if}}
 
 {{if picture_base64}}
-            <img src="data:image/png;base64,${picture_base64}" style="padding:1px;border:1px solid #ccc;margin:5px;"/></a>
+            <img src="cid:thumbnail" style="padding:1px;border:1px solid #ccc;margin:5px;"/></a>
 {{else}}
     {{if picture}}
                 <img src="${picture}" style="padding:1px;border:1px solid #ccc;margin:5px;"/></a>
-    {{else}}
-                <img src="cid:thumbnail" style="padding:1px;border:1px solid #ccc;margin:5px;"/></a>
     {{/if}}
 {{/if}}
         </td>
