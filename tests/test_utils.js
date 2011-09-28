@@ -2,7 +2,7 @@ const {Cc, Ci} = require("chrome");
 const URL = require("url");
 const tabs = require("tabs");
 // implicitly run our main() entry-point
-require("ffshare/main").main();
+require("fx-share-addon/main").main();
 
 exports.finalize = function(test, fn) {
   let onDone = test.onDone;
