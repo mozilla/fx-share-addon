@@ -85,13 +85,14 @@ function (object,         Widget,         $,        template,
         this.displayName = profile.displayName || profile.username;
 
         //Listen for updates to base64Preview
-        this.base64PreviewSub = dispatch.sub('base64Preview', fn.bind(this, function (dataUrl) {
+        this.base64PreviewSub = fn.bind(this, function (dataUrl) {
           $('[name="picture_base64"]', this.node).val(jigFuncs.rawBase64(dataUrl));
-        }));
+        });
+        mediator.on('base64Preview', this.base64PreviewSub);
       },
 
       destroy: function () {
-        dispatch.unsub(this.base64PreviewSub);
+        mediator.removeListener('base64Preview', this.base64PreviewSub);
         dispatch.unsub(this.sendCompleteSub);
         this.select.dom.unbind('change', this.selectChangeFunc);
         delete this.selectChangeFunc;
