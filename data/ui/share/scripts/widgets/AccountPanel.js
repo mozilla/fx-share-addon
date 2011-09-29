@@ -252,6 +252,7 @@ function (object,         Widget,         $,        template,
           // Disable share, show error.
           this.shareButtonNode.setAttribute('disabled', 'disabled');
           this.toDom.addClass('inputError');
+          this.toDom.attr("aria-invalid", "true");
 
           this.showStatus('needRecipient');
         } else {
@@ -269,6 +270,7 @@ function (object,         Widget,         $,        template,
                 // at least one error
                 this.shareButtonNode.setAttribute('disabled', 'disabled');
                 this.toDom.addClass('inputError');
+                this.toDom.attr("aria-invalid", "true");
                 this.showStatus('invalidRecipient');
               }
             }.bind(this)
@@ -317,6 +319,7 @@ function (object,         Widget,         $,        template,
       resetError: function () {
         this.shareButtonNode.removeAttribute('disabled');
         this.toDom.removeClass('inputError');
+        this.doDom.removeAttr("aria-invalid");
         this.hideStatus();
       },
 

@@ -106,8 +106,8 @@ function (object,         Widget,         array,         $,        module,
       onRender: function () {
         this.dom = $(this.node);
 
-        //Apply selected style.
-        $('li', this.node).eq(this.selectedIndex).addClass('selected');
+        // Mark as selected .
+        $('li', this.node).eq(this.selectedIndex).attr("aria-selected", "true");
       },
 
       destroy: function () {
@@ -128,7 +128,7 @@ function (object,         Widget,         array,         $,        module,
       val: function (newValue) {
         if (newValue === undefined) {
           // Get
-          return $('li.selected', this.node)[0].getAttribute('data-value');
+          return $('li[aria-selected="true"]', this.node)[0].getAttribute('data-value');
         } else {
           // Set the value.
           var liNode, ulNode, index;
@@ -150,8 +150,8 @@ function (object,         Widget,         array,         $,        module,
           this.selectedIndex = array.to.apply(null, $('li', ulNode)).indexOf(liNode);
 
           // Make sure the right node has the selected class
-          $('li', ulNode).removeClass('selected');
-          $(liNode).addClass('selected');
+          $('li', ulNode).attr("aria-selected", "false");
+          $(liNode).attr('aria-selected', "true");
 
           this.close();
 
@@ -162,7 +162,7 @@ function (object,         Widget,         array,         $,        module,
       },
 
       close: function () {
-        var liNode = $('li.selected', this.node)[0];
+        var liNode = $('li[aria-selected="true"]', this.node)[0];
 
         // Put the value in the hidden input
         $('input', this.node).val(liNode.getAttribute('data-value'));

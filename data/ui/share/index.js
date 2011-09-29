@@ -357,12 +357,14 @@ function (require,   $,        object,         fn,
         /// XXX - need the OWA icon helper!!
         var icon = thisSvc.getIconForSize(48); // XXX - what size should really be used???
         // Add a tab button for the service.
-        tabsDom.append(new TabButton({
+        var tabButton = new TabButton({
           target: tabId,
           type: appid,
           title: thisSvc.app.manifest.name,
           serviceIcon: icon
-        }, tabFragment));
+        }, tabFragment);
+        tabButton.node.setAttribute("role", "tab");
+        tabsDom.append(tabButton);
 
         // Get the contructor function for the panel.
         accountPanel = new ServicePanel({
@@ -426,8 +428,8 @@ function (require,   $,        object,         fn,
           var node = evt.target.nodeName==='A' ? evt.target : evt.target.parentNode,
               target = node.href.split('#')[1];
 
-          tabButtonsDom.removeClass('selected');
-          $(node).addClass('selected');
+          tabButtonsDom.attr('aria-selected', 'false');
+          $(node).attr('aria-selected', 'true');
 
           servicePanelsDom.addClass('hidden');
           var targetElement = $('#' + target);

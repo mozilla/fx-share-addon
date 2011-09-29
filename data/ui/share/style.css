@@ -335,7 +335,7 @@ h3 {
   margin: 2px;
 }
 
-.widgets-TabButton.selected {
+.widgets-TabButton[aria-selected="true"] {
   border: @tabButtonBorder;
   box-shadow: 0 0 5px rgba(87, 120, 148, 1);
   background: @tabButtonBackgroundWebKit;

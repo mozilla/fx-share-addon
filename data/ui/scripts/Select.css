@@ -55,7 +55,7 @@
   white-space: nowrap;
 }
 
-.Select li.selected {
+.Select li[aria-selected="true"] {
   display: block;
   height: 24px;
   line-height: 24px;
@@ -68,19 +68,19 @@
   padding-right: 20px;
 }
 
-.Select.open li.selected {
+.Select.open li[aria-selected="true"] {
   /* background-color: grey; */
 }
 
-.Select.open li.selected:hover,
+.Select.open li[aria-selected="true"]:hover,
 .Select.open li:hover {
   color:white;
   background-color: #2b2b2b;
 }
 
-.win .Select.open li.selected:hover,
+.win .Select.open li[aria-selected="true"]:hover,
 .win .Select.open li:hover,
-.linux .Select.open li.selected:hover,
+.linux .Select.open li[aria-selected="true"]:hover,
 .linux .Select.open li:hover {
   color: inherit;
   background-color: #E1E9F6;
