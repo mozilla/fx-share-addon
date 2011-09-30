@@ -128,7 +128,8 @@ exports.getSharePanelWithApp = function(test, args, cb) {
               // Use a 'jq' prefix for the jquery objects.
               let appWidget = cw.$('#tabContent').children()[index]; // *sob* - why eq(index) doesn't work?
               let jqAppWidget = cw.$(appWidget); // for convenience - most tests want this.
-              let result = {panel: panel,
+              let result = {appOrigin: appOrigin,
+                            panel: panel,
                             panelContentWindow: cw,
                             jqPanelContentWindow: cw.$,
                             appFrame: appFrame,
@@ -173,6 +174,26 @@ unblock the next call until the test has finished examining the mediator state.
 
 **/
 
+function invokeService(mediatorPanel, activity, cb, cberr) {
+  let worker = mediatorPanel.handlers[activity.origin][activity.action][activity.message];
+  activity.success = "test_invoke_success";
+  activity.error = "test_invoke_error";
+  function postResult(result) {
+    worker.port.removeListener(activity.error, postException);
+    cb(result);
+  }
+  function postException(result) {
+    worker.port.removeListener(activity.success, postResult);
+    cberr(result);
+  }
+  worker.port.once(activity.success, postResult)
+  worker.port.once(activity.error, postException)
+  worker.port.emit("owa.service.invoke", {
+    activity: activity,
+    credentials: {}
+  });
+}
+
 // any exceptions in this replay process can cause confusion unless the error
 // is logged.
 exports.testAppSequence = function(test, appInfo, seq, cbdone) {
@@ -186,28 +207,31 @@ exports.testAppSequence = function(test, appInfo, seq, cbdone) {
 }
 
 function _testAppSequence(test, appInfo, seq, cbdone) {
-  let {appFrame} = appInfo;
-  let invokeService = exports.getOWA()._services.invokeService;
+  let {appFrame, appOrigin, panel} = appInfo;
   let item = seq.shift();
   let resumeArgs = {method: item.method, successArgs: item.successArgs,
                     errorType: item.errorType, errorValue: item.errorValue};
   // invoke our special "test.resume" method.
   // console.log("test is unblocking call to", item.method);
   let activity = {
+    origin: appOrigin,
     action: "test",
+    message: "resume",
     data: resumeArgs
   };
   let finish_activity = {
+    origin: appOrigin,
     action: "test",
+    message: "finish",
     data: {}
   }
-  invokeService(appFrame, activity, "resume",
+  invokeService(panel, activity,
     function(result) {
       // The previously blocked call has returned.
       function cbresume() {
         if (seq.length === 0) {
           // out of items - tell the app we are done and to check itself.
-          invokeService(appFrame, finish_activity, "finish",
+          invokeService(panel, finish_activity,
             function() {
               // call the final callback or just finish the test if not specified.
               if (cbdone) {
