@@ -26,5 +26,5 @@
 @buttonShareBackground: -moz-linear-gradient(center top , #EDF7F9 0%, #9BDCF5 100%);
 
 
-@inputBorder: !important;
-@inputBoxShadow: !important;
+@inputBorder: 1px solid #577894;
+@inputBoxShadow: 0 0 5px #57BCFF;
