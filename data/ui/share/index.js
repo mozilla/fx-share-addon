@@ -67,14 +67,18 @@ function (require,   $,        object,         fn,
     function (osText, styleText) {
     (new less.Parser()).parse(osText + styleText, function (err, css) {
       if (err) {
-        dump("Failed to setup style-sheet: " + err.name + "/" + err.message);
+        dump("Failed to setup style-sheet: " + err.name + "/" + err.message+"\n");
         if (typeof console !== 'undefined' && console.error) {
           console.error(err);
         }
       } else {
         var style = document.createElement('style');
         style.type = 'text/css';
-        style.textContent = css.toCSS();
+        try{
+          style.textContent = css.toCSS();
+        } catch(e) {
+          dump("less error: "+JSON.stringify(e)+"\n");
+        }
         document.head.appendChild(style);
         document.body.style.display = 'block';
         mediator.sizeToContent();
