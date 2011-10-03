@@ -1,0 +1,16 @@
+{
+  "name":"Yammer via Firefox Share",
+  "developer": {
+    "name":"Mozilla Labs Demo",
+    "url":"http://mozillalabs.com"
+  },
+  "description":"Connects your browser's Firefox Share to Yammer",
+  "icons":{
+    "32":"/yammer-logo-small-dark.png"
+  },
+  "services": {
+    "link.send": {
+      "path": "/yammer.html"
+    }
+  }
+}
