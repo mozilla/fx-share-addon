@@ -324,6 +324,13 @@ function (require,  common) {
   navigator.mozApps.services.registerHandler('link.send', 'resolveRecipients', function(activity, credentials) {
     var type;
     var args = activity.data;
+    if (args.shareType === "public") {
+      if (args.names && args.names.length) {
+        throw("invalid call, public shares do not have recipients\n");
+      }
+      activity.postResult([]);
+      return;
+    }
     if (args.shareType === "direct") {
       type = "followers";
     } else {
