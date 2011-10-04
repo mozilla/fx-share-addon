@@ -109,8 +109,11 @@ exports.getSharePanelWithApp = function(test, args, cb) {
         let lc = windowUtils.activeBrowserWindow.document.getElementById("mainPopupSet").lastChild;
         // and the first child of the XUL panel is the mediator's iframe.
         let iframe = lc.firstChild;
-        // check it really is the mediator iframe
-        test.assertEqual(iframe.contentWindow.location.href, require("self").data.url("ui/share/index.html"));
+        // check it really is the mediator iframe (but not using test.assert*
+        // to prevent the actual test "passing" if it does nothing)
+        if (iframe.contentWindow.location.href != require("self").data.url("ui/share/index.html")) {
+          throw "failed to find the correct mediator frame";
+        }
         // So get the actual window object for the mediator...
         let cw = iframe.contentWindow.wrappedJSObject;
         // but the mediator might not yet have got around to adding the service
