@@ -1,5 +1,5 @@
 APPNAME = fx-share-addon
-DEPS = github:addon-sdk:master,github:oauthorizer:develop,github:openwebapps:develop
+DEPS = mixedpuppy:addon-sdk:master,github:oauthorizer:develop,github:openwebapps:release/fx-q3
 PYTHON = python
 
 ifeq ($(TOPSRCDIR),)
