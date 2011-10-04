@@ -38,7 +38,6 @@ function (require,  common,      $) {
         direct: true,
         subjectLabel: true,
         picture: true,
-        title: true,
         description: true
       },
       shareTypes: [{

@@ -162,14 +162,23 @@ function (object,         Widget,         $,        template,
         root.find('[name="picture"]').val(jigFuncs.preview(opts));
         root.find('[name="picture_base64"]').val(jigFuncs.preview_base64(opts));
         root.find('[name="link"]').val(formLink);
-        root.find('[name="title"]').val(opts.title);
+        // If the service has a specific field for the title, use that.
+        // otherwise if it has a field for the subject and no 'subject' is
+        // specified, stick the title in the subject.
+        if (this.parameters.features.title) {
+          root.find('[name="title"]').val(opts.title);
+        } else if (this.parameters.features.subjectLabel) {
+          if (opts.subject) {
+            root.find('[name="subject"]').val(opts.subject);
+          } else if (opts.title) {
+            root.find('[name="subject"]').val(opts.title);
+          }
+        }
         root.find('[name="caption"]').val(opts.caption);
         root.find('[name="description"]').val(opts.description);
         root.find('[name="medium"]').val(opts.medium);
         root.find('[name="source"]').val(opts.source);
-
         this.toDom.val(opts.to);
-        root.find('[name="subject"]').val(opts.subject);
         var message = opts.message || '';
         var constraints = this.parameters.constraints || {};
         if (constraints.editableURLInMessage) {
