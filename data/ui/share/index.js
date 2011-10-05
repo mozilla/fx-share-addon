@@ -67,14 +67,18 @@ function (require,   $,        object,         fn,
     function (osText, styleText) {
     (new less.Parser()).parse(osText + styleText, function (err, css) {
       if (err) {
-        dump("Failed to setup style-sheet: " + err.name + "/" + err.message);
+        dump("Failed to setup style-sheet: " + err.name + "/" + err.message+"\n");
         if (typeof console !== 'undefined' && console.error) {
           console.error(err);
         }
       } else {
         var style = document.createElement('style');
         style.type = 'text/css';
-        style.textContent = css.toCSS();
+        try{
+          style.textContent = css.toCSS();
+        } catch(e) {
+          dump("less error: "+JSON.stringify(e)+"\n");
+        }
         document.head.appendChild(style);
         document.body.style.display = 'block';
         mediator.sizeToContent();
@@ -189,7 +193,8 @@ function (require,   $,        object,         fn,
                              appName: svcRec.app.manifest.name});
           }, 1000);
       },
-      function(error, message) {
+      function(errob) {
+        var error = errob.code, message = errob.message;
         var fatal = true; // false if we can automatically take corrective action.
         dump("SEND FAILURE: " + error + "/" + message + "\n");
         if (error === 'authentication') {
@@ -217,11 +222,8 @@ function (require,   $,        object,         fn,
         }
         updateChromeStatus(SHARE_ERROR);
         if (fatal) {
-          // Let the 'error' status stay up for a second then notify OWA of
-          // the error.
-          setTimeout(function() {
-              mediator.error(sendData.appid);
-            }, 1000);
+          // The text here is what will be displayed in the OWA error notification
+          mediator.error("There was a problem sharing this page: " + message);
         }
       }
     );

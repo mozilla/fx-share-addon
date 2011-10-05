@@ -207,7 +207,7 @@ function (require,  common) {
         parameters: body
       },function(json) {
         if ('error' in json) {
-            activity.postException({code:"error", message:json});
+            activity.postException({code:"error", message:json.error});
         } else {
             activity.postResult(json)
         }
@@ -324,6 +324,13 @@ function (require,  common) {
   navigator.mozApps.services.registerHandler('link.send', 'resolveRecipients', function(activity, credentials) {
     var type;
     var args = activity.data;
+    if (args.shareType === "public") {
+      if (args.names && args.names.length) {
+        throw("invalid call, public shares do not have recipients\n");
+      }
+      activity.postResult([]);
+      return;
+    }
     if (args.shareType === "direct") {
       type = "followers";
     } else {
