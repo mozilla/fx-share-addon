@@ -12,6 +12,7 @@ function testTextCounterHelper(test, constraints, testVal, expectedCounter)
     let seq = [
       {method: 'getParameters', successArgs:
           {constraints: constraints,
+           features: {},
            shareTypes: [{type: 'type', name: 'name'}]
           }
       },
@@ -73,6 +74,7 @@ function testEditableUrlInMessageHelper(test, appArgs, constraints, expectedMess
     let seq = [
       {method: 'getParameters', successArgs:
           {constraints: constraints,
+           features: {},
            shareTypes: [{type: 'type', name: 'name'}]
           }
       },
@@ -116,4 +118,57 @@ exports.testEditableUrlInMessageDefault = function(test) {
   let constraints = {editableURLInMessage: true};
   let expected = "the message " + pageUrl;
   testEditableUrlInMessageHelper(test, appArgs, constraints, expected);
+}
+
+function testTitleAndSubjectHelper(test, shareArgs, features, expectedTitle, expectedSubject)
+{
+  test.waitUntilDone();
+  getSharePanelWithApp(test, shareArgs, function(appInfo) {
+    let {jqAppWidget, jqPanelContentWindow} = appInfo;
+    let accountPanelDiv = jqAppWidget.find(".accountPanel");
+    let seq = [
+      {method: 'getParameters', successArgs:
+          {constraints: {},
+           features: features,
+           shareTypes: [{type: 'type', name: 'name'}]
+          }
+      },
+      {method: 'getLogin', successArgs: {user: {displayName: 'test user'}}
+      }
+    ];
+    testAppSequence(test, appInfo, seq, function () {
+      test.waitUntil(function() {
+        return accountPanelDiv.is(":visible");
+      }).then(function () {
+        // check the text in the fields.
+        let title = accountPanelDiv.find('[name="title"]');
+        test.assertEqual(title.val() || '', expectedTitle);
+        let subject = accountPanelDiv.find('[name="subject"]');
+        test.assertEqual(subject.val() || '', expectedSubject);
+        test.done();
+      });
+    });
+  });
+}
+
+exports['subject field, no title field, default share options'] = function(test) {
+  let features = {subjectLabel: "Subject"};
+  testTitleAndSubjectHelper(test, {}, features, '', "Just another web page");
+}
+
+exports['subject field, no title field, subject in share options'] = function(test) {
+  let features = {subjectLabel: "Subject"};
+  let appArgs = {shareArgs: {subject: "The subject"}};
+  testTitleAndSubjectHelper(test, appArgs, features, '', "The subject");
+}
+
+exports['subject field, title field, default share options'] = function(test) {
+  let features = {subjectLabel: "Subject", title: true};
+  testTitleAndSubjectHelper(test, {}, features, "Just another web page", '');
+}
+
+exports['subject field, title field, subject in share options'] = function(test) {
+  let features = {subjectLabel: "Subject", title: true};
+  let appArgs = {shareArgs: {subject: "The subject"}};
+  testTitleAndSubjectHelper(test, appArgs, features, "Just another web page", "The subject");
 }
