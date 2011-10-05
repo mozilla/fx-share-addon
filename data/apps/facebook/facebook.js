@@ -276,7 +276,7 @@ function (require,  common) {
       },function(json) {
         //dump("got facebook send result "+JSON.stringify(json)+"\n");
         if ('error' in json) {
-            activity.postException({code: "error", message: json});
+            activity.postException({code: "error", message: json.error.message});
         } else {
             activity.postResult(json)
         }
