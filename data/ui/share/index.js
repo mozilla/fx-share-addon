@@ -308,6 +308,7 @@ function (require,   $,        object,         fn,
         title: 'Add Account',
         name: '+'
       }, tabFragment);
+      addButton.node.setAttribute("role", "tab");
 
       // Add the AddAccount UI to the DOM/tab list.
       addAccountWidget = new AddAccount({
