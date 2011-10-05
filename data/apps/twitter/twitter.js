@@ -207,7 +207,7 @@ function (require,  common) {
         parameters: body
       },function(json) {
         if ('error' in json) {
-            activity.postException({code:"error", message:json});
+            activity.postException({code:"error", message:json.error});
         } else {
             activity.postResult(json)
         }
