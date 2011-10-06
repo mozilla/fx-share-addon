@@ -4,6 +4,8 @@
 let {validateURL} = require("fx-share-addon/panel");
 
 let bad_urls = [
+  "/invalid/path",
+  "file:///invalid/path",
   "http://invalid.comhttp://invalid.com",
   "http:///invalid/path",
   "chrome://browser/content/aboutDialog.xul",
