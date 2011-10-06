@@ -60,7 +60,7 @@ function getSharePanel(args) {
     data: args || {}
   }
   // first pretend to invoke a service so our panel is created.
-  return services.get(browser.contentWindow, activity, function () {;});
+  return services.get(activity, function () {;});
 }
 exports.getSharePanel = getSharePanel;
 
