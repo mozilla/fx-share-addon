@@ -548,7 +548,7 @@ function (require,   $,        object,         fn,
 
   // tell OWA we are ready...
   window.navigator.mozApps.mediation.ready(
-    function(activity, services) {
+    function configureServices(activity, services) {
       _deleteOldServices();
       options = activity.data;
       owaservices = services;
@@ -570,6 +570,10 @@ function (require,   $,        object,         fn,
           dispatch.pub('serviceChanged', this.app.origin);
         }.bind(svc));
       }
+    },
+    function updateActivity(activity) {
+      options = activity.data;
+      // force a refresh of the options....
     }
   );
 });
