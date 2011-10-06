@@ -20,12 +20,24 @@ let tests = [
       //source: this.getSourceURL(),
       //url: this.gBrowser.currentURI.spec,
       // og:url
-      canonicalUrl: "http://f1.mozillamessaging.com/",
+      canonicalUrl: "https://f1.mozillamessaging.com/",
       //shortUrl: this.getShortURL(),
       // og:image
       previews: [{"http_url":"http://f1.mozillamessaging.com/favicon.png","base64":""}],
       // og:site_name
       siteName: ">My simple test page<"
+    }
+  },
+  {
+    // tests getShortUrl
+    get url() {
+      return getTestUrl("corpus/og_invalid_url.html")
+    },
+    options: {
+      description: "A test corpus file for open graph tags passing a bad url",
+      canonicalUrl: "",
+      previews: [],
+      siteName: "Evil chrome delivering website"
     }
   },
   {
