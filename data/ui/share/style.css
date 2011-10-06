@@ -481,6 +481,7 @@ span.icon {
 
 .icon {
   background-repeat: no-repeat;
+  cursor: pointer;
 }
 
 .icon.settings {

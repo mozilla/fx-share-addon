@@ -429,7 +429,7 @@ function (require,   $,        object,         fn,
           //Switch Tabs
           // Ack - the click event seems to come from the img rather than the anchor?
           var node = evt.target.nodeName==='A' ? evt.target : evt.target.parentNode,
-              target = node.href.split('#')[1];
+              target = node.getAttribute("tab-target");
 
           tabButtonsDom.attr('aria-selected', 'false');
           $(node).attr('aria-selected', 'true');
