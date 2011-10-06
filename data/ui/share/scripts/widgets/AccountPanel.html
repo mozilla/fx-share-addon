@@ -9,9 +9,9 @@
       <input type="hidden" name="caption" value="{options.caption}" />
       <input type="hidden" name="medium" value="{options.medium}" />
       <input type="hidden" name="source" value="{options.source}" />
-      <img class="avatar" src="{profilePic(profile.photos)}" />
+      <img class="avatar" src="{profilePic(profile.photos)}" alt="user avatar"/>
       <span class="username">{displayName}</span>
-      <a class="remove" href="#">logout</a>
+      <a class="remove" style="cursor: pointer">logout</a>
     </div>
     <div class="boxFlex addressing">
       {lt(svc.shareTypes.length, 2)[}
@@ -23,13 +23,13 @@
       {svc.features.subjectLabel [}
         <input name="subject" placeholder="subject" type="text" value="{options.subject}" autocomplete="off"/>
       {]}
-      <textarea class="message compose" placeholder="Type your message here, and we'll attach the link when you send." name="message">{options.message}</textarea>
+      <textarea class="message compose" placeholder="Type your message here, and we'll attach the link when you send." aria-label="The message to share" name="message">{options.message}</textarea>
 
       <div id="pageInfo">
         <div class="hbox">
             {svc.features.picture [}
           <div class="thumbContainer">
-            <div class="thumbnail"><img class="thumb" src="{thumb(options)}" /></div>
+            <div class="thumbnail"><img class="thumb" src="{thumb(options)}" alt="page thumbnail"/></div>
           </div>
             {]}
           <div class="boxFlex1 shareInfo">
