@@ -46,7 +46,6 @@ function (require,  common,      $) {
           toLabel: 'type in name of recipient'
       }],
       constraints: {
-        editableURLInMessage: true
       },
       auth: {
       type: "oauth",
