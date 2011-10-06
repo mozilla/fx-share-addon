@@ -536,11 +536,13 @@ function (require,   $,        object,         fn,
   // listen for changes in the base64Preview, and update options accordingly,
   // since the this call could happen before AccountPanels are ready, which
   // also listen for base64Preview.
-  function onBase64Preview(url) {
+  function onBase64Preview(img) {
     if (options) {
       var preview = options.previews && options.previews[0];
-      if (preview) {
-        preview.base64 = url;
+      if (preview && preview.http_url == img.url) {
+        preview.base64 = img.data;
+      } else {
+        dump("base64Preview data does not match a preview!\n");
       }
     }
   }
@@ -574,6 +576,8 @@ function (require,   $,        object,         fn,
     function updateActivity(activity) {
       options = activity.data;
       // force a refresh of the options....
+      dispatch.pub('optionsChanged', options);
+      mediator.checkBase64Preview(options);
     }
   );
 });
