@@ -434,18 +434,6 @@ function (require,  common) {
     activity.postResult(parameters);
   });
 
-  navigator.mozApps.services.registerHandler('link.send', 'getCredentials', function(activity, credentials) {
-    common.getLogin(activity, credentials);
-  });
-
-  navigator.mozApps.services.registerHandler('link.send', 'validateCredentials', function(activity, credentials) {
-  });
-
-  navigator.mozApps.services.registerHandler('link.send', 'clearCredentials', function(activity, credentials) {
-    clearStorage(activity, credentials);
-  });
-
-
   // Tell OWA we are now ready to be invoked.
   navigator.mozApps.services.ready();
 });
