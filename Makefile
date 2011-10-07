@@ -10,14 +10,23 @@ ifneq ($(OWA_PROFILE),)
   profile := --profiledir="$(OWA_PROFILE)"
 endif
 
-deps      := $(TOPSRCDIR)/deps
+deps  := $(TOPSRCDIR)/deps
+ifneq ($(DEPSDIR),)
+  deps := $(DEPSDIR)
+endif
+
 addon_sdk := $(deps)/addon-sdk/bin
-oauthorizer := $(TOPSRCDIR)/deps/oauthorizer
-openwebapps := $(TOPSRCDIR)/deps/openwebapps/addons/jetpack
+oauthorizer := $(deps)/oauthorizer
+openwebapps := $(deps)/openwebapps/addons/jetpack
 
 cfx_args :=  --pkgdir=$(TOPSRCDIR) $(profile) --package-path=$(oauthorizer) --package-path=$(openwebapps) --binary-args="-console -purgecaches"
 
 xpi_name := ffshare.xpi
+
+test_args :=
+ifneq ($(TEST),)
+    test_args := -f $(TEST)
+endif
 
 # might be useful for symlink handling...
 SLINK = ln -sf
@@ -35,7 +44,7 @@ pull:
 	$(PYTHON) build.py $(APPNAME) $(DEPS)
 
 test:
-	$(addon_sdk)/cfx test $(cfx_args)
+	$(addon_sdk)/cfx test $(cfx_args) $(test_args)
 
 run:
 	$(addon_sdk)/cfx run $(cfx_args)	
