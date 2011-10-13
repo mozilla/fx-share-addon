@@ -48,9 +48,6 @@ define(['blade/jig'], function (jig) {
       var preview = options.previews && options.previews[0];
       return preview && funcs.rawBase64(preview.base64);
     },
-    link: function (options) {
-      return options.canonicalUrl || options.url;
-    },
     cleanLink: function (url) {
       return url ? url.replace(/^https?:\/\//, '').replace(/^www\./, '') : url;
     },
