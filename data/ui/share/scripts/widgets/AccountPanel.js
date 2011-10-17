@@ -141,7 +141,7 @@ function (object,         Widget,         $,        template,
       _onRender: function () {
         var root = $(this.node),
             opts = this.options,
-            formLink = jigFuncs.link(opts);
+            formLink = opts.url;
 
         // Hold onto nodes that are used frequently
         this.toDom = $('[name="to"]', this.node);
@@ -188,7 +188,7 @@ function (object,         Widget,         $,        template,
           // do its own shortening we prefer a short url if we already have one.
           var url;
           if (constraints.shortURLLength) {
-            url = formLink; // prefers canonicalUrl over url.
+            url = formLink;
           } else {
             url = opts.shortUrl || formLink;
           }
