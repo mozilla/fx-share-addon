@@ -11,23 +11,6 @@
           widgets: '../share/scripts/widgets'
         }
       });
-
-      // Allow tests to plug into the page by notify them if this is a test.
-      if (location.hash === '#test') {
-        parent.postMessage(JSON.stringify({topic: 'registerForTests'}),
-                           location.protocol + "//" + location.host);
-
-        require({
-          priority: ['fakeStorage']
-        });
-      }
-
-      // XXX - need to fixup the storage story for when this code is running
-      // as an extension (fakeStorage is *not* needed when this code is
-      // embedded into firefox...
-      require({
-        priority: ['fakeStorage']
-      });
       require(['../share/index.js']);
     </script>
 </head>
@@ -69,16 +52,6 @@
         <td>
           Sorry, we couldn't connect to your account. Please try again.
           <button class="statusButton statusErrorButton">ok</button>
-        </td>
-      </tr>
-    </table>
-  </div>
-
-  <div id="statusEnableLocalStorage" class="status hidden">
-    <table>
-      <tr>
-        <td>
-          Please enable DOM Storage to use Mozilla F1.
         </td>
       </tr>
     </table>
