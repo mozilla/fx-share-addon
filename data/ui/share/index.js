@@ -37,18 +37,17 @@
 
 define([ "require", "jquery", "blade/object", "blade/fn",
         "blade/jig", "blade/url", "dispatch",
-         "storage",  "widgets/ServicePanel", "widgets/TabButton",
+         "widgets/ServicePanel", "widgets/TabButton",
          "widgets/AddAccount", "less", "osTheme", "mediator",
          "jquery-ui-1.8.7.min", "jquery.textOverflow"
          ],
 function (require,   $,        object,         fn,
           jig,         url,        dispatch,
-          storage,   ServicePanel,           TabButton,
+          ServicePanel,           TabButton,
           AddAccount,           less,   osTheme,   mediator) {
 
   var accountPanels = {},
       accountPanelsRestoreState = {},
-      store = storage(),
       SHARE_DONE = 0,
       SHARE_START = 1,
       SHARE_ERROR = 2,
@@ -458,13 +457,6 @@ function (require,   $,        object,         fn,
         sendData.HumanVerificationImage = $('#captchaImage').attr('src');
         sendMessage(sendData);
       });
-
-      //Only bother with localStorage enabled storage.
-      if (storage.type === 'memory') {
-        showStatus('statusEnableLocalStorage');
-        return;
-      }
-
     });
   };
 
