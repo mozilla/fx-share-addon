@@ -1,5 +1,6 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
+const {Cc, Ci} = require("chrome");
 const {getSharePanel, getTestUrl, getShareButton, createTab, removeCurrentTab, getContentWindow} = require("./test_utils");
 const Assert = require("test/assert").Assert;
 
@@ -149,4 +150,26 @@ function testOne(test, theTest) {
 exports.testShareOptions = function(test) {
   test.waitUntilDone();
   testOne(test, tests.shift());
+}
+
+// tests getCanonicalUrl when the link is relative.  We can't test this
+// using testShareOptions as the canonical URL resolves to a file:// URL which
+// PageOptionsBuilder considers invalid.  So we instantiate a
+// PageOptionsBuilder, then monkey-patch its _validURL function to let all
+// URLs through.
+exports.testRelativeCanonical = function(test) {
+  test.waitUntilDone();
+  // The test page has a canonical URL with href="/canonical.html".  As the
+  // page URL is file:///blah/blah/canonical_relative.html, the final
+  // canonical URL is file:///canonical.html
+  createTab(getTestUrl("corpus/canonical_relative.html"), function(tab) {
+    let wm = Cc["@mozilla.org/appshell/window-mediator;1"]
+            .getService(Ci.nsIWindowMediator);
+    let topwindow = wm.getMostRecentWindow("navigator:browser");
+    let PageOptionsBuilder = require("fx-share-addon/panel").PageOptionsBuilder;
+    let pageOptionsBuilder = new PageOptionsBuilder(topwindow.gBrowser);
+    pageOptionsBuilder._validURL = function(url) url;
+    test.assertEqual(pageOptionsBuilder.getCanonicalURL(), "file:///canonical.html");
+    test.done();
+  });
 }
