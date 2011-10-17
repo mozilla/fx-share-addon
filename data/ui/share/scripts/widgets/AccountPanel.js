@@ -141,7 +141,7 @@ function (object,         Widget,         $,        template,
       _onRender: function () {
         var root = $(this.node),
             opts = this.options,
-            formLink = jigFuncs.link(opts);
+            formLink = opts.url;
 
         // Hold onto nodes that are used frequently
         this.toDom = $('[name="to"]', this.node);
@@ -165,13 +165,15 @@ function (object,         Widget,         $,        template,
         // If the service has a specific field for the title, use that.
         // otherwise if it has a field for the subject and no 'subject' is
         // specified, stick the title in the subject.
-        if (this.parameters.features.title) {
-          root.find('[name="title"]').val(opts.title);
-        } else if (this.parameters.features.subjectLabel) {
-          if (opts.subject) {
-            root.find('[name="subject"]').val(opts.subject);
-          } else if (opts.title) {
-            root.find('[name="subject"]').val(opts.title);
+        if (this.parameters.features) {
+          if (this.parameters.features.title) {
+            root.find('[name="title"]').val(opts.title);
+          } else if (this.parameters.features.subjectLabel) {
+            if (opts.subject) {
+              root.find('[name="subject"]').val(opts.subject);
+            } else if (opts.title) {
+              root.find('[name="subject"]').val(opts.title);
+            }
           }
         }
         root.find('[name="caption"]').val(opts.caption);
@@ -186,7 +188,7 @@ function (object,         Widget,         $,        template,
           // do its own shortening we prefer a short url if we already have one.
           var url;
           if (constraints.shortURLLength) {
-            url = formLink; // prefers canonicalUrl over url.
+            url = formLink;
           } else {
             url = opts.shortUrl || formLink;
           }
@@ -199,9 +201,9 @@ function (object,         Widget,         $,        template,
         root.find('[name="message"]').val(message);
 
         var shareTypes = this.parameters.shareTypes;
-        var initialShareType = opts.shareType || this.options.shareType ||
-                               shareTypes[0].type;
         if (shareTypes && shareTypes.length > 1) {
+          var initialShareType = opts.shareType || this.options.shareType ||
+                                 shareTypes[0].type;
           //Insert a Select widget if it is desired.
           this.select = new Select({
             name: 'shareType',
@@ -221,8 +223,8 @@ function (object,         Widget,         $,        template,
             this.onShareTypeChange(evt);
           });
           this.select.dom.bind('change', this.selectChangeFunc);
+          this.changeShareType(this.getShareType(initialShareType));
         }
-        this.changeShareType(this.getShareType(initialShareType));
 
         if (this.parameters.constraints && this.parameters.constraints.textLimit) {
           this.startCounter();
