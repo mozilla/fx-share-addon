@@ -18,9 +18,8 @@ let tests = [
       description: "A test corpus file for open graph tags we care about",
       //medium: this.getPageMedium(),
       //source: this.getSourceURL(),
-      //url: this.gBrowser.currentURI.spec,
       // og:url
-      canonicalUrl: "http://f1.mozillamessaging.com/",
+      url: "https://f1.mozillamessaging.com/",
       //shortUrl: this.getShortURL(),
       // og:image
       previews: [{"http_url":"http://f1.mozillamessaging.com/favicon.png","base64":""}],
@@ -31,11 +30,23 @@ let tests = [
   {
     // tests getShortUrl
     get url() {
+      return getTestUrl("corpus/og_invalid_url.html")
+    },
+    options: {
+      description: "A test corpus file for open graph tags passing a bad url",
+      url: null,
+      previews: [],
+      siteName: "Evil chrome delivering website"
+    }
+  },
+  {
+    // tests getShortUrl
+    get url() {
       return getTestUrl("corpus/shorturl_link.html")
     },
     options: {
       previews: [{"http_url":"http://farm5.static.flickr.com/4141/5411147304_9f3996ba27_m.jpg","base64":""}],
-      canonicalUrl: "http://www.flickr.com/photos/mixedpuppy/5411147304/",
+      url: "http://www.flickr.com/photos/mixedpuppy/5411147304/",
       shortUrl: "http://flic.kr/p/9faxzb"
     }
   },
@@ -46,7 +57,7 @@ let tests = [
     },
     options: {
       previews: [{"http_url":"http://farm5.static.flickr.com/4141/5411147304_9f3996ba27_m.jpg","base64":""}],
-      canonicalUrl: "http://www.flickr.com/photos/mixedpuppy/5411147304/",
+      url: "http://www.flickr.com/photos/mixedpuppy/5411147304/",
       shortUrl: "http://flic.kr/p/9faxzb"
     }
   },
@@ -57,7 +68,7 @@ let tests = [
     },
     options: {
       previews: [{"http_url":"http://farm5.static.flickr.com/4141/5411147304_9f3996ba27_m.jpg","base64":""}],
-      canonicalUrl: "http://www.flickr.com/photos/mixedpuppy/5411147304/",
+      url: "http://www.flickr.com/photos/mixedpuppy/5411147304/",
       shortUrl: "http://flic.kr/p/9faxzb"
     }
   },

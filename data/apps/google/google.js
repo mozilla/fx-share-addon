@@ -46,7 +46,6 @@ function (require,  common,      $) {
           toLabel: 'type in name of recipient'
       }],
       constraints: {
-        editableURLInMessage: true
       },
       auth: {
       type: "oauth",
@@ -271,7 +270,8 @@ function (require,  common,      $) {
         function result(json) {
           dump("got gmail send result "+JSON.stringify(json)+"\n");
           if ('error' in json) {
-              activity.postException({code:"error", message:json});
+              var message = json.error.message || json.error.reply;
+              activity.postException({code:"error", message:message});
           } else {
               activity.postResult(json)
           }

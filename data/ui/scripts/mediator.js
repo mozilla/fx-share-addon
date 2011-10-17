@@ -89,8 +89,8 @@ define(function () {
       port.emit('owa.success', resultInfo);
     },
 
-    error: function(appid) {
-      port.emit('owa.failure', {app:appid, result: "error"});
+    error: function(message) {
+      port.emit('owa.failure', {message: message});
     }
   }
   return m;

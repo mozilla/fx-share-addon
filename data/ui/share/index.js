@@ -161,12 +161,6 @@ function (require,   $,        object,         fn,
   function callSendApi() {
     var data = object.create(sendData);
     updateChromeStatus(SHARE_START);
-    //For now strip out the bitly placeholder since the backend does
-    //not support it. This is being tracked in:
-    //https://bugzilla.mozilla.org/show_bug.cgi?id=653277
-    if (data.message) {
-      data.message = data.message.replace(/http\:\/\/bit\.ly\/XXXXXX/, '');
-    }
     // XXX - this needs lots of work - the values we work with are specific
     // to the F1 backend implementation and not really suitable as a general
     // api.
@@ -193,7 +187,8 @@ function (require,   $,        object,         fn,
                              appName: svcRec.app.manifest.name});
           }, 1000);
       },
-      function(error, message) {
+      function(errob) {
+        var error = errob.code, message = errob.message;
         var fatal = true; // false if we can automatically take corrective action.
         dump("SEND FAILURE: " + error + "/" + message + "\n");
         if (error === 'authentication') {
@@ -221,11 +216,8 @@ function (require,   $,        object,         fn,
         }
         updateChromeStatus(SHARE_ERROR);
         if (fatal) {
-          // Let the 'error' status stay up for a second then notify OWA of
-          // the error.
-          setTimeout(function() {
-              mediator.error(sendData.appid);
-            }, 1000);
+          // The text here is what will be displayed in the OWA error notification
+          mediator.error("There was a problem sharing this page: " + message);
         }
       }
     );

@@ -102,6 +102,11 @@ exports.getSharePanelWithApp = function(test, args, cb) {
       });
 
       let panel = getSharePanel(shareArgs);
+      // as our app path is a file:// url, it gets rejected as invalid and set
+      // to null - so we just patch it back in.
+      if (!panel.activity.data.url) {
+        panel.activity.data.url = pageUrl;
+      }
       panel.panel.port.once("owa.mediation.ready", function() {
         // The mediator reported it is ready - now find the contentWindow for the mediator.
         // We can't get it via the panel, so we use our knowledge of the panel
