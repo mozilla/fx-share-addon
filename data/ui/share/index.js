@@ -161,12 +161,6 @@ function (require,   $,        object,         fn,
   function callSendApi() {
     var data = object.create(sendData);
     updateChromeStatus(SHARE_START);
-    //For now strip out the bitly placeholder since the backend does
-    //not support it. This is being tracked in:
-    //https://bugzilla.mozilla.org/show_bug.cgi?id=653277
-    if (data.message) {
-      data.message = data.message.replace(/http\:\/\/bit\.ly\/XXXXXX/, '');
-    }
     // XXX - this needs lots of work - the values we work with are specific
     // to the F1 backend implementation and not really suitable as a general
     // api.
