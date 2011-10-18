@@ -142,7 +142,7 @@ def pull_release(options, package, dependencies):
     pull_app(package, dependencies)
     # update dependencies now
     dependencies = get_dependencies(options.dependencies)
-    pull_deps(package, dependencies)
+    pull_deps(dependencies)
 
 
 def tag_release(package, dependencies):
@@ -222,6 +222,6 @@ if __name__ == '__main__':
         pull_release(options, package, dependencies)
     else:
         pull_app(package, dependencies)
-        pull_deps(package, dependencies)
+        pull_deps(dependencies)
     if options.tag:
         tag_release(package, dependencies)
