@@ -11,19 +11,19 @@
       "git", 
       "https://github.com/mixedpuppy/addon-sdk.git", 
       "master", 
-      "5074ac6"
+      ""
     ], 
     [
       "git", 
       "https://github.com/mozilla/oauthorizer.git", 
       "develop", 
-      "adb47af"
+      ""
     ], 
     [
       "git", 
       "https://github.com/mozilla/openwebapps.git", 
       "release/fx-q3", 
-      "7ade209"
+      ""
     ]
   ]
 }
