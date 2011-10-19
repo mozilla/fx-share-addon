@@ -1,0 +1,29 @@
+{
+  "project": [
+    "git", 
+    "https://github.com/mixedpuppy/fx-share-addon.git", 
+    "develop", 
+    ""
+  ], 
+  "location": "..", 
+  "projects": [
+    [
+      "git", 
+      "https://github.com/mixedpuppy/addon-sdk.git", 
+      "master", 
+      ""
+    ], 
+    [
+      "git", 
+      "https://github.com/mozilla/oauthorizer.git", 
+      "develop", 
+      ""
+    ], 
+    [
+      "git", 
+      "https://github.com/mozilla/openwebapps.git", 
+      "develop", 
+      ""
+    ]
+  ]
+}

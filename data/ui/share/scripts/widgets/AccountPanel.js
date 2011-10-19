@@ -148,7 +148,7 @@ function (object,         Widget,         $,        template,
 
       _onRender: function () {
         var opts = this.options,
-            formLink = jigFuncs.link(opts);
+            formLink = opts.url;
 
         // Hold onto nodes that are used frequently
         this.toDom = $('[name="to"]', this.node);
@@ -215,7 +215,7 @@ function (object,         Widget,         $,        template,
       optionsChanged: function() {
         var root = $(this.node),
             opts = this.options,
-            formLink = jigFuncs.link(opts),
+            formLink = opts.url,
             pageUrl = jigFuncs.cleanLink(opts.url);
 
         //Update the DOM.

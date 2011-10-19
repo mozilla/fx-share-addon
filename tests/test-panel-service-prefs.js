@@ -51,7 +51,7 @@ exports.testTextCounterSimpleWithUrl = function(test) {
 exports.testTextCounterSingleShortUrl = function(test) {
   let constraints = {textLimit: 140, shortURLLength: 10};
   let prefix = "This is a message - "
-  let testVal = prefix + "http://foo.com:1234/bar?arg=something#etc";
+  let testVal = prefix + "http://foo.com:1234/bar-123%20.?arg=something#etc";
   let expectedCounter = 140 - prefix.length - 10; // the url should be counted as 10 chars.
   testTextCounterHelper(test, constraints, testVal, expectedCounter);
 };

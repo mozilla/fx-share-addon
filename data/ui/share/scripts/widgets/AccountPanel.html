@@ -5,7 +5,7 @@
       <input type="hidden" name="username" value="{profile.username}" />
       <input type="hidden" name="picture" value="{preview(options)}" />
       <input type="hidden" name="picture_base64" value="{preview_base64(options)}" />
-      <input type="hidden" name="link" value="{link(options)}" />
+      <input type="hidden" name="link" value="{options.url}" />
       <input type="hidden" name="caption" value="{options.caption}" />
       <input type="hidden" name="medium" value="{options.medium}" />
       <input type="hidden" name="source" value="{options.source}" />
@@ -25,6 +25,10 @@
       {]}
       <textarea class="message compose" placeholder="Type your message here, and we'll attach the link when you send." name="message">{options.message}</textarea>
 
+      {svc.constraints.shortURLLength [}
+        <div>Links will appear shortened.</div>
+      {]}
+
       <div id="pageInfo">
         <div class="hbox">
             {svc.features.picture [}
@@ -36,7 +40,10 @@
             {svc.features.title [}
               <input class="pageTitle" type="text" name="title" value="{options.title}" />
             {]}
-            <div id="pageUrl" class="nofollow url overflow">{cleanLink(options.url)}</div>
+            {/ We only show the URL in the page-info box if we haven't put it in the message}
+            {!svc.constraints.editableURLInMessage [}
+              <div id="pageUrl"  class="nofollow url overflow">{cleanLink(options.url)}</div>
+            {]}
             {svc.features.description [}
               <textarea class="pageDescription" name="description">{options.description}</textarea>
             {]}

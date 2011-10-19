@@ -30,7 +30,7 @@ function ($,        object,         fn) {
     // Note this is very similar to the regex in panel.js but with a few
     // tweaks to better handle '?', '#' etc chars, allow a URL to finish on
     // whitespace and the global flag.
-    var urlRegex = /\w+?:\/\/\w+(\.\w+)*(:\d+)?[^\d]+?(\s|$)/g;
+    var urlRegex = /\w+?:\/\/\w+(\.\w+)*(:\d+)?\S+?(\s|$)/g;
 
     return object(null, null, {
         init: function (node, countNode, parameters) {
