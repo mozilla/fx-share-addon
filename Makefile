@@ -35,7 +35,7 @@ endif
 all: xpi
 
 xpi:    pull
-	$(addon_sdk)/cfx xpi $(cfx_args)
+	$(addon_sdk)/cfx xpi --no-strip-xpi $(cfx_args)
 
 pull:
 	$(PYTHON) build.py
