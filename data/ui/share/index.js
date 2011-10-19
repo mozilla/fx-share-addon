@@ -37,18 +37,17 @@
 
 define([ "require", "jquery", "blade/object", "blade/fn",
         "blade/jig", "blade/url", "dispatch",
-         "storage",  "widgets/ServicePanel", "widgets/TabButton",
+         "widgets/ServicePanel", "widgets/TabButton",
          "widgets/AddAccount", "less", "osTheme", "mediator",
          "jquery-ui-1.8.7.min", "jquery.textOverflow"
          ],
 function (require,   $,        object,         fn,
           jig,         url,        dispatch,
-          storage,   ServicePanel,           TabButton,
+          ServicePanel,           TabButton,
           AddAccount,           less,   osTheme,   mediator) {
 
   var accountPanels = {},
       accountPanelsRestoreState = {},
-      store = storage(),
       SHARE_DONE = 0,
       SHARE_START = 1,
       SHARE_ERROR = 2,
@@ -225,54 +224,13 @@ function (require,   $,        object,         fn,
 
   function sendMessage(data) {
     showStatus('statusSharing');
+    // hide the panel now, but only if the extension can show status
+    // itself (0.7.7 or greater)
+    updateChromeStatus(SHARE_START);
+    mediator.hide();
 
     sendData = data;
-    var svcRec = owaservicesbyid[data.appid];
-
-    // get any shortener prefs before trying to send.
-    store.get('shortenPrefs', function (shortenPrefs) {
-          var svcConfig = svcRec.parameters,
-              shortenData;
-
-          // hide the panel now, but only if the extension can show status
-          // itself (0.7.7 or greater)
-          updateChromeStatus(SHARE_START);
-          mediator.hide();
-
-          //First see if a bitly URL is needed.
-          if (svcConfig.shorten && shortenPrefs) {
-            shortenData = {
-              format: 'json',
-              longUrl: sendData.link
-            };
-
-            // Unpack the user prefs
-            shortenPrefs = JSON.parse(shortenPrefs);
-
-            if (shortenPrefs) {
-              object.mixin(shortenData, shortenPrefs, true);
-            }
-
-            // Make sure the server does not try to shorten.
-            delete sendData.shorten;
-
-            $.ajax({
-              url: 'http://api.bitly.com/v3/shorten',
-              type: 'GET',
-              data: shortenData,
-              dataType: 'json',
-              success: function (json) {
-                sendData.shorturl = json.data.url;
-                callSendApi();
-              },
-              error: function (xhr, textStatus, errorThrown) {
-                showStatus('statusShortenerError', errorThrown);
-              }
-            });
-          } else {
-            callSendApi();
-          }
-    });
+    callSendApi();
   }
 
   /**
@@ -499,13 +457,6 @@ function (require,   $,        object,         fn,
         sendData.HumanVerificationImage = $('#captchaImage').attr('src');
         sendMessage(sendData);
       });
-
-      //Only bother with localStorage enabled storage.
-      if (storage.type === 'memory') {
-        showStatus('statusEnableLocalStorage');
-        return;
-      }
-
     });
   };
 
