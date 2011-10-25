@@ -1,10 +1,14 @@
-	/*
- * jQuery Templating Plugin
- * Copyright 2010, John Resig
+/*!
+ * jQuery Templates Plugin 1.0.0pre
+ * http://github.com/jquery/jquery-tmpl
+ * Requires jQuery 1.4.2
+ *
+ * Copyright Software Freedom Conservancy, Inc.
  * Dual licensed under the MIT or GPL Version 2 licenses.
+ * http://jquery.org/license
  */
 (function( jQuery, undefined ){
-	var oldManip = jQuery.fn.domManip, tmplItmAtt = "_tmplitem", htmlExpr = /^[^<]*(<[\w\W]+>)[^>]*$/,
+	var oldManip = jQuery.fn.domManip, tmplItmAtt = "_tmplitem", htmlExpr = /^[^<]*(<[\w\W]+>)[^>]*$|\{\{\! /,
 		newTmplItems = {}, wrappedItems = {}, appendToTmplItems, topTmplItem = { key: 0, data: {} }, itemKey = 0, cloneIndex = 0, stack = [];
 
 	function newTmplItem( options, parentItem, fn, data ) {
@@ -12,7 +16,7 @@
 		// The content field is a hierarchical array of strings and nested items (to be
 		// removed and replaced by nodes field of dom elements, once inserted in DOM).
 		var newItem = {
-			data: data || (parentItem ? parentItem.data : {}),
+			data: data || (data === 0 || data === false) ? data : (parentItem ? parentItem.data : {}),
 			_wrap: parentItem ? parentItem._wrap : null,
 			tmpl: null,
 			parent: parentItem || null,
@@ -24,7 +28,7 @@
 			update: tiUpdate
 		};
 		if ( options ) {
-			jQuery.extend( newItem, options, { nodes: [], parent: parentItem } );
+			jQuery.extend( newItem, options, { nodes: [], parent: parentItem });
 		}
 		if ( fn ) {
 			// Build the hierarchical content to be used during insertion into DOM
@@ -46,7 +50,7 @@
 		replaceAll: "replaceWith"
 	}, function( name, original ) {
 		jQuery.fn[ name ] = function( selector ) {
-			var ret = [], insert = jQuery( selector ),
+			var ret = [], insert = jQuery( selector ), elems, i, l, tmplItems,
 				parent = this.length === 1 && this[0].parentNode;
 
 			appendToTmplItems = newTmplItems || {};
@@ -54,16 +58,16 @@
 				insert[ original ]( this[0] );
 				ret = this;
 			} else {
-				for ( var i = 0, l = insert.length; i < l; i++ ) {
+				for ( i = 0, l = insert.length; i < l; i++ ) {
 					cloneIndex = i;
-					var elems = (i > 0 ? this.clone(true) : this).get();
-					jQuery.fn[ original ].apply( jQuery(insert[i]), elems );
+					elems = (i > 0 ? this.clone(true) : this).get();
+					jQuery( insert[i] )[ original ]( elems );
 					ret = ret.concat( elems );
 				}
 				cloneIndex = 0;
 				ret = this.pushStack( ret, name, insert.selector );
 			}
-			var tmplItems = appendToTmplItems;
+			tmplItems = appendToTmplItems;
 			appendToTmplItems = null;
 			jQuery.tmpl.complete( tmplItems );
 			return ret;
@@ -83,24 +87,19 @@
 		},
 
 		// Consider the first wrapped element as a template declaration, and get the compiled template or store it as a named template.
-		templates: function( name ) {
-			return jQuery.templates( name, this[0] );
+		template: function( name ) {
+			return jQuery.template( name, this[0] );
 		},
 
 		domManip: function( args, table, callback, options ) {
-			// This appears to be a bug in the appendTo, etc. implementation
-			// it should be doing .call() instead of .apply(). See #6227
-			if ( args[0].nodeType ) {
-				var dmArgs = jQuery.makeArray( arguments ), argsLength = args.length, i = 0, tmplItem;
-				while ( i < argsLength && !(tmplItem = jQuery.data( args[i++], "tmplItem" ))) {};
-				if ( argsLength > 1 ) {
-					dmArgs[0] = [jQuery.makeArray( args )];
-				}
+			if ( args[0] && jQuery.isArray( args[0] )) {
+				var dmArgs = jQuery.makeArray( arguments ), elems = args[0], elemsLength = elems.length, i = 0, tmplItem;
+				while ( i < elemsLength && !(tmplItem = jQuery.data( elems[i++], "tmplItem" ))) {}
 				if ( tmplItem && cloneIndex ) {
 					dmArgs[2] = function( fragClone ) {
 						// Handler called by oldManip when rendered template has been inserted into DOM.
 						jQuery.tmpl.afterManip( this, fragClone, callback );
-					}
+					};
 				}
 				oldManip.apply( this, dmArgs );
 			} else {
@@ -121,14 +120,17 @@
 			if ( topLevel ) {
 				// This is a top-level tmpl call (not from a nested template using {{tmpl}})
 				parentItem = topTmplItem;
-				tmpl = jQuery.templates[tmpl] || jQuery.templates( null, tmpl );
+				tmpl = jQuery.template[tmpl] || jQuery.template( null, tmpl );
+				wrappedItems = {}; // Any wrapped items will be rebuilt, since this is top level
 			} else if ( !tmpl ) {
 				// The template item is already associated with DOM - this is a refresh.
 				// Re-evaluate rendered template for the parentItem
 				tmpl = parentItem.tmpl;
 				newTmplItems[parentItem.key] = parentItem;
 				parentItem.nodes = [];
-				updateWrapped( parentItem );
+				if ( parentItem.wrapped ) {
+					updateWrapped( parentItem, parentItem.wrapped );
+				}
 				// Rebuild, without creating a new template item
 				return jQuery( build( parentItem, null, parentItem.tmpl( jQuery, parentItem ) ));
 			}
@@ -139,19 +141,13 @@
 				data = data.call( parentItem || {} );
 			}
 			if ( options && options.wrapped ) {
-				// Create template item for wrapped content, without rendering template
-				parentItem = newTmplItem( options, parentItem, null, data );
-				parentItem.key = ++itemKey;
-				wrappedItems[itemKey] = parentItem;
-				parentItem.tmpl = tmpl;
-				updateWrapped( parentItem );
+				updateWrapped( options, options.wrapped );
 			}
-			ret = jQuery.isArray( data ) ? 
+			ret = jQuery.isArray( data ) ?
 				jQuery.map( data, function( dataItem ) {
 					return dataItem ? newTmplItem( options, parentItem, tmpl, dataItem ) : null;
 				}) :
 				[ newTmplItem( options, parentItem, tmpl, data ) ];
-
 			return topLevel ? jQuery( build( parentItem, null, ret ) ) : ret;
 		},
 
@@ -159,43 +155,47 @@
 		tmplItem: function( elem ) {
 			var tmplItem;
 			if ( elem instanceof jQuery ) {
-				elem = tmpl[0];
+				elem = elem[0];
 			}
 			while ( elem && elem.nodeType === 1 && !(tmplItem = jQuery.data( elem, "tmplItem" )) && (elem = elem.parentNode) ) {}
 			return tmplItem || topTmplItem;
 		},
 
 		// Set:
-		// Use $.templates( name, tmpl ) to cache a named template,
+		// Use $.template( name, tmpl ) to cache a named template,
 		// where tmpl is a template string, a script element or a jQuery instance wrapping a script element, etc.
-		// Use $( "selector" ).templates( name ) to provide access by name to a script block template declaration.
+		// Use $( "selector" ).template( name ) to provide access by name to a script block template declaration.
 
 		// Get:
-		// Use $.templates( name ) to access a cached template.
-		// Also $( selectorToScriptBlock ).templates(), or $.templates( null, templateString )
+		// Use $.template( name ) to access a cached template.
+		// Also $( selectorToScriptBlock ).template(), or $.template( null, templateString )
 		// will return the compiled template, without adding a name reference.
-		// If templateString includes at least one HTML tag, $.templates( templateString ) is equivalent
-		// to $.templates( null, templateString )
-		templates: function( name, tmpl ) {
+		// If templateString includes at least one HTML tag, $.template( templateString ) is equivalent
+		// to $.template( null, templateString )
+		template: function( name, tmpl ) {
 			if (tmpl) {
 				// Compile template and associate with name
 				if ( typeof tmpl === "string" ) {
 					// This is an HTML string being passed directly in.
-					tmpl = buildTmplFn( tmpl )
+					tmpl = buildTmplFn( tmpl );
 				} else if ( tmpl instanceof jQuery ) {
 					tmpl = tmpl[0] || {};
 				}
 				if ( tmpl.nodeType ) {
 					// If this is a template block, use cached copy, or generate tmpl function and cache.
 					tmpl = jQuery.data( tmpl, "tmpl" ) || jQuery.data( tmpl, "tmpl", buildTmplFn( tmpl.innerHTML ));
+					// Issue: In IE, if the container element is not a script block, the innerHTML will remove quotes from attribute values whenever the value does not include white space.
+					// This means that foo="${x}" will not work if the value of x includes white space: foo="${x}" -> foo=value of x.
+					// To correct this, include space in tag: foo="${ x }" -> foo="value of x"
 				}
-				return typeof name === "string" ? (jQuery.templates[name] = tmpl) : tmpl;
+				return typeof name === "string" ? (jQuery.template[name] = tmpl) : tmpl;
 			}
 			// Return named compiled template
-			return typeof name !== "string" ? jQuery.templates( null, name ): 
-				(jQuery.templates[name] || 
-					// If not in map, treat as a selector. (If integrated with core, use quickExpr.exec) 
-					jQuery.templates( null, htmlExpr.test( name ) ? name : jQuery( name ))); 
+			return name ? (typeof name !== "string" ? jQuery.template( null, name ):
+				(jQuery.template[name] ||
+					// If not in map, and not containing at least on HTML tag, treat as a selector.
+					// (If integrated with core, use quickExpr.exec)
+					jQuery.template( null, htmlExpr.test( name ) ? name : jQuery( name )))) : null;
 		},
 
 		encode: function( text ) {
@@ -205,18 +205,18 @@
 	});
 
 	jQuery.extend( jQuery.tmpl, {
-		tags: {
+		tag: {
 			"tmpl": {
 				_default: { $2: "null" },
-				open: "if($notnull_1){_=_.concat($item.nest($1,$2));}"
+				open: "if($notnull_1){__=__.concat($item.nest($1,$2));}"
 				// tmpl target parameter can be of type function, so use $1, not $1a (so not auto detection of functions)
-				// This means that {{tmpl foo}} treats foo as a template (which IS a function). 
+				// This means that {{tmpl foo}} treats foo as a template (which IS a function).
 				// Explicit parens can be used if foo is a function that returns a template: {{tmpl foo()}}.
 			},
 			"wrap": {
 				_default: { $2: "null" },
-				open: "$item.calls(_,$1,$2);_=[];",
-				close: "call=$item.calls();_=call._.concat($item.wrap(call,_));"
+				open: "$item.calls(__,$1,$2);__=[];",
+				close: "call=$item.calls();__=call._.concat($item.wrap(call,__));"
 			},
 			"each": {
 				_default: { $2: "$index, $value" },
@@ -228,14 +228,21 @@
 				close: "}"
 			},
 			"else": {
-				open: "}else{"
+				_default: { $1: "true" },
+				open: "}else if(($notnull_1) && $1a){"
 			},
 			"html": {
-				open: "if($notnull_1){_.push($1a);}"
+				// Unecoded expression evaluation.
+				open: "if($notnull_1){__.push($1a);}"
 			},
 			"=": {
+				// Encoded expression evaluation. Abbreviated form is ${}.
 				_default: { $1: "$data" },
-				open: "if($notnull_1){_.push($.encode($1a));}"
+				open: "if($notnull_1){__.push($.encode($1a));}"
+			},
+			"!": {
+				// Comment tag. Skipped by parser
+				open: ""
 			}
 		},
 
@@ -264,18 +271,21 @@
 	//========================== Private helper functions, used by code above ==========================
 
 	function build( tmplItem, nested, content ) {
-		// Convert hierarchical content into flat string array 
+		// Convert hierarchical content into flat string array
 		// and finally return array of fragments ready for DOM insertion
-		var frag, ret = jQuery.map( content, function( item ) {
-			return (typeof item === "string") ? 
+		var frag, ret = content ? jQuery.map( content, function( item ) {
+			return (typeof item === "string") ?
 				// Insert template item annotations, to be converted to jQuery.data( "tmplItem" ) when elems are inserted into DOM.
-				item.replace( /(<\w+)(?=[\s>])(?![^>]*_tmplitem)([^>]*)/g, "$1 " + tmplItmAtt + "=\"" + tmplItem.key + "\" $2" ) :
+				(tmplItem.key ? item.replace( /(<\w+)(?=[\s>])(?![^>]*_tmplitem)([^>]*)/g, "$1 " + tmplItmAtt + "=\"" + tmplItem.key + "\" $2" ) : item) :
 				// This is a child template item. Build nested template.
 				build( item, tmplItem, item._ctnt );
-		});
+		}) :
+		// If content is not defined, insert tmplItem directly. Not a template item. May be a string, or a string array, e.g. from {{html $item.html()}}.
+		tmplItem;
 		if ( nested ) {
 			return ret;
 		}
+
 		// top-level template
 		ret = ret.join("");
 
@@ -305,66 +315,58 @@
 	// Generate a reusable function that will serve to render a template against data
 	function buildTmplFn( markup ) {
 		return new Function("jQuery","$item",
-			"var $=jQuery,_=[],$data=$item.data;" +
+			// Use the variable __ to hold a string array while building the compiled template. (See https://github.com/jquery/jquery-tmpl/issues#issue/10).
+			"var $=jQuery,call,__=[],$data=$item.data;" +
 
 			// Introduce the data as local variables using with(){}
-			"with($data){_.push('" +
+			"with($data){__.push('" +
 
 			// Convert the template into pure JavaScript
-			$.trim(markup)
+			jQuery.trim(markup)
 				.replace( /([\\'])/g, "\\$1" )
 				.replace( /[\r\t\n]/g, " " )
-				.replace( /\${([^}]*)}/g, "{{= $1}}" )
-				.replace( /{{(\/?)(\w+|.)(?:\(((?:.(?!}}))*?)?\))?(?:\s+(.*?)?)?(\((.*?)\))?\s*}}/g,
+				.replace( /\$\{([^\}]*)\}/g, "{{= $1}}" )
+				.replace( /\{\{(\/?)(\w+|.)(?:\(((?:[^\}]|\}(?!\}))*?)?\))?(?:\s+(.*?)?)?(\(((?:[^\}]|\}(?!\}))*?)\))?\s*\}\}/g,
 				function( all, slash, type, fnargs, target, parens, args ) {
-					var cmd = jQuery.tmpl.tags[ type ], def, expr, exprAutoFnDetect;
-					if ( !cmd ) {
-						throw "Template command not found: " + type;
+					var tag = jQuery.tmpl.tag[ type ], def, expr, exprAutoFnDetect;
+					if ( !tag ) {
+						throw "Unknown template tag: " + type;
 					}
-					def = cmd._default || [];
+					def = tag._default || [];
+					if ( parens && !/\w$/.test(target)) {
+						target += parens;
+						parens = "";
+					}
 					if ( target ) {
-						target = unescape( target ); 
+						target = unescape( target );
 						args = args ? ("," + unescape( args ) + ")") : (parens ? ")" : "");
-						if ( parens && target.indexOf(".") > -1 ) {
-							// Support for target being things like a.toLowerCase(); 
-							// In that case don't call with template item as 'this' pointer. Just evaluate...
-							target += parens;
-							args = "";
-						}
-						expr = args ? ("(" + target + ").call($item" + args) : target;
-						exprAutoFnDetect = args ? expr : "(typeof(" + target + ")==='function'?(" + target + ").call($item):(" + target + "))";
+						// Support for target being things like a.toLowerCase();
+						// In that case don't call with template item as 'this' pointer. Just evaluate...
+						expr = parens ? (target.indexOf(".") > -1 ? target + unescape( parens ) : ("(" + target + ").call($item" + args)) : target;
+						exprAutoFnDetect = parens ? expr : "(typeof(" + target + ")==='function'?(" + target + ").call($item):(" + target + "))";
 					} else {
-						expr = def["$1"] || "null";
+						exprAutoFnDetect = expr = def.$1 || "null";
 					}
 					fnargs = unescape( fnargs );
-					return "');" + 
-						cmd[ slash ? "close" : "open" ]
-							.split( "$notnull_1" ).join( "typeof(" + target + ")!=='undefined' && (" + target + ")!=null" )
+					return "');" +
+						tag[ slash ? "close" : "open" ]
+							.split( "$notnull_1" ).join( target ? "typeof(" + target + ")!=='undefined' && (" + target + ")!=null" : "true" )
 							.split( "$1a" ).join( exprAutoFnDetect )
 							.split( "$1" ).join( expr )
-							.split( "$2" ).join( fnargs ?
-								fnargs.replace( /\s*([^\(]+)\s*(\((.*?)\))?/g, function( all, name, parens, params ) {
-									params = params ? ("," + params + ")") : (parens ? ")" : "");
-									return params ? ("(" + name + ").call($item" + params) : all;
-								})
-								: (def["$2"]||"")
-							) +
-						"_.push('";
+							.split( "$2" ).join( fnargs || def.$2 || "" ) +
+						"__.push('";
 				}) +
-			"');}return _;"
+			"');}return __;"
 		);
 	}
-
-	function updateWrapped( tmplItem ) {
-		if ( tmplItem.wrapped ) {
-			var wrapped = tmplItem.wrapped;
-			// Build the wrapped content
-			tmplItem._wrap = build( tmplItem, true, 
-				jQuery.isArray( wrapped ) ? wrapped : [htmlExpr.test( wrapped ) ? wrapped : jQuery( wrapped ).html()] 
-			).join("");
-		}
+	function updateWrapped( options, wrapped ) {
+		// Build the wrapped content.
+		options._wrap = build( options, true,
+			// Suport imperative scenario in which options.wrapped can be set to a selector or an HTML string.
+			jQuery.isArray( wrapped ) ? wrapped : [htmlExpr.test( wrapped ) ? wrapped : jQuery( wrapped ).html()]
+		).join("");
 	}
-	
+
 	function unescape( args ) {
 		return args ? args.replace( /\\'/g, "'").replace(/\\\\/g, "\\" ) : null;
 	}
@@ -376,36 +378,32 @@
 
 	// Store template items in jQuery.data(), ensuring a unique tmplItem data data structure for each rendered template instance.
 	function storeTmplItems( content ) {
-		var keySuffix = "_" + cloneIndex, elem, elems, newClonedItems = {};
-		for ( var i = 0, l = content.length; i < l; i++ ) {
+		var keySuffix = "_" + cloneIndex, elem, elems, newClonedItems = {}, i, l, m;
+		for ( i = 0, l = content.length; i < l; i++ ) {
 			if ( (elem = content[i]).nodeType !== 1 ) {
 				continue;
 			}
 			elems = elem.getElementsByTagName("*");
-			for ( var m = elems.length - 1; m >= 0; m-- ) {
+			for ( m = elems.length - 1; m >= 0; m-- ) {
 				processItemKey( elems[m] );
 			}
 			processItemKey( elem );
 		}
-		// Cannot remove temporary wrappedItem objects, since needed during updating of nested items. //wrappedItems = {}; 
-		// TODO - ensure no memory leaks 
-
 		function processItemKey( el ) {
 			var pntKey, pntNode = el, pntItem, tmplItem, key;
 			// Ensure that each rendered template inserted into the DOM has its own template item,
-			if ( key = el.getAttribute( tmplItmAtt )) {
-				while ((pntNode = pntNode.parentNode).nodeType === 1 && !(pntKey = pntNode.getAttribute( tmplItmAtt ))) { }
+			if ( (key = el.getAttribute( tmplItmAtt ))) {
+				while ( pntNode.parentNode && (pntNode = pntNode.parentNode).nodeType === 1 && !(pntKey = pntNode.getAttribute( tmplItmAtt ))) { }
 				if ( pntKey !== key ) {
 					// The next ancestor with a _tmplitem expando is on a different key than this one.
 					// So this is a top-level element within this template item
-					pntNode = pntNode.nodeType === 11 ? 0 : (pntNode.getAttribute( tmplItmAtt ) || 0);
+					// Set pntNode to the key of the parentNode, or to 0 if pntNode.parentNode is null, or pntNode is a fragment.
+					pntNode = pntNode.parentNode ? (pntNode.nodeType === 11 ? 0 : (pntNode.getAttribute( tmplItmAtt ) || 0)) : 0;
 					if ( !(tmplItem = newTmplItems[key]) ) {
 						// The item is for wrapped content, and was copied from the temporary parent wrappedItem.
 						tmplItem = wrappedItems[key];
-						tmplItem = newTmplItem( tmplItem, newTmplItems[pntNode]||wrappedItems[pntNode], null, true );
+						tmplItem = newTmplItem( tmplItem, newTmplItems[pntNode]||wrappedItems[pntNode] );
 						tmplItem.key = ++itemKey;
-						// Note that there is a remaining issue on parenting of wrappedItems.
-						// ...Currently there may be additional newTmplItems items wrapped contexts, leading to duplicate rendered events.
 						newTmplItems[itemKey] = tmplItem;
 					}
 					if ( cloneIndex ) {
@@ -423,7 +421,8 @@
 			}
 			if ( tmplItem ) {
 				pntItem = tmplItem;
-				// Find the template item of the parent element
+				// Find the template item of the parent element.
+				// (Using !=, not !==, since pntItem.key is number, and pntNode may be a string)
 				while ( pntItem && pntItem.key != pntNode ) {
 					// Add this element as a top-level node for this rendered template item, as well as for any
 					// ancestor items between this item and the item of its parent element
@@ -438,8 +437,8 @@
 			}
 			function cloneTmplItem( key ) {
 				key = key + keySuffix;
-				tmplItem = newClonedItems[key]
-				= (newClonedItems[key] || newTmplItem( tmplItem, newTmplItems[tmplItem.parent.key + keySuffix] || tmplItem.parent, null, true ));
+				tmplItem = newClonedItems[key] =
+					(newClonedItems[key] || newTmplItem( tmplItem, newTmplItems[tmplItem.parent.key + keySuffix] || tmplItem.parent ));
 			}
 		}
 	}
@@ -450,21 +449,20 @@
 		if ( !content ) {
 			return stack.pop();
 		}
-		var l = stack.length;
-		stack.push({ _: content, tmpl: tmpl, parent: l ? stack[l - 1].item : this, item:this, data: data, options: options });
+		stack.push({ _: content, tmpl: tmpl, item:this, data: data, options: options });
 	}
 
 	function tiNest( tmpl, data, options ) {
 		// nested template, using {{tmpl}} tag
-		return jQuery.tmpl( jQuery.templates( tmpl ), data, options, this );
+		return jQuery.tmpl( jQuery.template( tmpl ), data, options, this );
 	}
 
 	function tiWrap( call, wrapped ) {
 		// nested template, using {{wrap}} tag
-		var options = call.options;
+		var options = call.options || {};
 		options.wrapped = wrapped;
-		// Apply the template, which may incorporate wrapped content, 
-		return jQuery.tmpl( jQuery.templates( call.tmpl ), call.data, options, call.parent );
+		// Apply the template, which may incorporate wrapped content,
+		return jQuery.tmpl( jQuery.template( call.tmpl ), call.data, options, call.item );
 	}
 
 	function tiHtml( filter, textOnly ) {
@@ -483,4 +481,4 @@
 		jQuery.tmpl( null, null, null, this).insertBefore( coll[0] );
 		jQuery( coll ).remove();
 	}
-})(jQuery);
+})( jQuery );
