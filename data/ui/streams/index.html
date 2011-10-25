@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stream</title>
+    <script src="../scripts/requireplugins-jquery.js" charset="utf-8"></script>
+    <script>
+      require({
+        baseUrl: '../scripts',
+        paths: {
+        }
+      });
+      require(['../streams/index.js']);
+    </script>
+
+    <script id="accountTemplate" type="text/x-jquery-tmpl">
+      <div app="${app.origin}" style='background-image: url("${$item.icon}")'>
+        ${app.manifest.name}
+        {{if initializing}}
+          <div class="accountLoading ServiceAccountPanel">
+            <div class="AccountLoadingSpinner body"></div>
+            loading...
+          </div>
+        {{else user}}
+          <button class="fetchButton statusErrorButton">Start fetching</button>
+        {{else}}
+          <span name="displayName"></span><button class="login" type="submit">Sign In</button>
+          <div class="accountDescription">
+            <div>Sign in to your ${app.manifest.name} account to start retrieving the activity stream</div>
+          </div>
+        {{/if}}
+      </div>
+      <p>
+    </script>
+
+</head>
+<body>
+  <h1>A stub UI for working with activity streams</h1>
+  <div id="wrapper" class="wrapper hbox">
+    <!-- the UI -->
+    <div id="content">
+    </div>
+  </div>
+  <!-- the hidden iframes with the app content -->
+  <div style="display:none" id="frame-garage"></div>
+
+</body>
+</html>

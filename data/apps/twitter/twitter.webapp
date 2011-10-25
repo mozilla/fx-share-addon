@@ -11,6 +11,9 @@
   "services": {
     "link.send": {
       "path": "/twitter.html"
+    },
+    "activityStream.fetch": {
+      "path": "/twitter.html"
     }
   }
 }

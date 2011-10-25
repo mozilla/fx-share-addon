@@ -1,0 +1,35 @@
+A very rough doc for the ActivityStream activity.
+
+ActivityItem: An object with:
+
+domain: The domain name of the service which provided this message (eg
+        "twitter.com")
+
+id: An ID of the message.  Only makes sense in the context of the service
+    providing the item, so should be treated as a BLOB.
+
+from: An array of PoCo records, with element 0 being the original sender.
+      Usually will have exactly one record, but may have more - eg, in the
+      case of a twitter re-tweet.  In the re-tweet example, element 0 will be
+      the initial user (who you may not be following) and element 1 will be
+      the person who re-tweeted it (who presumably you are following).
+
+text: The raw text from the stream.  May or may not include any links shared
+      (eg, will include the link if this is a tweet, will probably not if
+      shared from facebook)
+
+urls: An array of SharedUrl objects.
+
+inReplyTo: A 2 element array of [domain, id].  If 'domain' is
+           undefined or null, the same service as this item is assumed.
+
+when: A string in RFCXXX format.
+
+
+SharedUrl: An object with:
+
+url: The full 'canonical' URL (ie, the non-shortened version)
+shortUrl: If undefined, the 'url' was shared directly, otherwise the short
+           version of the URL that was included in the ActivityItem.
+[note - twitter has some cool things, such as the position in the message the
+url was entered.]

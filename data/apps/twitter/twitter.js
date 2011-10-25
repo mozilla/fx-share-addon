@@ -369,6 +369,84 @@ function (require,  common) {
     clearStorage(activity, credentials);
   });
 
+  // The activityStream activities.
+  navigator.mozApps.services.registerHandler('activityStream.fetch', 'getLogin', function(activity, credentials) {
+    common.getLogin(domain, activity, credentials);
+  });
+
+  navigator.mozApps.services.registerHandler('activityStream.fetch', 'getParameters', function(activity, credentials) {
+    // This is currently also returning both link.send parameters and auth parameters, but
+    // the link.send ones will be ignored.
+    activity.postResult(parameters);
+  });
+
+  navigator.mozApps.services.registerHandler('activityStream.fetch', 'setAuthorization', function(activity, credentials) {
+    api.getProfile(activity, credentials);
+  });
+
+  // Convert a raw twitter item to a common ActivityItem.
+  function twitterItemToActivityItem(twitem) {
+    var newItem = {
+      domain: domain,
+      id: twitem.id_str,
+      // todo - handle re-tweets.
+      from: [api.profileToPoco(twitem.user)],
+      text: twitem.text,
+      when: twitem.created_at
+    };
+    // now the URLs.
+    newItem.urls = [];
+    if (twitem.entities && twitem.entities.urls) {
+      for each (var urlitem in twitem.entities.urls) {
+        var urlObj;
+        if (urlitem.expanded_url) {
+          urlObj = {url: urlitem.expanded_url,
+                    shortUrl: urlitem.url};
+        } else {
+          urlObj = {url: urlitem.url}
+        }
+        newItem.urls.push(urlObj);
+      }
+    }
+    return newItem;
+  };
+
+  navigator.mozApps.services.registerHandler('activityStream.fetch', 'fetch', function(activity, credentials) {
+    var data = activity.data;
+    var count = data.count || 10;
+    var cursor = data.cursor;
+    var urec = JSON.parse(window.localStorage.getItem(api.key));
+    var oauthConfig = urec.oauth;
+    var params = {include_entities: 1}
+    if (cursor) {
+      params.since_id = cursor;
+    }
+    if (data.count) {
+      params.count = data.count;
+    }
+
+    navigator.mozApps.services.oauth.call(oauthConfig, {
+      method: "GET",
+      action: "https://api.twitter.com/1/statuses/home_timeline.json",
+      parameters: params
+      },function(result) {
+        if ('error' in result) {
+          activity.postException({code:"error", message:result.error});
+          return;
+        }
+        var resultItems = [];
+        for each (var item in result) {
+          resultItems.push(twitterItemToActivityItem(item));
+          cursor = item.id_str;
+        }
+        var ret = {items: resultItems};
+        if (resultItems.length) {
+          ret.cursor = cursor;
+        }
+        activity.postResult(ret);
+      });
+  });
+
   // Tell OWA we are now ready to be invoked.
   navigator.mozApps.services.ready();
 });
