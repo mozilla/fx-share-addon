@@ -11,6 +11,9 @@
   "services": {
     "link.send": {
       "path": "/facebook.html"
+    },
+    "activityStream.fetch": {
+      "path": "/facebook.html"
     }
   }
 }

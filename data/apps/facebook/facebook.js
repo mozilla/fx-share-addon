@@ -66,7 +66,7 @@ function (require,  common) {
               },
       key: "195438150530043",
       params: {
-          scope: "publish_stream,offline_access,user_groups",
+          scope: "publish_stream,offline_access,user_groups,read_stream",
           response_type: "token"
           },
       completionURI: "http://www.oauthcallback.local/postauthorize",
@@ -443,6 +443,86 @@ function (require,  common) {
 
   navigator.mozApps.services.registerHandler('link.send', 'clearCredentials', function(activity, credentials) {
     clearStorage(activity, credentials);
+  });
+
+  // The activityStream activities.
+  navigator.mozApps.services.registerHandler('activityStream.fetch', 'getLogin', function(activity, credentials) {
+    common.getLogin(domain, activity, credentials);
+  });
+
+  navigator.mozApps.services.registerHandler('activityStream.fetch', 'getParameters', function(activity, credentials) {
+    // This is currently also returning both link.send parameters and auth parameters, but
+    // the link.send ones will be ignored.
+    activity.postResult(parameters);
+  });
+
+  navigator.mozApps.services.registerHandler('activityStream.fetch', 'setAuthorization', function(activity, credentials) {
+    api.getProfile(activity, credentials);
+  });
+
+  // Convert a raw facebook feed item to a common ActivityItem.
+  var itemConverters = {
+    'link': function(item, aitem) {
+      aitem.text = item.message + "\n" + item.description;
+      aitem.urls = [{url: item.link}];
+    },
+    'status': function(item, aitem) {
+      aitem.text = item.story;
+    }
+  };
+
+  function itemToActivityItem(item) {
+    // do the common stuff.
+    var from = {displayName: item.from.name,
+                accounts: [{domain: domain, userid: item.from.id}]
+    };
+    var newItem = {
+      domain: domain,
+      id: item.id,
+      from: [from],
+      when: item.created_time
+    }
+    // and the specific stuff
+    var extrafun = itemConverters[item.type];
+    if (extrafun) {
+      extrafun(item, newItem);
+    }
+    return newItem;
+  };
+
+  navigator.mozApps.services.registerHandler('activityStream.fetch', 'fetch', function(activity, credentials) {
+    var data = activity.data;
+    var count = data.count || 10;
+    var cursor = data.cursor;
+    var urec = JSON.parse(window.localStorage.getItem(api.key));
+    var oauthConfig = urec.oauth;
+    var params = {};
+    var url = "https://graph.facebook.com/me/home"
+    if (cursor) {
+      url = cursor;
+    } else if (data.count) {
+      params.limit = data.count;
+    }
+
+    navigator.mozApps.services.oauth.call(oauthConfig, {
+      method: "GET",
+      action: url,
+      parameters: params
+      },function(result) {
+        if ('error' in result) {
+          activity.postException({code: "error", message: result.error.message});
+          return;
+        }
+        var resultItems = [];
+        for each (var item in result.data) {
+          resultItems.push(itemToActivityItem(item));
+        }
+        var ret = {items: resultItems};
+        if (result.paging && result.paging.previous) {
+          ret.cursor = result.paging.previous;
+        }
+        activity.postResult(ret);
+      });
   });
 
 
