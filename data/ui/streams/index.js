@@ -42,7 +42,10 @@ function (require,   $) {
       var svc = owaservicesbyid[appid];
       svc.call("fetch", {count: 50},
         function(result) {
-          dump("get worked - got " + result.items.length + " items\n");
+          // pass the items back up to our "agent" who is trusted and can
+          // stash the items in a DB.
+          var port = window.navigator.mozApps.mediation.port;
+          port.emit("fxas.consume", result.items);
         },
         function(errob) {
           dump("get failed: " + JSON.stringify(errob) + "\n");
