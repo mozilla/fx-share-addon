@@ -13,19 +13,20 @@
     </script>
 
     <script id="accountTemplate" type="text/x-jquery-tmpl">
-      <div app="${app.origin}" style='background-image: url("${$item.icon}")'>
-        ${app.manifest.name}
-        {{if initializing}}
+      <div app="${svc.app.origin}">
+        <img width="48" height="48" src="${svc.getIconForSize(48)}">
+        ${svc.app.manifest.name}
+        {{if svc.initializing}}
           <div class="accountLoading ServiceAccountPanel">
             <div class="AccountLoadingSpinner body"></div>
             loading...
           </div>
-        {{else user}}
+        {{else svc.user}}
           <button class="fetchButton statusErrorButton">Start fetching</button>
         {{else}}
           <span name="displayName"></span><button class="login" type="submit">Sign In</button>
           <div class="accountDescription">
-            <div>Sign in to your ${app.manifest.name} account to start retrieving the activity stream</div>
+            <div>Sign in to your ${svc.app.manifest.name} account to start retrieving the activity stream</div>
           </div>
         {{/if}}
       </div>

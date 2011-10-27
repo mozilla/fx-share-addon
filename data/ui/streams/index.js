@@ -26,8 +26,7 @@ function (require,   $) {
     $("#content").empty();
     for (var i = 0; i < owaservices.length; i++) {
       var svc = owaservices[i];
-      options = {icon: svc.getIconForSize(48)}
-      $("#accountTemplate" ).tmpl(svc, options).appendTo("#content");
+      $("#accountTemplate" ).tmpl({svc: svc}).appendTo("#content");
     }
     $(".login").bind("click", function() {
       var selectedItem = $.tmplItem(this);
