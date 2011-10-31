@@ -62,7 +62,7 @@ function (require,  common,      $) {
       secret: "anonymous",
       params: {
         xoauth_displayname: "GMail for Firefox Share",
-        scope: "https://mail.google.com/ http://www.google.com/m8/feeds/",
+        scope: "https://mail.google.com/ http://www.google.com/m8/feeds/ https://www.googleapis.com/auth/plus.me",
         response_type: "token"
         },
       completionURI: "http://www.oauthcallback.local/postauthorize",
@@ -346,6 +346,54 @@ function (require,  common,      $) {
 
   navigator.mozApps.services.registerHandler('link.send', 'clearCredentials', function(activity, credentials) {
     clearStorage(activity, credentials);
+  });
+
+  // The activityStream activities.
+  navigator.mozApps.services.registerHandler('activityStream.fetch', 'getLogin', function(activity, credentials) {
+    common.getLogin(domain, activity, credentials);
+  });
+
+  navigator.mozApps.services.registerHandler('activityStream.fetch', 'getParameters', function(activity, credentials) {
+    // This is currently also returning both link.send parameters and auth parameters, but
+    // the link.send ones will be ignored.
+    activity.postResult(parameters);
+  });
+
+  navigator.mozApps.services.registerHandler('activityStream.fetch', 'setAuthorization', function(activity, credentials) {
+    api.getProfile(activity, credentials);
+  });
+
+  navigator.mozApps.services.registerHandler('activityStream.fetch', 'fetch', function(activity, credentials) {
+    var data = activity.data;
+    var count = data.count || 10;
+    var cursor = data.cursor;
+    var urec = JSON.parse(window.localStorage.getItem(api.key));
+    var oauthConfig = urec.oauth;
+    var params = {alt: "json",
+                  key: "AIzaSyCLsc0_mA2zPfBeP4heECvGunkenNg-z8Y"};
+/***
+    if (cursor) {
+      params.since_id = cursor;
+    }
+    if (data.count) {
+      params.count = data.count;
+    }
+***/
+    navigator.mozApps.services.oauth.call(oauthConfig, {
+      method: "GET",
+      action: "https://www.googleapis.com/plus/v1/people/me/activities/public",
+      parameters: params
+      },function(result) {
+        dump("GOT RESULT: " + JSON.stringify(result, undefined, 2) + "\n" );
+        if ('error' in result) {
+          activity.postException({code:"error", message:result.error});
+          return;
+        }
+        // in theory, the g+ data is already good as it is already in
+        // activitystrea.ms format.
+        activity.postResult(result);
+      }
+    );
   });
 
   // Tell OWA we are now ready to be invoked.

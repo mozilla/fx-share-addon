@@ -11,6 +11,9 @@
   "services": {
     "link.send": {
       "path": "/google.html"
+    },
+    "activityStream.fetch": {
+      "path": "/google.html"
     }
   }
 }
