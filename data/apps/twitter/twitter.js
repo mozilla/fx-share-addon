@@ -384,28 +384,53 @@ function (require,  common) {
     api.getProfile(activity, credentials);
   });
 
-  // Convert a raw twitter item to a common ActivityItem.
+  function twitterDateToRFC3339(dateStr) {
+    // todo - something useful!
+    return dateStr;
+  }
+
+  // Convert a raw twitter item to a common ActivityStrea.ms "Activity" object.
+  // It is really unclear what the schema should actually be.  On one hand
+  // there is http://wiki.activitystrea.ms/w/page/1359317/Twitter%20Examples,
+  // but that seems out-of-date (eg, "uri" and "name" instead of "url" and
+  // "displayName".  OTOH, we also have google+ generating these objects, so
+  // we lean towards being similar to google+)
   function twitterItemToActivityItem(twitem) {
+    // todo - handle re-tweets (which would presumably mean adding in an
+    // 'author' object for the original tweet?)
+    var actor = {
+      objectType: "person",
+      // not clear what to use here.  twitter's atom feed uses something like
+      // "tag:twitter.com,2005:username"
+      id: "http://twitter.com/" + twitem.user.screen_name,
+      published: twitterDateToRFC3339(twitem.user.created_at),
+      displayName: twitem.user.name || twitem.user.screen_name,
+      image: twitem.user.profile_image_url
+      // no extra data in the poco record, so no point adding it.
+      // poco: api.profileToPoco(twitem.user)
+    }
+    var url = "http://twitter.com/" + twitem.user.screen_name + "/status/" + twitem.id_str;
     var newItem = {
-      domain: domain,
-      id: twitem.id_str,
-      // todo - handle re-tweets.
-      from: [api.profileToPoco(twitem.user)],
-      text: twitem.text,
-      when: twitem.created_at
+      objectType: "post",
+      url: url,
+      actor: actor,
+      title: twitem.text,
+      published: twitterDateToRFC3339(twitem.created_at),
+      object: {
+        objectType: "note",
+        content: twitem.text,
+        url: url
+        // the 'attachments' will go here...
+      }
     };
     // now the URLs.
-    newItem.urls = [];
     if (twitem.entities && twitem.entities.urls) {
+      var attachments = newItem.object.attachments = [];
       for each (var urlitem in twitem.entities.urls) {
-        var urlObj;
-        if (urlitem.expanded_url) {
-          urlObj = {url: urlitem.expanded_url,
-                    shortUrl: urlitem.url};
-        } else {
-          urlObj = {url: urlitem.url}
-        }
-        newItem.urls.push(urlObj);
+        attachments.push({
+          objectType: "article",
+          url: urlitem.expanded_url || urlitem.url
+        });
       }
     }
     return newItem;

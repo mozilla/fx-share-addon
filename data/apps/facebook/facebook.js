@@ -460,32 +460,32 @@ function (require,  common) {
     api.getProfile(activity, credentials);
   });
 
-  // Convert a raw facebook feed item to a common ActivityItem.
-  var itemConverters = {
-    'link': function(item, aitem) {
-      aitem.text = item.message + "\n" + item.description;
-      aitem.urls = [{url: item.link}];
-    },
-    'status': function(item, aitem) {
-      aitem.text = item.story;
-    }
-  };
-
+  // Convert a raw facebook feed item to a common activityite.ms schema
   function itemToActivityItem(item) {
     // do the common stuff.
-    var from = {displayName: item.from.name,
-                accounts: [{domain: domain, userid: item.from.id}]
+    var actor = {
+      objectType: "person",
+      displayName: item.from.name,
+      id: "tag:mozilla.org,1998:facebook.com/" + item.from.id
     };
     var newItem = {
-      domain: domain,
-      id: item.id,
-      from: [from],
-      when: item.created_time
+      id: "tag:mozilla.org,1998:facebook.com/" + item.id,
+      actor: actor,
+      published: item.created_time,
+      updated: item.updated_time,
+      objectType: "post",
+      object: {
+        objectType: "note",
+        content: item.story || item.message
+      }
     }
-    // and the specific stuff
-    var extrafun = itemConverters[item.type];
-    if (extrafun) {
-      extrafun(item, newItem);
+
+    if (item.type === 'link') {
+      var attachments = newItem.object.attachments = [];
+      attachments.push({
+        objectType: "article",
+        url: item.link
+      });
     }
     return newItem;
   };
@@ -515,7 +515,10 @@ function (require,  common) {
         }
         var resultItems = [];
         for each (var item in result.data) {
-          resultItems.push(itemToActivityItem(item));
+          //dump("raw facebook item:\n" + JSON.stringify(item, undefined, 2) + "\n");
+          var converted = itemToActivityItem(item);
+          resultItems.push(converted);
+          //dump("converted item:\n" + JSON.stringify(converted, undefined, 2) + "\n");
         }
         var ret = {items: resultItems};
         if (result.paging && result.paging.previous) {
