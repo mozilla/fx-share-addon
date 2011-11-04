@@ -466,17 +466,19 @@ function (require,  common) {
     var actor = {
       objectType: "person",
       displayName: item.from.name,
-      id: "tag:mozilla.org,1998:facebook.com/" + item.from.id
+      id: "tag:mozilla.org,1999:facebook.com/" + item.from.id,
+      image: "https://graph.facebook.com/" + item.from.id + "/picture"
     };
     var newItem = {
-      id: "tag:mozilla.org,1998:facebook.com/" + item.id,
+      id: "tag:mozilla.org,1999:facebook.com/" + item.id,
       actor: actor,
       published: item.created_time,
       updated: item.updated_time,
+      displayName: item.name, // activity uses displayName as the title.
       objectType: "post",
       object: {
         objectType: "note",
-        content: item.story || item.message
+        content: item.story || item.message || item.description
       }
     }
 
