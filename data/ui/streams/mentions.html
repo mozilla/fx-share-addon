@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mentions</title>
+    <script src="../scripts/requireplugins-jquery.js" charset="utf-8"></script>
+    <script>
+      require({
+        baseUrl: '../scripts',
+        paths: {
+        }
+      });
+      require(['../streams/mentions.js']);
+    </script>
+
+    <script id="itemTemplate" type="text/x-jquery-tmpl">
+      <div>
+        <div>
+          <img width src="${from.image}">
+          <b><a href="${from.url}" target="_blank">${from.displayName}</a></b>
+        </div>
+        <div>${displayName}</div>
+        <div>${content}</div>
+      </div>
+      <p>
+    </script>
+
+</head>
+<body>
+  <h1>Comments from your activity stream</h1>
+  <div id="wrapper" class="wrapper hbox">
+    <!-- the UI -->
+    <div id="content">
+    </div>
+  </div>
+</body>
+</html>
