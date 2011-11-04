@@ -96,6 +96,9 @@ function _storeItems(items, cbdone, cberr)
     let itemStore = transaction.objectStore("items");
     let attachmentStore = transaction.objectStore("attachments");
     for each (let item in items) {
+      if (!item.id && item.url) {
+        item.id = item.url;
+      }
       if (!item.id || !item.object || !item.object.attachments) {
         continue;
       }
@@ -116,6 +119,7 @@ function _storeItems(items, cbdone, cberr)
         } else {
           continue; // don't bother storing this one.
         }
+        console.log("have mention of URL", attachment.url);
         attachment._activityId = item.id;
         if (attachment.url) {
           attachment._origin = getOrigin(attachment.url);

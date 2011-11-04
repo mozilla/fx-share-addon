@@ -403,6 +403,7 @@ function (require,  common) {
       // not clear what to use here.  twitter's atom feed uses something like
       // "tag:twitter.com,2005:username"
       id: "http://twitter.com/" + twitem.user.screen_name,
+      url: "https://twitter.com/" + twitem.user.screen_name,
       published: twitterDateToRFC3339(twitem.user.created_at),
       displayName: twitem.user.name || twitem.user.screen_name,
       image: twitem.user.profile_image_url

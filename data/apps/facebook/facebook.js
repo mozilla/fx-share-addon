@@ -467,7 +467,8 @@ function (require,  common) {
       objectType: "person",
       displayName: item.from.name,
       id: "tag:mozilla.org,1999:facebook.com/" + item.from.id,
-      image: "https://graph.facebook.com/" + item.from.id + "/picture"
+      image: "https://graph.facebook.com/" + item.from.id + "/picture",
+      url: "https://www.facebook.com/" + item.from.id
     };
     var newItem = {
       id: "tag:mozilla.org,1999:facebook.com/" + item.id,
