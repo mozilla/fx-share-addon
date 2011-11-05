@@ -15,8 +15,8 @@ exports.getOWA = function() {
 
 function getTestAppOptions(appRelPath) {
   // first find the URL of the app.
-  let lastSlash = module.id.lastIndexOf("/");
-  let manifest = module.id.substr(0, lastSlash+1) + appRelPath;
+  let lastSlash = module.uri.lastIndexOf("/");
+  let manifest = module.uri.substr(0, lastSlash+1) + appRelPath;
   let origin = manifest.substr(0, manifest.lastIndexOf("/")+1);
 
   return {

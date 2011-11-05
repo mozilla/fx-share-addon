@@ -245,7 +245,7 @@ function (require,   $,        object,         fn,
         asyncCount = 0,
         asyncConstructionDone = false,
         accountPanel,
-        lastSelection = localStorage['last-app-selected'];
+        lastSelection = localStorage.getItem('last-app-selected');
 
     $('#shareui').removeClass('hidden');
 
