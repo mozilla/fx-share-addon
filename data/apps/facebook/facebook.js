@@ -190,14 +190,16 @@ function (require,  common) {
         var user = {
           profile: me,
           oauth: oauthConfig
-        }
+        };
         window.localStorage.setItem(api.key, JSON.stringify(user));
         // nuke the existing contacts before returning so we don't have a race
         // which allows a different user's contacts to be returned.
         // XXX - this whole "what user are the contacts for" needs thought...
-        window.localStorage.removeItem(api.key+'.groups');
-        window.localStorage.removeItem(api.key+'.friends');
-
+        try {
+          window.localStorage.removeItem(api.key+'.groups');
+          window.localStorage.removeItem(api.key+'.friends');
+        } catch(e) {}
+        
         activity.postResult(user);
 
         // initiate contact retreival now
@@ -314,7 +316,12 @@ function (require,  common) {
       };
       var url = "https://graph.facebook.com/me/"+ params.type;
 
+      try {
       var strval = window.localStorage.getItem(api.key);
+      } catch(e) {
+        dump(e.toString()+"\n");
+        throw e;
+      }
       var urec = JSON.parse(strval);
       var oauthConfig = urec.oauth;
       this._pagedContacts(url, params, oauthConfig);
