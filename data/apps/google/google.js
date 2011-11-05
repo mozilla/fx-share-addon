@@ -188,8 +188,9 @@ function (require,  common,      $) {
         // nuke the existing contacts before returning so we don't have a race
         // which allows a different user's contacts to be returned.
         // XXX - this whole "what user are the contacts for" needs thought...
-        window.localStorage.removeItem(api.key+'.followers');
-        window.localStorage.removeItem(api.key+'.following');
+        try {
+          window.localStorage.removeItem(api.key+'.email');
+        } catch(e) {}
         activity.postResult(user);
 
         // handle the first page of contacts now
