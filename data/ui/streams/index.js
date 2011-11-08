@@ -55,7 +55,7 @@ function (require,   $) {
 
   // tell OWA we are ready...
   window.navigator.mozApps.mediation.ready(
-    function(activity, services) {
+    function configureServices(activity, services) {
       _deleteOldServices();
       options = activity.data;
       owaservices = services;
@@ -87,6 +87,10 @@ function (require,   $) {
           });
         }.bind(svc));
       }
+    },
+    function updateActivity(activity) {
+      // may not need to do anything for this mediator, it isn't reacting
+      // to page data at all.
     }
   );
 
