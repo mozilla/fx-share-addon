@@ -112,7 +112,7 @@ def pull_deps(dependencies):
             target = os.path.join(deps_dir, name)
             if not os.path.exists(target):
                 print "cloning ", name
-                if repo_type == 'git':
+                if type == 'git':
                     _run('git clone %s %s' % (repo, target))
                 else:
                     _run('hg clone %s %s' % (repo, target))
