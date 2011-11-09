@@ -494,7 +494,7 @@ function (require,   $,        object,         fn,
   mediator.on('base64Preview', onBase64Preview);
 
   // tell OWA we are ready...
-  window.navigator.mozApps.mediation.ready(
+  window.navigator.mozActivities.mediation.ready(
     function configureServices(activity, services) {
       _deleteOldServices();
       options = activity.data;

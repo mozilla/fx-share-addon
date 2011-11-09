@@ -5,12 +5,13 @@ const windowUtils = require("window-utils");
 
 // Return the "openwebapps" object.
 exports.getOWA = function() {
+  require("activities/main"); // for the side effect of injecting window.apps.
   require("openwebapps/main"); // for the side effect of injecting window.apps.
-  let repo = require("api").FFRepoImplService;
+  let repo = require("openwebapps/api").FFRepoImplService;
   let wm = Cc["@mozilla.org/appshell/window-mediator;1"]
             .getService(Ci.nsIWindowMediator);
   let window = wm.getMostRecentWindow("navigator:browser");
-  return window.apps;
+  return window.serviceInvocationHandler;
 }
 
 function getTestAppOptions(appRelPath) {
@@ -28,7 +29,7 @@ function getTestAppOptions(appRelPath) {
 
 // Ensure one of our test apps is installed and ready to go.
 exports.installTestApp = function(test, appPath, callback, errback) {
-  let repo = exports.getOWA()._repo;
+  let repo = require("openwebapps/api").FFRepoImplService;
   let options = getTestAppOptions(appPath);
   options.onerror = function(errob) {
     if (errback) {
@@ -50,7 +51,7 @@ exports.installTestApp = function(test, appPath, callback, errback) {
 // Uninstall our test app - by default (ie, with no errback passed), errors
 // are "fatal".
 exports.uninstallTestApp = function(test, appPath, callback, errback) {
-  let repo = exports.getOWA()._repo;
+  let repo = require("openwebapps/api").FFRepoImplService;
   let options = getTestAppOptions(appPath);
 
   repo.uninstall(options.origin,
@@ -161,7 +162,7 @@ exports.getSharePanelWithApp = function(test, args, cb) {
 /** Test a "sequence" of app calls.
 The basic mechanism is this:
 
-* Mediator loads app, app responds with the normal navigator.mozApps.services.ready()
+* Mediator loads app, app responds with the normal navigator.mozActivities.services.ready()
 * Mediator calls first method on the app (in our case, that will normally be
   link.send.getParameters)
 * App "blocks" on this call - it doesn't call the callback - so the mediator
