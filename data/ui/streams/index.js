@@ -94,7 +94,8 @@ function (require,   $) {
       }
     },
     function updateActivity(activity) {
-      console.log("TODO: implement updateActivity");
+      // may not need to do anything for this mediator, it isn't reacting
+      // to page data at all.
     }
   );
 

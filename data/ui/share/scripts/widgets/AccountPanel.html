@@ -42,7 +42,7 @@
             {]}
             {/ We only show the URL in the page-info box if we haven't put it in the message}
             {!svc.constraints.editableURLInMessage [}
-              <div class="nofollow url overflow">{cleanLink(options.url)}</div>
+              <div id="pageUrl"  class="nofollow url overflow">{cleanLink(options.url)}</div>
             {]}
             {svc.features.description [}
               <textarea class="pageDescription" name="description">{options.description}</textarea>

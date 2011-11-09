@@ -85,15 +85,23 @@ function (object,         Widget,         $,        template,
         this.displayName = profile.displayName || profile.username;
 
         //Listen for updates to base64Preview
-        this.base64PreviewSub = fn.bind(this, function (dataUrl) {
-          $('[name="picture_base64"]', this.node).val(jigFuncs.rawBase64(dataUrl));
+        this.base64PreviewSub = fn.bind(this, function (img) {
+          $('[name="picture_base64"]', this.node).val(jigFuncs.rawBase64(img.data));
+          $('img.thumb', this.node).attr('src', img.url);
         });
         mediator.on('base64Preview', this.base64PreviewSub);
+
+        //Listen for options changes and update the account.
+        this.optionsChangedSub = dispatch.sub('optionsChanged', fn.bind(this, function (options) {
+          this.options = options;
+          this.optionsChanged();
+        }));
       },
 
       destroy: function () {
         mediator.removeListener('base64Preview', this.base64PreviewSub);
         dispatch.unsub(this.sendCompleteSub);
+        dispatch.unsub(this.optionsChangedSub);
         this.select.dom.unbind('change', this.selectChangeFunc);
         delete this.selectChangeFunc;
         this.select.destroy();
@@ -139,8 +147,7 @@ function (object,         Widget,         $,        template,
       },
 
       _onRender: function () {
-        var root = $(this.node),
-            opts = this.options,
+        var opts = this.options,
             formLink = opts.url;
 
         // Hold onto nodes that are used frequently
@@ -158,47 +165,7 @@ function (object,         Widget,         $,        template,
           }]);
         }
 
-        //Update the DOM.
-        root.find('[name="picture"]').val(jigFuncs.preview(opts));
-        root.find('[name="picture_base64"]').val(jigFuncs.preview_base64(opts));
-        root.find('[name="link"]').val(formLink);
-        // If the service has a specific field for the title, use that.
-        // otherwise if it has a field for the subject and no 'subject' is
-        // specified, stick the title in the subject.
-        if (this.parameters.features) {
-          if (this.parameters.features.title) {
-            root.find('[name="title"]').val(opts.title);
-          } else if (this.parameters.features.subjectLabel) {
-            if (opts.subject) {
-              root.find('[name="subject"]').val(opts.subject);
-            } else if (opts.title) {
-              root.find('[name="subject"]').val(opts.title);
-            }
-          }
-        }
-        root.find('[name="caption"]').val(opts.caption);
-        root.find('[name="description"]').val(opts.description);
-        root.find('[name="medium"]').val(opts.medium);
-        root.find('[name="source"]').val(opts.source);
-        this.toDom.val(opts.to);
-        var message = opts.message || '';
-        var constraints = this.parameters.constraints || {};
-        if (constraints.editableURLInMessage) {
-          // so we need some URL in the message itself - if the service doesn't
-          // do its own shortening we prefer a short url if we already have one.
-          var url;
-          if (constraints.shortURLLength) {
-            url = formLink;
-          } else {
-            url = opts.shortUrl || formLink;
-          }
-          if (url) {
-            // just use a single space to separate them - that is what
-            // twitter's intents does and it sounds reasonable...
-            message += " " + url;
-          }
-        }
-        root.find('[name="message"]').val(message);
+        this.optionsChanged();
 
         var shareTypes = this.parameters.shareTypes;
         if (shareTypes && shareTypes.length > 1) {
@@ -243,6 +210,54 @@ function (object,         Widget,         $,        template,
           mediator.sizeToContent();
         });
 
+      },
+
+      optionsChanged: function() {
+        var root = $(this.node),
+            opts = this.options,
+            formLink = opts.url,
+            pageUrl = jigFuncs.cleanLink(opts.url);
+
+        //Update the DOM.
+        root.find('[name="picture"]').val(jigFuncs.preview(opts));
+        root.find('[name="picture_base64"]').val(jigFuncs.preview_base64(opts));
+        root.find('[name="link"]').val(formLink);
+        root.find('#pageUrl').text(pageUrl);
+        // If the service has a specific field for the title, use that.
+        // otherwise if it has a field for the subject and no 'subject' is
+        // specified, stick the title in the subject.
+        if (this.parameters.features.title) {
+          root.find('[name="title"]').val(opts.title);
+        } else if (this.parameters.features.subjectLabel) {
+          if (opts.subject) {
+            root.find('[name="subject"]').val(opts.subject);
+          } else if (opts.title) {
+            root.find('[name="subject"]').val(opts.title);
+          }
+        }
+        root.find('[name="caption"]').val(opts.caption);
+        root.find('[name="description"]').val(opts.description);
+        root.find('[name="medium"]').val(opts.medium);
+        root.find('[name="source"]').val(opts.source);
+        this.toDom.val(opts.to);
+        var message = opts.message || '';
+        var constraints = this.parameters.constraints || {};
+        if (constraints.editableURLInMessage) {
+          // so we need some URL in the message itself - if the service doesn't
+          // do its own shortening we prefer a short url if we already have one.
+          var url;
+          if (constraints.shortURLLength) {
+            url = formLink; // prefers canonicalUrl over url.
+          } else {
+            url = opts.shortUrl || formLink;
+          }
+          if (url) {
+            // just use a single space to separate them - that is what
+            // twitter's intents does and it sounds reasonable...
+            message += " " + url;
+          }
+        }
+        root.find('[name="message"]').val(message);
       },
 
       validate: function (sendData) {
