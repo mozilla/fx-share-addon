@@ -22,7 +22,7 @@
     [
       "git", 
       "https://github.com/mozilla/openwebapps.git", 
-      "develop", 
+      "feature/activities-v3", 
       ""
     ]
   ]
