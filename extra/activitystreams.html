@@ -1,0 +1,106 @@
+<html>
+<head>
+<title>Activity Streams Example</title>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+<script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jquery.templates/beta1/jquery.tmpl.js"></script>
+
+<script id="itemTemplate" type="text/x-jquery-tmpl">
+  <div>
+    <div>
+      <img width src="${from.image}">
+      <b><a href="${from.url}" target="_blank">${from.displayName}</a></b>
+    </div>
+    <div>${displayName}</div>
+    <div>${content}</div>
+  </div>
+  <p>
+</script>
+
+
+<script>
+
+function doit(args) {
+  if (!navigator.mozApps || !navigator.mozApps.startActivity)
+  {
+    showResult("Can't invoke service: not supported by current browser");
+    return;
+  }
+
+  navigator.mozApps.startActivity({
+      action: "activityStream.fetch",
+      type: "",
+      message: "",
+      data: args || {},
+    },
+  function(result) {
+    showResult(result);
+  }, 
+  function() {
+    alert("eek - we failed - sorry about that");
+  });
+}
+
+function showResult(items)
+{
+    $("#stream").empty();
+    for each (var item in items) {
+      // do some simple normalization of the items for our template.
+      var tplitem = {
+        from: item.actor || item.author,
+        displayName: item.displayName,
+        content: item.object.content
+      };
+      $("#itemTemplate").tmpl(tplitem).appendTo("#stream");
+    }
+
+    // and put the raw data there too.
+    $("#output").hide().text(JSON.stringify(items, undefined, 2)).fadeIn();
+}
+function init() {
+}
+
+</script>
+<style>
+#output {
+  padding:6px;
+  margin-top:32px;
+  min-width:400px;
+  max-width:640px;
+  min-height:100px;
+  width:640px;
+  background-color:#f8f8f8;
+  border-radius:1em;
+  border:1px solid #909090;
+  font:9pt "Lucida Granda", Tahoma, sans-serif;
+}
+</style>
+</head>
+<body onload="init()">
+<div style="width:660px;margin:auto;padding-top:16px">
+
+<h2>Activity Streams demonstration</h2>
+<p>
+This page demonstrates the use of the <code>invokeService</code> function.  When you click the
+"Fetch" button, below, the page will ask your browser to connect it to an application
+that provides the <code>"activityStream.fetch"</code> service.
+</p>
+
+
+<div style="width:664px;margin:auto">
+  <div style="vertical-align:top;display:inline-block;width:200px">
+    <button style="font-size:18px" onclick="doit()">Fetch</button>
+  </div>
+</div>
+
+<div id="stream"></div>
+Raw Data:
+<pre>
+<div id="output"></div>
+</pre>
+</div>
+</div>
+<script>
+$("#output").hide()
+</script>
+</body>
+</html>

@@ -53,9 +53,14 @@ function (require,   $) {
     });
   };
 
+  $(".confirm").bind("click", function() {
+    var port = window.navigator.mozApps.mediation.port;
+    port.emit('fxas.result');
+  });
+
   // tell OWA we are ready...
   window.navigator.mozApps.mediation.ready(
-    function(activity, services) {
+    function configureServices(activity, services) {
       _deleteOldServices();
       options = activity.data;
       owaservices = services;
@@ -87,6 +92,9 @@ function (require,   $) {
           });
         }.bind(svc));
       }
+    },
+    function updateActivity(activity) {
+      console.log("TODO: implement updateActivity");
     }
   );
 

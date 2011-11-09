@@ -12,8 +12,8 @@ self.port.on('storeItems', function(req) {
   );
 });
 
-self.port.on('getActivityItemsForUrl', function(req) {
-  unsafeWindow.getActivityItemsForUrl(req.url,
+self.port.on('getActivityItems', function(req) {
+  unsafeWindow.getActivityItems(req.args,
     function(result) {
       self.port.emit(req.response, {result: result});
     },

@@ -49,7 +49,7 @@ function getDB(cb, cberr) {
     let thisdb = event.target.result;
     console.log("opened DB with version", thisdb.version);
     if (thisdb.version != "0.1") {
-      console.log("setting versuin");
+      console.log("updating database version");
       let request = thisdb.setVersion("0.1");
       request.onerror = function(event) {
         cberr("failed to set the version");
@@ -58,6 +58,7 @@ function getDB(cb, cberr) {
         // Set up the database structure
         // The Activity items themselves, sans attachments.
         let itemStore = thisdb.createObjectStore("items", { keyPath: "id" });
+        itemStore.createIndex("modified", "_modified", {unique: false});
         let attachmentStore = thisdb.createObjectStore("attachments", { keyPath: "_id" });
         attachmentStore.createIndex("url", "url", {unique: false});
         attachmentStore.createIndex("origin", "_origin", {unique: false});
@@ -102,12 +103,11 @@ function _storeItems(items, cbdone, cberr)
       if (!item.id || !item.object || !item.object.attachments) {
         continue;
       }
+      item._modified = item.published || item.updated;
       let attachments = item.object.attachments;
-      delete item.object.attachments;
       // This seems insane, but without the parse/stringify dance, we wind up
-      // with NS_ERROR_DOM_DATA_CLONE_ERR - the object can't be cloned.  I
-      // originally guessed this was to do with the delete of .attachments,
-      // but the same pattern is necessary below for the attachment itself.
+      // with NS_ERROR_DOM_DATA_CLONE_ERR - the object can't be cloned.  The
+      // same pattern is necessary below for the attachment itself.
       itemStore.put(JSON.parse(JSON.stringify(item)));
       for each (let attachment in attachments) {
         if (attachment.id) {
@@ -130,28 +130,45 @@ function _storeItems(items, cbdone, cberr)
   });
 };
 
-function getActivityItemsForUrl(url, cbresult, cberr) {
+function getActivityItems(args, cbresult, cberr) {
   try {
-    _getActivityItemsForUrl(url, cbresult, cberr);
+    _getActivityItems(args, cbresult, cberr);
   } catch (ex) {
+    dump("getActivityItems failed: " + ex.toString() + " - " + ex.stack + "\n");
     cberr({code: "runtime_error", message: ex.toString()});
   }
 }
 
-function _getActivityItemsForUrl(url, cbresult, cberr) {
+function _getActivityItems(args, cbresult, cberr) {
   // TODO: errors!
   getDB(function(db) {
     let transaction = db.transaction(["items", "attachments"]);
-    let attachmentStore = transaction.objectStore("attachments");
-    let urlIndex = attachmentStore.index("url");
+    let request;
+    let processValue;
     let itemIds = [];
-    let request = urlIndex.openCursor(IDBKeyRange.only(url));
     let allItems = [];
+    if (args && args.url) {
+      let attachmentStore = transaction.objectStore("attachments");
+      let urlIndex = attachmentStore.index("url");
+      request = urlIndex.openCursor(IDBKeyRange.only(args.url));
+      processValue = function(cursor) {
+        itemIds.push(cursor.value._activityId);
+      }
+    } else {
+      // TODO: things like date range etc?
+      // for now, we want all the items in reverse date order.
+      let itemStore = transaction.objectStore("items");
+      let index = itemStore.index("modified");
+      request = index.openCursor(null, IDBCursor.PREV);
+      processValue = function(cursor) {
+        allItems.push(cursor.value);
+      }
+    }
     request.onsuccess = function(event) {
       function getNextItem(itemStore) {
         if (itemIds.length === 0) {
           // no more to fetch
-          console.log("getActivityItemsForUrl finished with", allItems.length);
+          console.log("getActivityItems (indirectly) finished with", allItems.length);
           cbresult(allItems);
           return;
         }
@@ -164,11 +181,18 @@ function _getActivityItemsForUrl(url, cbresult, cberr) {
       }
       let cursor = event.target.result;
       if (cursor) {
-        itemIds.push(cursor.value._activityId);
+        processValue(cursor);
         cursor.continue();
       } else {
-        // no more matching entries - get the items.
-        getNextItem(transaction.objectStore("items"));
+        // no more matching entries - if we have any itemIds we get the items,
+        // otherwise we are done.
+        if (itemIds.length !== 0) {
+          getNextItem(transaction.objectStore("items"));
+        } else {
+          console.log("getActivityItems finished with", allItems.length);
+          cbresult(allItems);
+          return;
+        }
       }
     };
     request.onerror = function(event) {
