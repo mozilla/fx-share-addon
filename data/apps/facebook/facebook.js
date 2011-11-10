@@ -483,7 +483,7 @@ function (require,  common) {
       published: item.created_time,
       updated: item.updated_time,
       displayName: item.name, // activity uses displayName as the title.
-      objectType: "post",
+      verb: "post",
       object: {
         objectType: "note",
         content: item.story || item.message || item.description

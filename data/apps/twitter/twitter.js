@@ -388,7 +388,7 @@ function (require,  common) {
 
   function twitterDateToRFC3339(dateStr) {
     // todo - something useful!
-    return dateStr;
+    return new Date(dateStr).toISOString();
   }
 
   // Convert a raw twitter item to a common ActivityStrea.ms "Activity" object.
@@ -414,7 +414,7 @@ function (require,  common) {
     }
     var url = "http://twitter.com/" + twitem.user.screen_name + "/status/" + twitem.id_str;
     var newItem = {
-      objectType: "post",
+      verb: "post",
       url: url,
       actor: actor,
       title: twitem.text,
@@ -430,10 +430,17 @@ function (require,  common) {
     if (twitem.entities && twitem.entities.urls) {
       var attachments = newItem.object.attachments = [];
       for each (var urlitem in twitem.entities.urls) {
-        attachments.push({
+        // to stay inside the twitter TOS, we set the actual URL to the
+        // (probably) t.co short url and set the displayName to the expanded
+        // one if it exists.
+        var attachment = {
           objectType: "article",
-          url: urlitem.expanded_url || urlitem.url
-        });
+          url: urlitem.url
+        };
+        if (urlitem.expanded_url) {
+          attachment.displayName = urlitem.expanded_url;
+        }
+        attachments.push(attachment);
       }
     }
     return newItem;
