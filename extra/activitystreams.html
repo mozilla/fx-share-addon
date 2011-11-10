@@ -4,14 +4,32 @@
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
 <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jquery.templates/beta1/jquery.tmpl.js"></script>
 
-<script id="itemTemplate" type="text/x-jquery-tmpl">
+<script id="activityItemTemplate" type="text/x-jquery-tmpl">
   <div>
     <div>
-      <img width src="${from.image}">
+      <img src="${from.image}">
       <b><a href="${from.url}" target="_blank">${from.displayName}</a></b>
     </div>
     <div>${displayName}</div>
     <div>${content}</div>
+    {{each attachments}}
+      {{if $value.url}}
+        <a href="${$value.url}" target="_blank">${$value.displayName || $value.url}</a>
+      {{/if}}
+    {{/each}}
+  </div>
+  <p>
+</script>
+
+<script id="visitTemplate" type="text/x-jquery-tmpl">
+  <div>
+    <div>
+      {{if image}}
+        <img src="${image}">
+      {{/if}}
+      <b><a href="${url}" target="_blank">${displayName || url}</a></b>
+      ${updated}
+    </div>
   </div>
   <p>
 </script>
@@ -19,13 +37,23 @@
 
 <script>
 
+$(function() {
+    hidem();
+});
+
+function hidem() {
+  $("#output-container").hide();
+  $("#visits-container").hide();
+  $("#stream-container").hide();
+}
+
 function doit(args) {
   if (!navigator.mozApps || !navigator.mozApps.startActivity)
   {
     showResult("Can't invoke service: not supported by current browser");
     return;
   }
-
+  hidem();
   navigator.mozApps.startActivity({
       action: "activityStream.fetch",
       type: "",
@@ -43,18 +71,28 @@ function doit(args) {
 function showResult(items)
 {
     $("#stream").empty();
-    for each (var item in items) {
+    for each (var item in items.activitystream) {
       // do some simple normalization of the items for our template.
       var tplitem = {
         from: item.actor || item.author,
         displayName: item.displayName,
-        content: item.object.content
+        content: item.object.content,
+        attachments: item.object.attachments
       };
-      $("#itemTemplate").tmpl(tplitem).appendTo("#stream");
+      $("#activityItemTemplate").tmpl(tplitem).appendTo("#stream");
     }
+    $("#stream-container").fadeIn();
+
+    $("#visits").empty();
+    for each (var item in items.visits) {
+      $("#visitTemplate").tmpl(item).appendTo("#visits");
+    }
+    $("#visits-container").fadeIn();
 
     // and put the raw data there too.
-    $("#output").hide().text(JSON.stringify(items, undefined, 2)).fadeIn();
+    $("#output").text(JSON.stringify(items, undefined, 2))
+    $("#output-container").fadeIn();
+    $("#fetch").html("Re-fetch");
 }
 function init() {
 }
@@ -76,31 +114,40 @@ function init() {
 </style>
 </head>
 <body onload="init()">
-<div style="width:660px;margin:auto;padding-top:16px">
+<div style="padding-top:16px">
 
 <h2>Activity Streams demonstration</h2>
 <p>
-This page demonstrates the use of the <code>invokeService</code> function.  When you click the
-"Fetch" button, below, the page will ask your browser to connect it to an application
-that provides the <code>"activityStream.fetch"</code> service.
+This page demonstrates the use of the <code>"activityStream.fetch"</code> service.
+Click the <em>Fetch</em> button to grab the data - it will be rendered below 
+and the raw JSON displayed at the end.
 </p>
 
 
 <div style="width:664px;margin:auto">
-  <div style="vertical-align:top;display:inline-block;width:200px">
-    <button style="font-size:18px" onclick="doit()">Fetch</button>
+  <div style="vertical-align:top;display:inline-block;width:400px">
+    <button id="fetch" style="font-size:18px" onclick="doit()">Fetch</button>
   </div>
 </div>
 
-<div id="stream"></div>
-Raw Data:
-<pre>
-<div id="output"></div>
-</pre>
+
+<div id="visits-container" style="width:500px;float:left;">
+    <b>Places you have visited</b>
+    <div id="visits"></div> <!-- visitTemplate goes here -->
+</div>
+
+<div id="stream-container" style="background-color:#EEEEEE;width:500px;float:left;">
+    <b>You and your friends</b>
+    <div id="stream" ></div> <!-- activityItemTemplate goes here -->
+</div>
+
+<p>
+<div id="output-container" style="clear:both">
+    <b>Raw Data:</b>
+    <pre>
+        <div id="output"></div>
+    </pre>
 </div>
 </div>
-<script>
-$("#output").hide()
-</script>
 </body>
 </html>
