@@ -59,6 +59,7 @@ function getDB(cb, cberr) {
         // The Activity items themselves, sans attachments.
         let itemStore = thisdb.createObjectStore("items", { keyPath: "id" });
         itemStore.createIndex("modified", "_modified", {unique: false});
+        itemStore.createIndex("app", "_app", {unique: false});
         let attachmentStore = thisdb.createObjectStore("attachments", { keyPath: "_id" });
         attachmentStore.createIndex("url", "url", {unique: false});
         attachmentStore.createIndex("origin", "_origin", {unique: false});
@@ -73,16 +74,18 @@ function getDB(cb, cberr) {
   }
 };
 
-function storeItems(items, cbdone, cberr) {
+function storeItems(info, cbdone, cberr) {
   try {
-    _storeItems(items, cbdone, cberr);
+    _storeItems(info, cbdone, cberr);
   } catch (ex) {
     cberr({code: "runtime_error", message: ex.toString()});
   }
 }
 
-function _storeItems(items, cbdone, cberr)
+function _storeItems(info, cbdone, cberr)
 {
+  let app = info.app;
+  let items = info.items;
   console.log("storing", items.length, "items");
   getDB(function(db) {
     let transaction = db.transaction(["items", "attachments"], IDBTransaction.READ_WRITE);
@@ -104,6 +107,7 @@ function _storeItems(items, cbdone, cberr)
         continue;
       }
       item._modified = item.published || item.updated;
+      item._app = app;
       let attachments = item.object.attachments;
       // This seems insane, but without the parse/stringify dance, we wind up
       // with NS_ERROR_DOM_DATA_CLONE_ERR - the object can't be cloned.  The
@@ -197,6 +201,25 @@ function _getActivityItems(args, cbresult, cberr) {
     };
     request.onerror = function(event) {
       cberr(errorEventToObject(event));
+    }
+  });
+}
+
+function countItems(args, cbresult, cberr) {
+  getDB(function(db) {
+    let transaction = db.transaction(["items"]);
+    let store = transaction.objectStore("items");
+    let index = store.index(args.name);
+    let request = index.openCursor(IDBKeyRange.only(args.value));
+    let count = 0;
+    request.onsuccess = function(event) {
+      let cursor = event.target.result;
+      if (cursor) {
+        count++;
+        cursor.continue();
+      } else {
+        cbresult({name: args.name, value: args.value, count: count});
+      }
     }
   });
 }

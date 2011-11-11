@@ -22,3 +22,14 @@ self.port.on('getActivityItems', function(req) {
     }
   );
 });
+
+self.port.on('countItems', function(req) {
+  unsafeWindow.countItems(req,
+    function(result) {
+      self.port.emit(req.response, {result: result});
+    },
+    function(err) {
+      self.port.emit(req.response, {error: err});
+    }
+  );
+});

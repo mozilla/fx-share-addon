@@ -12,17 +12,31 @@
       require(['../streams/index.js']);
     </script>
 
+    <style type="text/css">
+        .Spinner {
+          width: 16px;
+          height: 16px;
+          background-image: url('../share/i/loader.gif');
+          z-index: 200;
+        }
+    </style>
+
     <script id="accountTemplate" type="text/x-jquery-tmpl">
       <div app="${svc.app.origin}">
-        <img width="48" height="48" src="${svc.getIconForSize(48)}">
-        ${svc.app.manifest.name}
-        {{if svc.initializing}}
+        <img width="48" height="48" src="${svc.getIconForSize(48)}" style="float:left">
+        ${svc.app.manifest.name}<br/><span style="font-size:small">${svc.count} records currently stored</span>
+        {{if svc.state=="initializing"}}
           <div class="accountLoading ServiceAccountPanel">
-            <div class="AccountLoadingSpinner body"></div>
+            <div class="Spinner body"></div>
             loading...
           </div>
+        {{else svc.state=="fetching"}}
+            <div style="float:right">
+              <div class="Spinner body" style="float:right"></div>
+              fetching...
+            </div>
         {{else svc.user}}
-          <button class="fetchButton statusErrorButton">Start fetching</button>
+          <button class="fetchButton statusErrorButton" style="float:right">Start fetching</button>
         {{else}}
           <span name="displayName"></span><button class="login" type="submit">Sign In</button>
           <div class="accountDescription">
@@ -38,10 +52,15 @@
   <h1>A web-paqe wants access to your Activity Stream</h1>
   <div id="wrapper" class="wrapper hbox">
     <!-- the UI -->
-    <div id="content">
-    </div>
-    Please confirm this page can access your stream.
-    <button class="confirm">Confirm</button>
+    <div id="content"></div>
+    <p>
+        Your stream and browser history are private, sensitive information -
+        only share with sites you completely trust
+    </p>
+    <p>
+        Confirm you want to share this information
+        <button class="confirm">Confirm</button>
+    </p>
   </div>
   <!-- the hidden iframes with the app content -->
   <div style="display:none" id="frame-garage"></div>

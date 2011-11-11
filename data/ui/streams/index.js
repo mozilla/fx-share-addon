@@ -3,7 +3,8 @@ define([ "require", "jquery", "jquery.tmpl"
 function (require,   $) {
   var options,
       owaservices = [], // A list of OWA service objects
-      owaservicesbyid = {}; // A map version of the above
+      owaservicesbyid = {}, // A map version of the above
+      port = window.navigator.mozApps.mediation.port;
 
   function _deleteOldServices() {
     while (owaservices.length) {
@@ -39,24 +40,40 @@ function (require,   $) {
       var selectedItem = $.tmplItem(this);
       var appid = $(selectedItem.nodes).attr("app");
       var svc = owaservicesbyid[appid];
+      svc.state = "fetching";
+      _updateServicePanels();
       svc.call("fetch", {count: 50},
         function(result) {
           // pass the items back up to our "agent" who is trusted and can
           // stash the items in a DB.
-          var port = window.navigator.mozApps.mediation.port;
-          port.emit("fxas.consume", result.items);
+          port.emit("fxas.consume", {app: appid, items: result.items});
+          svc.state = "idle";
+          _updateServicePanels();
         },
         function(errob) {
           dump("get failed: " + JSON.stringify(errob) + "\n");
+          svc.state = "idle";
+          _updateServicePanels();
         }
       );
     });
   };
 
   $(".confirm").bind("click", function() {
-    var port = window.navigator.mozApps.mediation.port;
     port.emit('fxas.result');
   });
+
+  // setup a handler for the result of our 'count' requests.
+  port.on('fxas.count.result', function(result) {
+    owaservicesbyid[result.value].count = result.count;
+    _updateServicePanels();
+  });
+
+  // and for our "consume" requests
+  port.on("fxas.consume.result", function(result) {
+    port.emit("fxas.count", {name: "app", value: result.app});
+    // and the result will cause _updateServicePanels to be called.
+  })
 
   // tell OWA we are ready...
   window.navigator.mozApps.mediation.ready(
@@ -67,15 +84,16 @@ function (require,   $) {
 
       for (var i = 0; i < services.length; i++) {
         var svc = services[i];
-        svc.initializing = true;
+        svc.state = "initializing";
+        svc.count = 0;
         owaservicesbyid[svc.app.origin] = svc;
         $("#frame-garage").append(svc.iframe);
+        port.emit("fxas.count", {name: "app", value: svc.app.origin});
       }
       _updateServicePanels();
       for (var i = 0; i < services.length; i++) {
         var svc = services[i];
         svc.on("serviceChanged", function() {
-          dump("Got servicechanged\n");
           var readyService = this;
           readyService.call("getLogin", {}, function(result) {
             readyService.user = result.user;
@@ -85,9 +103,9 @@ function (require,   $) {
         svc.on("ready", function() {
           _updateServicePanels();
           var readyService = this;
-          readyService.initializing = false;
           readyService.call("getLogin", {}, function(result) {
             readyService.user = result.user;
+            readyService.state = "idle";
             _updateServicePanels();
           });
         }.bind(svc));
