@@ -18,6 +18,7 @@
       {{/if}}
     {{/each}}
   </div>
+  <div style="font-size: xx-small">${updated}</div>
   <p>
 </script>
 
@@ -28,7 +29,7 @@
         <img src="${image}">
       {{/if}}
       <b><a href="${url}" target="_blank">${displayName || url}</a></b>
-      ${updated}
+      <div style="font-size: xx-small">${updated}</div>
     </div>
   </div>
   <p>
@@ -77,7 +78,8 @@ function showResult(items)
         from: item.actor || item.author,
         displayName: item.displayName,
         content: item.object.content,
-        attachments: item.object.attachments
+        attachments: item.object.attachments,
+        updated: item.updated || item.published
       };
       $("#activityItemTemplate").tmpl(tplitem).appendTo("#stream");
     }
