@@ -102,10 +102,12 @@ function (object,         Widget,         $,        template,
         mediator.removeListener('base64Preview', this.base64PreviewSub);
         dispatch.unsub(this.sendCompleteSub);
         dispatch.unsub(this.optionsChangedSub);
-        this.select.dom.unbind('change', this.selectChangeFunc);
-        delete this.selectChangeFunc;
-        this.select.destroy();
-        this.select = null;
+        if (this.select) {
+          this.select.dom.unbind('change', this.selectChangeFunc);
+          delete this.selectChangeFunc;
+          this.select.destroy();
+          this.select = null;
+        }
         parent(this, 'destroy');
       },
 
