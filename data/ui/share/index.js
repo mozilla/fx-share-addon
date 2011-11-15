@@ -472,7 +472,9 @@ function (require,   $,        object,         fn,
     $("#tabs").empty();
     $("#tabContent").empty();
     for (var appid in accountPanels) {
-      accountPanelsRestoreState[appid] = accountPanels[appid].getRestoreState();
+      var panel = accountPanels[appid];
+      accountPanelsRestoreState[appid] = panel.getRestoreState();
+      panel.destroy();
     }
     accountPanels = {};
   };
