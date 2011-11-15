@@ -21,10 +21,10 @@ exports.testKey = function(test) {
 
   createTab(pageUrl, function(tab) {
     let share = getSharePanel();
-    share.panel.on("show", function() {
+    share.panel.once("show", function() {
       keyPress(document.documentElement, "ESCAPE");
     });
-    share.panel.on("hide", function() {
+    share.panel.once("hide", function() {
       test.assert(true, "keypress open/close panels")
       test.done();
     });

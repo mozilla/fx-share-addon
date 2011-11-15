@@ -25,12 +25,12 @@ exports.testButton = function(test) {
 
   createTab(pageUrl, function(tab) {
     let share = getSharePanel();
-    share.panel.on("show", function() {
+    share.panel.once("show", function() {
       test.assert(true, "mouse clicks opens panels");
       // close the panel by clicking someplace outside the panel
       mouseEvent(share.anchor);
     });
-    share.panel.on("hide", function() {
+    share.panel.once("hide", function() {
       test.assert(true, "mouse clicks closes panels");
       test.done();
     });
