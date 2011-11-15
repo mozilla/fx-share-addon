@@ -226,13 +226,15 @@ function (object,         Widget,         $,        template,
         // If the service has a specific field for the title, use that.
         // otherwise if it has a field for the subject and no 'subject' is
         // specified, stick the title in the subject.
-        if (this.parameters.features.title) {
-          root.find('[name="title"]').val(opts.title);
-        } else if (this.parameters.features.subjectLabel) {
-          if (opts.subject) {
-            root.find('[name="subject"]').val(opts.subject);
-          } else if (opts.title) {
-            root.find('[name="subject"]').val(opts.title);
+        if (this.parameters.features) {
+          if (this.parameters.features.title) {
+            root.find('[name="title"]').val(opts.title);
+          } else if (this.parameters.features.subjectLabel) {
+            if (opts.subject) {
+              root.find('[name="subject"]').val(opts.subject);
+            } else if (opts.title) {
+              root.find('[name="subject"]').val(opts.title);
+            }
           }
         }
         root.find('[name="caption"]').val(opts.caption);
