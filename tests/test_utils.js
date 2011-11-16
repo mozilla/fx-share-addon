@@ -44,7 +44,7 @@ exports.removeCurrentTab = function(callback) {
   tab.close();
 }
 
-function getSharePanel(args) {
+function getMediator(args) {
   require("activities/main"); // for the side effect of injecting window.apps.
   require("openwebapps/main"); // for the side effect of injecting window.apps.
   let wm = Cc["@mozilla.org/appshell/window-mediator;1"]
@@ -64,10 +64,10 @@ function getSharePanel(args) {
   // first pretend to invoke a service so our panel is created.
   return services.get(activity, function () {;});
 }
-exports.getSharePanel = getSharePanel;
+exports.getMediator = getMediator;
 
 exports.createSharePanel = function(contentWindow) {
-  let panel = getSharePanel();
+  let panel = getMediator();
   panel.show();
   return panel;
 };

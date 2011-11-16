@@ -1,5 +1,5 @@
 const {Cc, Ci, Cm, Cu, components} = require("chrome");
-const {getSharePanel, getTestUrl, createTab, removeCurrentTab, finalize} = require("./test_utils");
+const {getMediator, getTestUrl, createTab, removeCurrentTab, finalize} = require("./test_utils");
 const windowUtils = require("window-utils");
 
 
@@ -82,7 +82,7 @@ exports.ensureNoTestApp = function(test, appPath, callback) {
 // etc, than callback with all that info.
 // Automatically arranges for finalizers to be called to remove the app and
 // remove the tab.
-exports.getSharePanelWithApp = function(test, args, cb) {
+exports.getMediatorWithApp = function(test, args, cb) {
   let appPath = args.appPath || "apps/basic/basic.webapp";
   let pageUrl = args.pageUrl || getTestUrl("page.html");
   let shareArgs = args.shareArgs;
@@ -102,44 +102,25 @@ exports.getSharePanelWithApp = function(test, args, cb) {
         })
       });
 
-      let panel = getSharePanel(shareArgs);
-      let activity = panel.tabData.activity;
-      // as our app path is a file:// url, it gets rejected as invalid and set
-      // to null - so we just patch it back in.
-      if (!activity.data.url) {
-        activity.data.url = pageUrl;
-      }
-      panel.panel.port.once("owa.mediation.ready", function() {
-        // The mediator reported it is ready - now find the contentWindow for the mediator.
-        // We can't get it via the panel, so we use our knowledge of the panel
-        // implementation - it appended a XUL panel to the mainPopupSet.
-        let lc = windowUtils.activeBrowserWindow.document.getElementById("mainPopupSet").lastChild;
-        // and the first child of the XUL panel is the mediator's iframe.
-        let iframe = lc.firstChild;
-        // check it really is the mediator iframe (but not using test.assert*
-        // to prevent the actual test "passing" if it does nothing)
-        if (iframe.contentWindow.location.href != require("self").data.url("ui/share/index.html")) {
-          throw "failed to find the correct mediator frame";
-        }
-        // So get the actual window object for the mediator...
-        let cw = iframe.contentWindow.wrappedJSObject;
-        // but the mediator might not yet have got around to adding the service
-        // iframes to itself - wait until that happens.
-        test.waitUntil(function() {return cw.length}
+      let mediator = getMediator(shareArgs);
+      mediator.panel.port.once("owa.mediation.ready", function() {
+        //// The mediator reported it is ready - now find the contentWindow for the mediator.
+        test.waitUntil(function() {return mediator.panelWindow && mediator.handlers[appOrigin]; }
         ).then(function() {
           // loop over the iframes looking for or test app skipping any other
           // link.send apps which may exist.
-          for (let index=0; index < cw.length; index++) {
-            if (cw[index].location.href.indexOf(appOrigin)===0) {
+          let cw = mediator.panelWindow.wrappedJSObject;
+          for (let index=0; index < cw.frames.length; index++) {
+            if (cw.frames[index].location.href.indexOf(appOrigin)===0) {
               // select the app just so we can see what is going on.
-              let appFrame = cw[index];
+              let appFrame = cw.frames[index];
               cw.$('.widgets-TabButton').eq(index).click();
               // and finally package up these bits to the test can use them.
               // Use a 'jq' prefix for the jquery objects.
               let appWidget = cw.$('#tabContent').children()[index]; // *sob* - why eq(index) doesn't work?
               let jqAppWidget = cw.$(appWidget); // for convenience - most tests want this.
               let result = {appOrigin: appOrigin,
-                            panel: panel,
+                            mediator: mediator,
                             panelContentWindow: cw,
                             jqPanelContentWindow: cw.$,
                             appFrame: appFrame,
@@ -150,11 +131,11 @@ exports.getSharePanelWithApp = function(test, args, cb) {
               return;
             }
           }
-          test.fail("failed to find the app iframe");
+          test.fail("failed to find the app iframe for "+appOrigin);
         });
       });
       // kick the world off by showing the panel.
-      panel.show();
+      mediator.show();
     });
   });
 }
@@ -185,6 +166,9 @@ unblock the next call until the test has finished examining the mediator state.
 **/
 
 function invokeService(mediatorPanel, activity, cb, cberr) {
+  if (!mediatorPanel.handlers[activity.origin]) {
+    throw new Error(activity.action+":"+activity.message+" not available at "+activity.origin);
+  }
   let worker = mediatorPanel.handlers[activity.origin][activity.action][activity.message];
   activity.success = "test_invoke_success";
   activity.error = "test_invoke_error";
@@ -217,7 +201,7 @@ exports.testAppSequence = function(test, appInfo, seq, cbdone) {
 }
 
 function _testAppSequence(test, appInfo, seq, cbdone) {
-  let {appFrame, appOrigin, panel} = appInfo;
+  let {appFrame, appOrigin, mediator} = appInfo;
   let item = seq.shift();
   let resumeArgs = {method: item.method, successArgs: item.successArgs,
                     errorType: item.errorType, errorValue: item.errorValue};
@@ -235,13 +219,13 @@ function _testAppSequence(test, appInfo, seq, cbdone) {
     message: "finish",
     data: {}
   }
-  invokeService(panel, activity,
+  invokeService(mediator, activity,
     function(result) {
       // The previously blocked call has returned.
       function cbresume() {
         if (seq.length === 0) {
           // out of items - tell the app we are done and to check itself.
-          invokeService(panel, finish_activity,
+          invokeService(mediator, finish_activity,
             function() {
               // call the final callback or just finish the test if not specified.
               if (cbdone) {
