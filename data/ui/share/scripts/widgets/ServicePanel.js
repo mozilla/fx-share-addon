@@ -163,7 +163,7 @@ function (object,         Widget,         $,        template,
         // the popup was blocked.
         try {
           var app = this.owaservice.app;
-          navigator.mozApps.mediation.startLogin(app.origin);
+          navigator.mozActivities.mediation.startLogin(app.origin);
         } catch (e) {
           dump("ex "+e.toString()+"\n");
         }

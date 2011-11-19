@@ -44,7 +44,9 @@ exports.removeCurrentTab = function(callback) {
   tab.close();
 }
 
-function getSharePanel(args) {
+function getMediator(args) {
+  require("activities/main"); // for the side effect of injecting window.apps.
+  require("openwebapps/main"); // for the side effect of injecting window.apps.
   let wm = Cc["@mozilla.org/appshell/window-mediator;1"]
                 .getService(Ci.nsIWindowMediator);
 
@@ -53,7 +55,7 @@ function getSharePanel(args) {
   let browser = topWindow.gBrowser.getBrowserForTab(tab);
   // instead of constructing the object explicitly, we go via the services API
   // so it knows the created panel is associated with the contentWindow/service.
-  let services = topWindow.apps._services;
+  let services = topWindow.serviceInvocationHandler;
   let activity = {
     action: "link.send",
     type: "link.send", // fixme
@@ -62,10 +64,10 @@ function getSharePanel(args) {
   // first pretend to invoke a service so our panel is created.
   return services.get(activity, function () {;});
 }
-exports.getSharePanel = getSharePanel;
+exports.getMediator = getMediator;
 
 exports.createSharePanel = function(contentWindow) {
-  let panel = getSharePanel();
+  let panel = getMediator();
   panel.show();
   return panel;
 };

@@ -1,6 +1,6 @@
 
 var callid = 0;
-unsafeWindow.navigator.mozApps.services.sendEmail = {
+unsafeWindow.navigator.wrappedJSObject.mozActivities.services.sendEmail = {
   call: function(svc, data, callback) {
     callid++;
     let resultName = "owa.service.sendEmail.call.result."+callid;

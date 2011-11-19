@@ -1,12 +1,12 @@
 // Test the F1 "ServicePanel" WRT how the service 'parameters' change its behaviour.
 const {getTestUrl} = require("./test_utils");
-const {getSharePanelWithApp, testAppSequence} = require("./app_helpers");
+const {getMediatorWithApp, testAppSequence} = require("./app_helpers");
 const keys = require("dom/events/keys");
 
 function testTextCounterHelper(test, constraints, testVal, expectedCounter)
 {
   test.waitUntilDone();
-  getSharePanelWithApp(test, {}, function(appInfo) {
+  getMediatorWithApp(test, {}, function(appInfo) {
     let {jqAppWidget, jqPanelContentWindow} = appInfo;
     let accountPanelDiv = jqAppWidget.find(".accountPanel");
     let seq = [
@@ -68,7 +68,7 @@ exports.testTextCounterMultipleShortUrl = function(test) {
 function testEditableUrlInMessageHelper(test, appArgs, constraints, expectedMessage)
 {
   test.waitUntilDone();
-  getSharePanelWithApp(test, appArgs, function(appInfo) {
+  getMediatorWithApp(test, appArgs, function(appInfo) {
     let {jqAppWidget, jqPanelContentWindow} = appInfo;
     let accountPanelDiv = jqAppWidget.find(".accountPanel");
     let seq = [
@@ -96,7 +96,8 @@ function testEditableUrlInMessageHelper(test, appArgs, constraints, expectedMess
 
 exports.testEditableUrlInMessageNoDefault = function(test) {
   let pageUrl = getTestUrl("page.html");
-  let appArgs = {pageUrl: pageUrl};
+  let appArgs = {shareArgs: {url: pageUrl},
+                 pageUrl: pageUrl};
   let constraints = {editableURLInMessage: true};
   let expected = " " + pageUrl;
   testEditableUrlInMessageHelper(test, appArgs, constraints, expected);
@@ -104,7 +105,7 @@ exports.testEditableUrlInMessageNoDefault = function(test) {
 
 exports.testEditableUrlInMessageNullDefault = function(test) {
   let pageUrl = getTestUrl("page.html");
-  let appArgs = {shareArgs: {message: null},
+  let appArgs = {shareArgs: {message: null, url: pageUrl},
                  pageUrl: pageUrl};
   let constraints = {editableURLInMessage: true};
   let expected = " " + pageUrl;
@@ -113,7 +114,7 @@ exports.testEditableUrlInMessageNullDefault = function(test) {
 
 exports.testEditableUrlInMessageDefault = function(test) {
   let pageUrl = getTestUrl("page.html");
-  let appArgs = {shareArgs: {message: "the message"},
+  let appArgs = {shareArgs: {message: "the message", url: pageUrl},
                  pageUrl: pageUrl};
   let constraints = {editableURLInMessage: true};
   let expected = "the message " + pageUrl;
@@ -123,7 +124,7 @@ exports.testEditableUrlInMessageDefault = function(test) {
 function testTitleAndSubjectHelper(test, shareArgs, features, expectedTitle, expectedSubject)
 {
   test.waitUntilDone();
-  getSharePanelWithApp(test, shareArgs, function(appInfo) {
+  getMediatorWithApp(test, shareArgs, function(appInfo) {
     let {jqAppWidget, jqPanelContentWindow} = appInfo;
     let accountPanelDiv = jqAppWidget.find(".accountPanel");
     let seq = [
@@ -152,23 +153,23 @@ function testTitleAndSubjectHelper(test, shareArgs, features, expectedTitle, exp
 }
 
 exports['subject field, no title field, default share options'] = function(test) {
-  let features = {subjectLabel: "Subject"};
+  let features = {subjectLabel: true};
   testTitleAndSubjectHelper(test, {}, features, '', "Just another web page");
 }
 
 exports['subject field, no title field, subject in share options'] = function(test) {
-  let features = {subjectLabel: "Subject"};
+  let features = {subjectLabel: true};
   let appArgs = {shareArgs: {subject: "The subject"}};
   testTitleAndSubjectHelper(test, appArgs, features, '', "The subject");
 }
 
 exports['subject field, title field, default share options'] = function(test) {
-  let features = {subjectLabel: "Subject", title: true};
-  testTitleAndSubjectHelper(test, {}, features, "Just another web page", '');
+  let features = {subjectLabel: true, title: true};
+  testTitleAndSubjectHelper(test, {}, features, "Just another web page", 'Just another web page');
 }
 
 exports['subject field, title field, subject in share options'] = function(test) {
-  let features = {subjectLabel: "Subject", title: true};
+  let features = {subjectLabel: true, title: true};
   let appArgs = {shareArgs: {subject: "The subject"}};
   testTitleAndSubjectHelper(test, appArgs, features, "Just another web page", "The subject");
 }
