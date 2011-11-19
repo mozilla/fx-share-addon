@@ -3,7 +3,7 @@
 
 const {Cc, Ci, Cm, Cu, components} = require("chrome");
 
-let {getSharePanel, getTestUrl, createTab, removeCurrentTab} = require("./test_utils");
+let {getMediator, getTestUrl, createTab, removeCurrentTab} = require("./test_utils");
 
 /**
  * test share state information
@@ -20,7 +20,7 @@ exports.testShareState = function(test) {
   let pageUrl = getTestUrl("page.html");
 
   createTab(pageUrl, function(tab) {
-    let sharePanel = getSharePanel();
+    let sharePanel = getMediator();
 
     // test 'sharing' state
     sharePanel.onUpdateStatus({statusCode: SHARE_START});

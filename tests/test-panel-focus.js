@@ -1,9 +1,9 @@
-const {getSharePanelWithApp, testAppSequence} = require("./app_helpers");
+const {getMediatorWithApp, testAppSequence} = require("./app_helpers");
 
 testAccountFocusLoadHelper = function(test, parameters, expected_focus_name, cbdone) {
   test.waitUntilDone();
 
-  getSharePanelWithApp(test, {}, function(appInfo) {
+  getMediatorWithApp(test, {}, function(appInfo) {
     let {jqAppWidget, panelContentWindow} = appInfo;
     let accountPanelDiv = jqAppWidget.find(".accountPanel");
     let seq = [
@@ -43,7 +43,7 @@ exports.testToFocused2 = function(test) {
   // these parameters mean "to" and "subject" are shown - but "to"
   // should still win.
   let params = {
-    features: {direct: true, subjectLabel: "the subject"},
+    features: {direct: true, subjectLabel: true},
     shareTypes: [{type: 'somewhere', name: 'somewhere'}]
   };
   testAccountFocusLoadHelper(test, params, "to");
@@ -52,7 +52,7 @@ exports.testToFocused2 = function(test) {
 exports.testSubjectFocused = function(test) {
   // these parameters mean "subject" is shown, so it should get focus
   let params = {
-    features: {subjectLabel: "the subkect"},
+    features: {subjectLabel: true},
     shareTypes: [{type: 'somewhere', name: 'somewhere'}]
   };
   testAccountFocusLoadHelper(test, params, "subject");
@@ -72,13 +72,13 @@ exports.testFocusAfterHide = function(test) {
   // "message" should get the focus
   let params = {shareTypes: [{type: 'somewhere', name: 'somewhere'}]};
   testAccountFocusLoadHelper(test, params, "message", function(appInfo, cbresume) {
-    let {panel, panelContentWindow, jqAppWidget} = appInfo;
+    let {mediator, panelContentWindow, jqAppWidget} = appInfo;
     let accountPanelDiv = jqAppWidget.find(".accountPanel");
-    panel.panel.hide();
-    test.waitUntil(function() !panel.panel.isShowing
+    mediator.panel.hide();
+    test.waitUntil(function() !mediator.panel.isShowing
     ).then(function() {
-      panel.show();
-      test.waitUntil(function() panel.panel.isShowing
+      mediator.show();
+      test.waitUntil(function() mediator.panel.isShowing
       ).then(function() {
         // The div should already be visible.
         test.assert(accountPanelDiv.is(":visible"));
@@ -98,7 +98,7 @@ exports.testLoginFocus = function(test) {
   test.waitUntilDone();
   let params = {shareTypes: [{type: 'somewhere', name: 'somewhere'}]};
 
-  getSharePanelWithApp(test, {}, function(appInfo) {
+  getMediatorWithApp(test, {}, function(appInfo) {
     let {jqAppWidget, panelContentWindow} = appInfo;
     let loginPanelDiv = jqAppWidget.find(".accountLogin");
     let seq = [

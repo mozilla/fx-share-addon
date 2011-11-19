@@ -2,7 +2,7 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
 const {Cc, Ci, Cm, Cu, components} = require("chrome");
-let {getSharePanel, getTestUrl, createTab, removeCurrentTab, finalize} = require("./test_utils");
+let {getMediator, getTestUrl, createTab, removeCurrentTab, finalize} = require("./test_utils");
 
 // test showing the notification box, this could move to owa
 exports.testErrorNotification = function(test) {
@@ -16,7 +16,7 @@ exports.testErrorNotification = function(test) {
   });
 
   createTab(pageUrl, function(tab) {
-    let sharePanel = getSharePanel();
+    let sharePanel = getMediator();
     sharePanel.showErrorNotification({msg: "This is a test error"});
 
     let wm = Cc["@mozilla.org/appshell/window-mediator;1"]

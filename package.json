@@ -5,7 +5,7 @@
     "description": "Share links fast",
     "author": "Mozilla",
     "version": "0.2.2",
-    "dependencies": ["api-utils", "addon-kit", "openwebapps", "oauthorizer"],
+    "dependencies": ["api-utils", "addon-kit", "openwebapps", "activities", "oauthorizer"],
     "icon": "./share-icon.png",
     "main": "./main.js"
 }

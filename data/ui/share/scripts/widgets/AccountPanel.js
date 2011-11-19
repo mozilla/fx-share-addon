@@ -102,10 +102,12 @@ function (object,         Widget,         $,        template,
         mediator.removeListener('base64Preview', this.base64PreviewSub);
         dispatch.unsub(this.sendCompleteSub);
         dispatch.unsub(this.optionsChangedSub);
-        this.select.dom.unbind('change', this.selectChangeFunc);
-        delete this.selectChangeFunc;
-        this.select.destroy();
-        this.select = null;
+        if (this.select) {
+          this.select.dom.unbind('change', this.selectChangeFunc);
+          delete this.selectChangeFunc;
+          this.select.destroy();
+          this.select = null;
+        }
         parent(this, 'destroy');
       },
 
@@ -226,13 +228,15 @@ function (object,         Widget,         $,        template,
         // If the service has a specific field for the title, use that.
         // otherwise if it has a field for the subject and no 'subject' is
         // specified, stick the title in the subject.
-        if (this.parameters.features.title) {
-          root.find('[name="title"]').val(opts.title);
-        } else if (this.parameters.features.subjectLabel) {
-          if (opts.subject) {
-            root.find('[name="subject"]').val(opts.subject);
-          } else if (opts.title) {
-            root.find('[name="subject"]').val(opts.title);
+        if (this.parameters.features) {
+          if (this.parameters.features.title) {
+            root.find('[name="title"]').val(opts.title);
+          } else if (this.parameters.features.subjectLabel) {
+            if (opts.subject) {
+              root.find('[name="subject"]').val(opts.subject);
+            } else if (opts.title) {
+              root.find('[name="subject"]').val(opts.title);
+            }
           }
         }
         root.find('[name="caption"]').val(opts.caption);

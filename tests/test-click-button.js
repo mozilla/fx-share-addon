@@ -1,5 +1,5 @@
 const {Cc, Ci, Cm, Cu, components} = require("chrome");
-const {getSharePanel, getTestUrl, getShareButton, createTab, removeCurrentTab, finalize} = require("./test_utils");
+const {getMediator, getTestUrl, getShareButton, createTab, removeCurrentTab, finalize} = require("./test_utils");
 const events = require("dom/events");
 const { activeBrowserWindow: { document } } = require("window-utils");
 const window = document.window;
@@ -24,13 +24,13 @@ exports.testButton = function(test) {
   });
 
   createTab(pageUrl, function(tab) {
-    let share = getSharePanel();
-    share.panel.on("show", function() {
+    let share = getMediator();
+    share.panel.once("show", function() {
       test.assert(true, "mouse clicks opens panels");
       // close the panel by clicking someplace outside the panel
       mouseEvent(share.anchor);
     });
-    share.panel.on("hide", function() {
+    share.panel.once("hide", function() {
       test.assert(true, "mouse clicks closes panels");
       test.done();
     });

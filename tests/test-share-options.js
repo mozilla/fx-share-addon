@@ -1,6 +1,6 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
-const {getSharePanel, getTestUrl, getShareButton, createTab, removeCurrentTab, getContentWindow} = require("./test_utils");
+const {getMediator, getTestUrl, getShareButton, createTab, removeCurrentTab, getContentWindow} = require("./test_utils");
 const Assert = require("test/assert").Assert;
 
 // each test object has the url and the expected options.  we only include
@@ -135,7 +135,7 @@ function testOne(test, theTest) {
     if (theTest.cbSetupPage) {
       theTest.cbSetupPage(getContentWindow());
     }
-    let panel = getSharePanel();
+    let panel = getMediator();
     let options = panel.updateargs();
     hasoptions(test, theTest.options, options);
 

@@ -35,7 +35,7 @@
  */
 
 define(function () {
-  var port = window.navigator.mozApps.mediation.port;
+  var port = window.navigator.mozActivities.mediation.port;
   var m = {
     on: port.on,
     removeListener: port.removeListener,
