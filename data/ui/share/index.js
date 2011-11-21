@@ -472,7 +472,9 @@ function (require,   $,        object,         fn,
     $("#tabs").empty();
     $("#tabContent").empty();
     for (var appid in accountPanels) {
-      accountPanelsRestoreState[appid] = accountPanels[appid].getRestoreState();
+      var panel = accountPanels[appid];
+      accountPanelsRestoreState[appid] = panel.getRestoreState();
+      panel.destroy();
     }
     accountPanels = {};
   };
@@ -494,7 +496,7 @@ function (require,   $,        object,         fn,
   mediator.on('base64Preview', onBase64Preview);
 
   // tell OWA we are ready...
-  window.navigator.mozApps.mediation.ready(
+  window.navigator.mozActivities.mediation.ready(
     function configureServices(activity, services) {
       _deleteOldServices();
       options = activity.data;

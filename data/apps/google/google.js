@@ -174,7 +174,7 @@ function (require,  common,      $) {
 
     getProfile: function(activity, credentials) {
       var oauthConfig = activity.data;
-      navigator.mozApps.services.oauth.call(oauthConfig, {
+      navigator.mozActivities.services.oauth.call(oauthConfig, {
         method: "GET",
         action: "https://www.google.com/m8/feeds/contacts/default/full",
         parameters: {alt:'json'}
@@ -228,7 +228,7 @@ function (require,  common,      $) {
     },
 
     _pagedContacts: function(url, params, oauthConfig) {
-      navigator.mozApps.services.oauth.call(oauthConfig, {
+      navigator.mozActivities.services.oauth.call(oauthConfig, {
         method: "GET",
         action: url,
         parameters: params
@@ -260,7 +260,7 @@ function (require,  common,      $) {
         username: activity.data.username,
         senderName: activity.data.username
       };
-      navigator.mozApps.services.sendEmail.call(smtpArgs,
+      navigator.mozActivities.services.sendEmail.call(smtpArgs,
         {
           to: activity.data.to,
           subject: activity.data.subject,
@@ -281,19 +281,19 @@ function (require,  common,      $) {
   }
 
   // Bind the OWA messages
-  navigator.mozApps.services.registerHandler('link.send', 'confirm', function(activity, credentials) {
+  navigator.mozActivities.services.registerHandler('link.send', 'confirm', function(activity, credentials) {
     api.send(activity, credentials);
   });
 
-  navigator.mozApps.services.registerHandler('link.send', 'getLogin', function(activity, credentials) {
+  navigator.mozActivities.services.registerHandler('link.send', 'getLogin', function(activity, credentials) {
     common.getLogin(domain, activity, credentials);
   });
 
-  navigator.mozApps.services.registerHandler('link.send', 'setAuthorization', function(activity, credentials) {
+  navigator.mozActivities.services.registerHandler('link.send', 'setAuthorization', function(activity, credentials) {
     api.getProfile(activity, credentials);
   });
 
-  navigator.mozApps.services.registerHandler('link.send', 'logout', function(activity, credentials) {
+  navigator.mozActivities.services.registerHandler('link.send', 'logout', function(activity, credentials) {
     clearStorage(activity, credentials);
   });
 
@@ -304,7 +304,7 @@ function (require,  common,      $) {
   // return an empty list.
   // This means the onus then falls back on us to match these names back up
   // with our PoCo records so we can extract the userid.
-  navigator.mozApps.services.registerHandler('link.send', 'getShareTypeRecipients', function(activity, credentials) {
+  navigator.mozActivities.services.registerHandler('link.send', 'getShareTypeRecipients', function(activity, credentials) {
     var type;
     var args = activity.data;
     var ckey = api.key+'.email';
@@ -320,7 +320,7 @@ function (require,  common,      $) {
   });
 
   // TODO validate the names passed in are valid email addresses
-  navigator.mozApps.services.registerHandler('link.send', 'resolveRecipients', function(activity, credentials) {
+  navigator.mozActivities.services.registerHandler('link.send', 'resolveRecipients', function(activity, credentials) {
     var type;
     var args = activity.data;
     var results = [];
@@ -333,22 +333,22 @@ function (require,  common,      $) {
   });
 
 
-  navigator.mozApps.services.registerHandler('link.send', 'getParameters', function(activity, credentials) {
+  navigator.mozActivities.services.registerHandler('link.send', 'getParameters', function(activity, credentials) {
     // This is currently slightly confused - it is both link.send parameters and auth parameters.
     activity.postResult(parameters);
   });
 
-  navigator.mozApps.services.registerHandler('link.send', 'getCredentials', function(activity, credentials) {
+  navigator.mozActivities.services.registerHandler('link.send', 'getCredentials', function(activity, credentials) {
     common.getLogin(activity, credentials);
   });
 
-  navigator.mozApps.services.registerHandler('link.send', 'validateCredentials', function(activity, credentials) {
+  navigator.mozActivities.services.registerHandler('link.send', 'validateCredentials', function(activity, credentials) {
   });
 
-  navigator.mozApps.services.registerHandler('link.send', 'clearCredentials', function(activity, credentials) {
+  navigator.mozActivities.services.registerHandler('link.send', 'clearCredentials', function(activity, credentials) {
     clearStorage(activity, credentials);
   });
 
   // Tell OWA we are now ready to be invoked.
-  navigator.mozApps.services.ready();
+  navigator.mozActivities.services.ready();
 });

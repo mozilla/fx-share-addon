@@ -8,7 +8,7 @@ Cu.import("resource://gre/modules/Services.jsm", tmp);
 Cu.import("resource://gre/modules/PlacesUtils.jsm", tmp);
 let {Services, PlacesUtils} = tmp;
 
-let {getSharePanel, getTestUrl, createTab, removeCurrentTab, finalize} = require("./test_utils");
+let {getMediator, getTestUrl, createTab, removeCurrentTab, finalize} = require("./test_utils");
 
 exports.testBookmarkPage = function(test) {
   test.waitUntilDone();
@@ -31,7 +31,7 @@ exports.testBookmarkPage = function(test) {
       appName: "F1 test suite",
       title: 'A test page'
     };
-    let sharePanel = getSharePanel();
+    let sharePanel = getMediator();
     let oldPrefVal;
     try {
       oldPrefVal = Services.prefs.getBoolPref("services.share.bookmarking");
