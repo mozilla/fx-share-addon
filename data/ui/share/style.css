@@ -426,22 +426,6 @@ a.remove {
   padding-left: 4px;
 }
 
-.widgets-AddAccount .add li[data-value="twitter.com"] {
-  background-image: url("i/sprite2.png");
-  background-position: 4px -33px;
-
-}
-
-.widgets-AddAccount .add li[data-value="facebook.com"] {
-  background-image: url("i/sprite2.png");
-  background-position: 4px -66px;
-}
-
-.widgets-AddAccount .add li[data-value="google.com"] {
-  background-image: url("i/sprite2.png");
-  background-position: 4px -99px;
-}
-
 
 /*
     generic styles for account panels
@@ -486,41 +470,6 @@ span.icon {
 .icon.settings {
   background-image: url("i/sprite2.png");
   background-position: center 4px;
-}
-
-.icon.twitter {
-  background-image: url("i/sprite2.png");
-  background-position: center -33px;
-}
-
-.icon.facebook {
-  background-image: url("i/sprite2.png");
-  background-position: center -66px;
-}
-
-.icon.gmail {
-  background-image: url("i/sprite2.png");
-  background-position: center -99px;
-}
-
-.icon.yahoo {
-  background-image: url("i/sprite2.png");
-  background-position: center -129px;
-}
-
-.icon.googleapps {
-  background-image: url("i/sprite2.png");
-  background-position: center -162px;
-}
-
-.icon.linkedin {
-  background-image: url("i/LinkedIn_Logo16px.png");
-  background-position: center;
-}
-
-.icon.debug {
-  background-image: url("i/bug_b.png");
-  background-position: center;
 }
 
 /* Generic AccountPanel styles */
@@ -712,100 +661,6 @@ body .toSection input[type="text"] {
   text-shadow: @buttonShareTextShadow;
   background: @buttonShareBackgroundWebKit;
   background: @buttonShareBackground;
-}
-
-/*
-    twitter styles
-
-span.icon.twitter {
-  background-position: center -35px;
-}
-
-*/
-
-
-/*
-    facebook styles
-*/
-
-.facebook.widgets-AccountPanel .shareTypeSection .Select.open ul {
-  top: -40px;
-}
-
-.facebook .facebookActions {
-  margin: 0 0 10px 0;
-  width: 100%;
-}
-
-.facebook .facebookActions .to {
-  width: 100px;
-  margin-right: 10px;
-}
-
-.facebook .facebookActions .to .dropdownContainer {
-  height: 24px;
-  line-height: 24px;
-  display: block;
-}
-
-.facebook .facebookActions .to select {
-  width: 100%;
-}
-
-.facebook .facebookActions .list label {
-  visibility: hidden;
-}
-
-.facebook .facebookActions .list button {
-  border-left: none;
-  width: 24px;
-  background-position: center -157px, center top;
-  background-repeat: no-repeat;
-
-  -webkit-border-radius: 0 2px 2px 0;
-     -moz-border-radius: 0 2px 2px 0;
-          border-radius: 0 2px 2px 0;
-
-  background-image: url("i/sprite.png"), -webkit-gradient(linear, left top, left bottom, color-stop(0%, #fafafa), color-stop(100%, #ddd));
-  background-image: url("i/sprite.png"), -moz-linear-gradient(center top , #fafafa 0%, #ddd 100%);
-}
-
-.facebook .facebookActions .list button:active {
-  background-image: url("i/sprite.png"), -webkit-gradient(linear, left top, left bottom, color-stop(0%, #eee), color-stop(100%, #ccc));
-  background-image: url("i/sprite.png"), -moz-linear-gradient(center top , #eee 0%, #ccc 100%);
-}
-
-/*
-
-span.icon.facebook {
-    background-position: center -59px;
-}
-*/
-
-/*
-    google styles
-*/
-
-.google .subject {
-  margin: 5px 0;
-}
-
-span.icon.google {
-  background-position: center -82px;
-}
-
-#news {
-  padding: 10px;
-  width: 100%;
-}
-
-#news span.icon.rss {
-  background-position: center -183px;
-  margin: 0 5px 0 0;
-}
-
-#news .story {
-  padding: 5px 0;
 }
 
 /*
