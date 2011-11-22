@@ -68,6 +68,15 @@ exports.testNameWithDot = function(test) {
   test.assertEqual(formataddr([a, b]), y);
 };
 
+exports.testNameWithComma = function(test) {
+  let x = '"Doe, John X" <jxd@example.com>';
+  let a = 'Doe, John X';
+  let b = 'jxd@example.com';
+  assertAddrsEqual(test, parseaddr(x), [a, b]);
+  // formataddr() quotes the name if there's a comma in it
+  test.assertEqual(formataddr([a, b]), x);
+};
+
 exports.testMultiLine = function(test) {
   let x = "\r\nFoo\r\n\tBar <foo@example.com>";
   assertAddrsEqual(test, parseaddr(x), ['Foo Bar', 'foo@example.com']);
@@ -76,10 +85,26 @@ exports.testMultiLine = function(test) {
 exports.testSemiColon = function(test) {
   test.assertEqual(formataddr(['A Silly; Person', 'person@dom.ain']),
                    '"A Silly; Person" <person@dom.ain>');
-  
 };
 
 exports.testComments = function(test) {
-  addrs = parseaddr('User ((nested comment)) <foo@bar.com>');
+  let addrs = parseaddr('User ((nested comment)) <foo@bar.com>');
   test.assertEqual(addrs[1], "foo@bar.com");
 };
+
+exports.testMultiple = function(test) {
+  let addrline = '"Doe, John X" <jxd@example.com>, user@dom.ain, "Arthur \\\\Backslash\\\\ Foobar" <person@dom.ain>';
+  let addrs = parseaddrlist(addrline);
+  let expected = [
+    ["Doe, John X", "jxd@example.com"],
+    ["", "user@dom.ain"],
+    ["Arthur \\Backslash\\ Foobar", "person@dom.ain"]
+  ];
+  assertAddrListsEqual(test, addrs, expected);
+}
+
+exports.testNameOnly = function(test) {
+  let addr = parseaddr('Just a name');
+  // this seems more an implementation accident, but we rely on it.
+  assertAddrsEqual(test, parseaddr(addr), ['', 'Just a name']);
+}

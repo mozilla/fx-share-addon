@@ -315,11 +315,11 @@ function (require,  common) {
     activity.postResult(result);
   });
 
-  // Validate a list of strings which are intended to be recipient names.
-  // The names possibly came back from getShareTypeRecipients() or were typed.
-  // Returns a string (but that string would resolve to itself - ie, passing
-  // 'Display Name' would resolve to @username, while @username always
-  // resolves to @username.)
+  // Validate a string holding a "list" of recipient names.
+  // The names possibly came back from getShareTypeRecipients() or were typed
+  // and were joined by a comma.  Returns an array of strings, and that string
+  // should resolve to itself - ie, passing 'Display Name' would resolve to
+  // @username, while @username always resolves to @username.)
   // A super-anal service who thinks any resolution at all is leaking too much
   // into is free to return exactly the names which were passed in (then fail
   // at send time if appropriate)
@@ -341,8 +341,13 @@ function (require,  common) {
     // XXX - should we just check for @username and return that without
     // checking our current list of followers?
     var results = [];
-    args.names.forEach(
+    var names = args.names.split(",");
+    names.forEach(
       function(recipstr) {
+        recipstr = recipstr.trim();
+        if (!recipstr) {
+          return;
+        }
         try {
           var poco = api.resolveRecipient(recipstr, type)
           results.push({result: '@' + api.getDomainAccount(poco).username});

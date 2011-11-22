@@ -309,19 +309,11 @@ function (object,         Widget,         $,        template,
       // Given a string direct from the UI, convert it to a list of PoCo
       // records suitable to pass back to the service.
       resolveRecipients: function(toText, cb) {
-        var names = [],
-            split = toText.split(',');
-        split.forEach(function (to) {
-          to = to.trim();
-          if (to) {
-            names.push(to)
-          }
-        });
         var shareType = this.parameters.shareTypes[0].type;
         if (this.select)
           shareType = this.getShareType(this.select.val()).type;
         this.owaservice.call('resolveRecipients',
-          {shareType: shareType, names: names},
+          {shareType: shareType, names: toText},
           function(results) {
             var good = [], bad = [];
             results.forEach(function (result) {
@@ -333,10 +325,10 @@ function (object,         Widget,         $,        template,
             });
             cb(good, bad);
           },
-          function(err, msg) {
-            dump("error resolving recipients: " + err + "/" + msg + "\n");
+          function(errob) {
+            dump("error resolving recipients: " + JSON.stringify(errob) + "\n");
             // and callback as if all are bad.
-            cb([], names);
+            cb([], [toText]);
           }
         );
       },
