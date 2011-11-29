@@ -14,3 +14,17 @@ unsafeWindow.navigator.wrappedJSObject.mozActivities.services.sendEmail = {
     });
   }
 };
+
+unsafeWindow.navigator.wrappedJSObject.mozActivities.services.resolveEmailAddresses = {
+  call: function(data, callback) {
+    callid++;
+    let resultName = "owa.service.resolveEmailAddresses.call.result."+callid;
+    self.port.once(resultName, function(result) {
+      callback(result);
+    });
+    self.port.emit('owa.service.resolveEmailAddresses.call', {
+      data: data,
+      result: resultName
+    });
+  }
+};

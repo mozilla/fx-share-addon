@@ -394,14 +394,7 @@ function (require,  common) {
     activity.postResult(result);
   });
 
-  // Validate a list of strings which are intended to be recipient names.
-  // The names possibly came back from getShareTypeRecipients() or were typed.
-  // Returns a string (but that string would resolve to itself - ie, passing
-  // 'Display Name' would resolve to @username, while @username always
-  // resolves to @username.)
-  // A super-anal service who thinks any resolution at all is leaking too much
-  // into is free to return exactly the names which were passed in (then fail
-  // at send time if appropriate)
+  // Validate recipient names - see comments in twitter.js for more info.
   navigator.mozActivities.services.registerHandler('link.send', 'resolveRecipients', function(activity, credentials) {
     var type;
     var args = activity.data;
@@ -417,8 +410,13 @@ function (require,  common) {
       throw("invalid shareType " + args.shareType + "\n");
     }
     var results = []
-    args.names.forEach(
+    var names = args.names.split(",");
+    names.forEach(
       function(displayName) {
+        displayName = displayName.trim();
+        if (!displayName) {
+          return;
+        }
         try {
           api.resolveRecipient(displayName, type);
           results.push({result: displayName});

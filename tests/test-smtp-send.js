@@ -13,8 +13,7 @@ let smtpArgs = {
   server: environ.get("FXSHARE_TEST_SMTP_SERVER") || 'smtp.gmail.com',
   port: environ.get("FXSHARE_TEST_SMTP_PORT") || 587,
   connectionType: environ.get("FXSHARE_TEST_SMTP_CONNECTION_TYPE") || 'starttls',
-  email: environ.get("FXSHARE_TEST_SMTP_EMAIL"),
-  senderName: environ.get("FXSHARE_TEST_SMTP_SENDER_NAME")
+  email: environ.get("FXSHARE_TEST_SMTP_EMAIL") // may be a full "Name <address>" string
 };
 
 let authArgs = {
@@ -44,6 +43,7 @@ function sendEmail(test, payload) {
     ;
   } else {
     // no concept of skipping a test, so just say it passed.
+    console.log("skipping SMTP test as required environment variables not configured");
     test.pass("skipping test as required environment variables not configured");
     return;
   }
@@ -65,7 +65,7 @@ function sendEmail(test, payload) {
     client.authenticate(authArgs,
       function() {
         // now we can send the message.
-        let to = [environ.get("FXSHARE_TEST_EMAIL_TO") || environ.get("FXSHARE_TEST_SMTP_EMAIL")];
+        let to = [environ.get("FXSHARE_TEST_EMAIL_TO") || smtpArgs.email];
         payload.addHeader('To', to);
         payload.addHeader('From', to);
         client.sendMessage(to, payload,

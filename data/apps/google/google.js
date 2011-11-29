@@ -148,30 +148,6 @@ function (require,  common,      $) {
       return result;
     },
 
-    // Given a recipient name string, find a matching PoCo record guaranteed
-    // to have an account identitifier for our domain.
-    // Throws on error.
-    resolveRecipient: function(recipstr, type) {
-      var ckey = api.key+'.'+type;
-      var strval = window.localStorage.getItem(ckey);
-      var allCollection = strval ? JSON.parse(strval) : {};
-
-      // first check if it is a screen name already a key into the collection.
-      if (recipstr.indexOf('@') === 0) {
-        var sn = recipstr.substr(1);
-        if (allCollection[sn]) {
-          return allCollection[sn];
-        }
-      }
-      // not there - see if a displayName
-      for each (var check in allCollection) {
-        if (check.displayName === recipstr) {
-          return check;
-        }
-      }
-      throw "invalid recipient '" + recipstr + "'";
-    },
-
     getProfile: function(activity, credentials) {
       var oauthConfig = activity.data;
       navigator.mozActivities.services.oauth.call(oauthConfig, {
@@ -277,8 +253,19 @@ function (require,  common,      $) {
               activity.postResult(json)
           }
         });
+    },
+
+    resolveRecipients: function(activity, credentials) {
+      navigator.mozActivities.services.resolveEmailAddresses.call(activity.data.names, function(result) {
+        if ('error' in result) {
+          activity.postException(result.error);
+        } else {
+          // result.result is already in the format we need.
+          activity.postResult(result.result);
+        }
+      });
     }
-  }
+  };
 
   // Bind the OWA messages
   navigator.mozActivities.services.registerHandler('link.send', 'confirm', function(activity, credentials) {
@@ -319,19 +306,9 @@ function (require,  common,      $) {
     activity.postResult(result);
   });
 
-  // TODO validate the names passed in are valid email addresses
   navigator.mozActivities.services.registerHandler('link.send', 'resolveRecipients', function(activity, credentials) {
-    var type;
-    var args = activity.data;
-    var results = [];
-    args.names.forEach(
-      function(recipstr) {
-        results.push({result: recipstr});
-      }, this
-    );
-    activity.postResult(results);
+    api.resolveRecipients(activity, credentials);
   });
-
 
   navigator.mozActivities.services.registerHandler('link.send', 'getParameters', function(activity, credentials) {
     // This is currently slightly confused - it is both link.send parameters and auth parameters.
