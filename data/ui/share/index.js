@@ -233,6 +233,32 @@ function (require,   $,        object,         fn,
     callSendApi();
   }
 
+  /* Validates the parameters for an app.
+     Returns null if OK, otherwise an error string targetted at a developer
+     (ie, the message may be dumped to the console, but will not be shown to
+     the user)
+  */
+  function validateAppParameters(params) {
+    try {
+      // This is only partially implemented - more robust checks should be created.
+      var shareTypes = params.shareTypes;
+      // typeof [] -> "object", so not very useful!
+      if (!shareTypes || !shareTypes.length) {
+        return "shareTypes must be an array with length > 0";
+      }
+      for (var i = 0; i < shareTypes.length; i++) {
+        var st = shareTypes[i];
+        if (typeof st.type !== "string" || typeof st.name !== "string") {
+          return "shareTypes[" + i + "] is invalid - must have string properties 'type' and 'name'";
+        }
+      }
+      // 'constraints' is optional, so no check is made.
+      return null;
+    } catch (ex) {
+      return "failed to validate app parameters: " + ex.toString();
+    }
+  }
+
   /**
    * Shows the accounts after any AccountPanel overlays have been loaded.
    */
@@ -510,7 +536,14 @@ function (require,   $,        object,         fn,
         svc.on("ready", function() {
           var readyService = this;
           readyService.call("getParameters", {}, function(prefs) {
-            readyService.parameters = prefs;
+            var problem = validateAppParameters(prefs);
+            if (problem === null) {
+              // all good.
+              readyService.parameters = prefs;
+            } else {
+              dump("Application " + readyService.app.origin + " has invalid parameters: " + problem + "\n");
+              readyService.error = "The application has invalid parameters";
+            }
             dispatch.pub('serviceChanged', readyService.app.origin);
           });
         }.bind(svc));

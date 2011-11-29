@@ -106,21 +106,27 @@ function (object,         Widget,         $,        template,
         }
         // If either 'parameters' or 'login' are null, we are waiting
         // for those methods to return.
-        $(".accountLoading", this.node).hide();
-        $(".accountLogin", this.node).show();
         var showPanel = false;
-        if (!this.owaservice.parameters) {
+        if (this.owaservice.error) {
+          $(".accountLoading", this.node).hide();
+          $(".accountLogin", this.node).hide();
+          $(".accountError", this.node).show();
+          $(this.node).find('[name="error"]').text(this.owaservice.error);
+        } else if (!this.owaservice.parameters) {
           // waiting for the app to load and respond.
           $(".accountLoading", this.node).show();
           $(".accountLogin", this.node).hide();
+          $(".accountError", this.node).hide();
         } else if (!this.owaservice.user) {
           // getLogin call has returned but no user logged in.
           $(".accountLoading", this.node).hide();
           $(".accountLogin", this.node).show();
+          $(".accountError", this.node).hide();
         } else {
           // logged in so can show the account panel.
           $(".accountLoading", this.node).hide();
           $(".accountLogin", this.node).hide();
+          $(".accountError", this.node).hide();
           showPanel = true;
         }
         var thisPanelDiv = $(".accountPanel", this.node);
