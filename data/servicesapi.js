@@ -28,3 +28,17 @@ unsafeWindow.navigator.wrappedJSObject.mozActivities.services.resolveEmailAddres
     });
   }
 };
+
+unsafeWindow.navigator.wrappedJSObject.mozActivities.services.formatEmailAddresses = {
+  call: function(data, callback) {
+    callid++;
+    let resultName = "owa.service.formatEmailAddresses.call.result."+callid;
+    self.port.once(resultName, function(result) {
+      callback(result);
+    });
+    self.port.emit('owa.service.formatEmailAddresses.call', {
+      data: data,
+      result: resultName
+    });
+  }
+};
