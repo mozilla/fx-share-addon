@@ -79,8 +79,7 @@ function (require,  common,      $) {
     //This takes care of api.key localStorage
     common.logout(domain, activity, credentials);
 
-    storage.removeItem(api.key + '.followers');
-    storage.removeItem(api.key + '.following');
+    storage.removeItem(api.key + '.email');
   }
 
   var api = {
@@ -180,7 +179,7 @@ function (require,  common,      $) {
       var strval = window.localStorage.getItem(ckey);
       var users = strval && JSON.parse(strval) || {};
       // We store in a keyed object so we can easily re-fetch contacts and
-      // not wind up with duplicates.  Keyed by screen_name.
+      // not wind up with duplicates.  Keyed by email adfress.
       data.entry.forEach(function(entry) {
         var poco = api.contactToPoco(entry, prefix);
         poco.emails.forEach(function (email) {
@@ -296,14 +295,23 @@ function (require,  common,      $) {
     var args = activity.data;
     var ckey = api.key+'.email';
     var strval = window.localStorage.getItem(ckey);
-    var byName = JSON.parse(strval);
+    var byEmail = JSON.parse(strval);
     // convert back to a simple array of names to use for auto-complete.
+    var toFormat = [];
     var result = [];
-    for (var name in byName) { // name is the screen_name
-      var poco = byName[name];
-      result.push(name);
+    for (var email in byEmail) {
+      var poco = byEmail[email];
+      toFormat.push([poco.displayName, email])
     }
-    activity.postResult(result);
+    // Now format the addresses into something we can later parse.
+    navigator.mozActivities.services.formatEmailAddresses.call(toFormat, function(result) {
+      if ('error' in result) {
+        activity.postException(result.error);
+      } else {
+        // result.result is already in the format we need.
+        activity.postResult(result.result);
+      }
+    });
   });
 
   navigator.mozActivities.services.registerHandler('link.send', 'resolveRecipients', function(activity, credentials) {
