@@ -165,13 +165,16 @@ unblock the next call until the test has finished examining the mediator state.
 
 **/
 
+var call_counter = 0;
 function invokeService(mediatorPanel, activity, cb, cberr) {
   if (!mediatorPanel.handlers[activity.origin]) {
     throw new Error(activity.action+":"+activity.message+" not available at "+activity.origin);
   }
   let worker = mediatorPanel.handlers[activity.origin][activity.action][activity.message];
-  activity.success = "test_invoke_success";
-  activity.error = "test_invoke_error";
+  //console.log("invoke "+JSON.stringify(activity));
+  call_counter++;
+  activity.success = "test_invoke_success_"+call_counter;
+  activity.error = "test_invoke_error"+call_counter;
   function postResult(result) {
     worker.port.removeListener(activity.error, postException);
     cb(result);
