@@ -16,7 +16,8 @@ exports.testAccountLoads = function(test) {
 
     // now kick off the sequence of "unblocking" calls and testing each state.
     let seq = [
-      {method: 'getParameters', successArgs: {},
+      {method: 'getParameters',
+       successArgs: {shareTypes: [{type: "test", name: "test"}]},
        callback: function(cbresume, results) {
         // only 'loading' should still be visible as getLogin is "blocked"
         test.assert(accountLoadingDiv.is(":visible"));
@@ -53,7 +54,8 @@ exports.testLoginPanelShows = function(test) {
     // above - so just kick off the sequence of unblocks and tests.
     let seq = [
       // no callback for getParameters - we've tested this above.
-      {method: 'getParameters', successArgs: {}
+      {method: 'getParameters',
+       successArgs: {shareTypes: [{type: "test", name: "test"}]}
       },
       {method: 'getLogin', successArgs: {auth: "something"},
        callback: function(cbresume) {

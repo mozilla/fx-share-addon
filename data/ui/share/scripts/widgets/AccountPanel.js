@@ -170,7 +170,7 @@ function (object,         Widget,         $,        template,
         this.optionsChanged();
 
         var shareTypes = this.parameters.shareTypes;
-        if (shareTypes && shareTypes.length > 1) {
+        if (shareTypes.length > 1) {
           var initialShareType = opts.shareType || this.options.shareType ||
                                  shareTypes[0].type;
           //Insert a Select widget if it is desired.
@@ -193,6 +193,8 @@ function (object,         Widget,         $,        template,
           });
           this.select.dom.bind('change', this.selectChangeFunc);
           this.changeShareType(this.getShareType(initialShareType));
+        } else {
+          this.changeShareType(this.getShareType(shareTypes[0].type));
         }
 
         if (this.parameters.constraints && this.parameters.constraints.textLimit) {
