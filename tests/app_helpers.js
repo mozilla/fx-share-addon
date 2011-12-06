@@ -75,6 +75,15 @@ exports.ensureNoTestApp = function(test, appPath, callback) {
                            function() {callback()}, function() {callback()});
 }
 
+function maybeInstallTestApp(test, appPath, skipInstall, callback) {
+  if (skipInstall) {
+    let options = getTestAppOptions(appPath);
+    callback(options.origin);
+  } else {
+    exports.installTestApp(test, appPath, callback);
+  }
+}
+
 // Helpers for working with our "test app".
 
 // Install our test app, open a URL in a new tab, open the "share panel" for
@@ -86,7 +95,9 @@ exports.getMediatorWithApp = function(test, args, cb) {
   let appPath = args.appPath || "apps/basic/basic.webapp";
   let pageUrl = args.pageUrl || getTestUrl("page.html");
   let shareArgs = args.shareArgs;
-  exports.installTestApp(test, appPath, function(appOrigin) {
+  let skipAppInstall = args.skipAppInstall;
+  let tabTitle = args.tabTitle;
+  maybeInstallTestApp(test, appPath, skipAppInstall, function(appOrigin) {
     // ensure a teardown method to unregister it!
     finalize(test, function(finish) {
       exports.ensureNoTestApp(test, appPath, function() {
@@ -95,6 +106,9 @@ exports.getMediatorWithApp = function(test, args, cb) {
     });
 
     createTab(pageUrl, function(tab) {
+      if (tabTitle) {
+        tab.title = tabTitle;
+      }
       // a finalizer to destroy the tab.
       finalize(test, function(finish) {
         removeCurrentTab(function() {
@@ -102,10 +116,10 @@ exports.getMediatorWithApp = function(test, args, cb) {
         })
       });
 
-      let mediator = getMediator(shareArgs);
-      mediator.panel.port.once("owa.mediation.ready", function() {
+      let mediator = getMediator(shareArgs, function(mediator) {
         //// The mediator reported it is ready - now find the contentWindow for the mediator.
-        test.waitUntil(function() {return mediator.panelWindow && mediator.handlers[appOrigin]; }
+        test.waitUntil(function() {
+          return mediator.panelWindow && mediator.handlers[appOrigin]; }
         ).then(function() {
           // loop over the iframes looking for or test app skipping any other
           // link.send apps which may exist.
@@ -125,7 +139,8 @@ exports.getMediatorWithApp = function(test, args, cb) {
                             jqPanelContentWindow: cw.$,
                             appFrame: appFrame,
                             appWidget: appWidget,
-                            jqAppWidget: jqAppWidget
+                            jqAppWidget: jqAppWidget,
+                            tab: tab
               };
               cb(result);
               return;
