@@ -44,7 +44,7 @@ exports.removeCurrentTab = function(callback) {
   tab.close();
 }
 
-function getMediator(args) {
+function getMediator(args, readyCallback) {
   require("activities/main"); // for the side effect of injecting window.apps.
   require("openwebapps/main"); // for the side effect of injecting window.apps.
   let wm = Cc["@mozilla.org/appshell/window-mediator;1"]
@@ -61,8 +61,29 @@ function getMediator(args) {
     type: "link.send", // fixme
     data: args || {}
   }
-  // first pretend to invoke a service so our panel is created.
-  return services.get(activity, function () {;});
+  // This is a bit yucky - if the mediator already exists, we will never
+  // get the "ready" notification from it, so dig inside the impl to work
+  // out if the mediator is new or will be reused.
+  let reused = false;
+  for each (let panel in services._popups) {
+    if (panel.panelWindow && activity.action == panel.methodName) {
+      reused = true;
+      break;
+    }
+  }
+  mediator = services.get(activity, function () {;});
+  if (readyCallback) {
+    if (reused) {
+      mediator.panel.once("show", function() {
+        readyCallback(mediator);
+      });
+    } else {
+      mediator.panel.port.once("owa.mediation.ready", function() {
+        readyCallback(mediator)
+      });
+    }
+  }
+  return mediator;
 }
 exports.getMediator = getMediator;
 
