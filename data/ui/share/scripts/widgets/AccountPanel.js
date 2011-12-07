@@ -71,10 +71,10 @@ function (object,         Widget,         $,        template,
       onCreate: function (onAsynCreateDone) {
         var profile = this.owaservice.user;
 
-        this.hadFocusRequest = false;
         this.profile = profile;
         this.parameters = this.owaservice.parameters;
         this.svc = this.parameters; // just for the jig template...
+        this.options = this.activity.data; // just for the jig template...
 
         //Set up the photo property
         this.photo = profile.photos && profile.photos[0] && profile.photos[0].value;
@@ -92,16 +92,13 @@ function (object,         Widget,         $,        template,
         mediator.on('base64Preview', this.base64PreviewSub);
 
         //Listen for options changes and update the account.
-        this.optionsChangedSub = dispatch.sub('optionsChanged', fn.bind(this, function (options) {
-          this.options = options;
-          this.optionsChanged();
-        }));
+        this.activityChangedSub = dispatch.sub('activityChanged', this.activityChanged.bind(this));
       },
 
       destroy: function () {
         mediator.removeListener('base64Preview', this.base64PreviewSub);
         dispatch.unsub(this.sendCompleteSub);
-        dispatch.unsub(this.optionsChangedSub);
+        dispatch.unsub(this.activityChangedSub);
         if (this.select) {
           this.select.dom.unbind('change', this.selectChangeFunc);
           delete this.selectChangeFunc;
@@ -137,6 +134,29 @@ function (object,         Widget,         $,        template,
         }
       },
 
+      activityChanged: function(activity) {
+        var appid = this.owaservice.app.origin;
+        var opts = activity.data;
+        var savedState = activity.mediatorState && activity.mediatorState.apps ?
+                         activity.mediatorState.apps[appid] : null;
+
+        this.hadFocusRequest = false;
+        this.doneFirstRender = false;
+        if (savedState) {
+          this.doneFirstRender = savedState.doneFirstRender;
+          this.hadFocusRequest = savedState.hadFocusRequest;
+
+          // Mix in any saved UI data from the last time we were invoked.
+          var tomixin =['to', 'subject', 'message', 'shareType', 'description', 'title'];
+          for each (var prop in tomixin) {
+            opts[prop] = savedState.ui[prop];
+          }
+        }
+        this.activity = activity;
+        this.options = opts;
+        this.renderData();
+      },
+
       onRender: function () {
         // Note an exception in _onRender will cause the widget creation
         // process to hang and never return - so catch and log exceptions.
@@ -156,18 +176,7 @@ function (object,         Widget,         $,        template,
         this.toDom = $('[name="to"]', this.node);
         this.shareButtonNode = $('button.share', this.node)[0];
 
-        //Mix in any saved data for the new URL if it was in storage.
-        if (this.savedState) {
-          //Create a temp object so we do not mess with pristine options.
-          opts = object.create(opts, [{
-            to: this.savedState.to,
-            subject: this.savedState.subject,
-            message: this.savedState.message,
-            shareType: this.savedState.shareType
-          }]);
-        }
-
-        this.optionsChanged();
+        this.activityChanged(this.activity);
 
         var shareTypes = this.parameters.shareTypes;
         if (shareTypes.length > 1) {
@@ -216,7 +225,7 @@ function (object,         Widget,         $,        template,
 
       },
 
-      optionsChanged: function() {
+      renderData: function() {
         var root = $(this.node),
             opts = this.options,
             formLink = opts.url,
@@ -233,6 +242,7 @@ function (object,         Widget,         $,        template,
         if (this.parameters.features) {
           if (this.parameters.features.title) {
             root.find('[name="title"]').val(opts.title);
+            root.find('[name="subject"]').val(opts.subject);
           } else if (this.parameters.features.subjectLabel) {
             if (opts.subject) {
               root.find('[name="subject"]').val(opts.subject);
@@ -248,7 +258,7 @@ function (object,         Widget,         $,        template,
         this.toDom.val(opts.to);
         var message = opts.message || '';
         var constraints = this.parameters.constraints || {};
-        if (constraints.editableURLInMessage) {
+        if (!this.doneFirstRender && constraints.editableURLInMessage) {
           // so we need some URL in the message itself - if the service doesn't
           // do its own shortening we prefer a short url if we already have one.
           var url;
@@ -264,6 +274,10 @@ function (object,         Widget,         $,        template,
           }
         }
         root.find('[name="message"]').val(message);
+        if (this.counter) {
+          this.counter.checkCount();
+        }
+        this.doneFirstRender = true;
       },
 
       validate: function (sendData) {
@@ -370,7 +384,11 @@ function (object,         Widget,         $,        template,
       },
 
       getRestoreState: function () {
-        return this.getFormData();
+        return {
+          doneFirstRender: this.doneFirstRender,
+          hadFocusRequest: this.hadFocusRequest,
+          ui: this.getFormData()
+        };
       },
 
       getFormData: function () {

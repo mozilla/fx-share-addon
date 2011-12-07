@@ -136,9 +136,8 @@ function (object,         Widget,         $,        template,
             // XXX - overlay??
             var PanelCtor = require('widgets/AccountPanel');
             this.accountPanel = new PanelCtor({
-                options: this.options,
-                owaservice: this.owaservice,
-                savedState: this.savedState
+                activity: this.activity,
+                owaservice: this.owaservice
                 }, thisPanelDiv[0]);
           }
           thisPanelDiv.show();

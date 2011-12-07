@@ -47,7 +47,6 @@ function (require,   $,        object,         fn,
           AddAccount,           less,   osTheme,   mediator) {
 
   var accountPanels = {},
-      accountPanelsRestoreState = {},
       SHARE_DONE = 0,
       SHARE_START = 1,
       SHARE_ERROR = 2,
@@ -56,7 +55,7 @@ function (require,   $,        object,         fn,
         statusSharing: true,
         statusShared: true
       },
-      options, sendData, tabButtonsDom,
+      activity, sendData, tabButtonsDom,
       servicePanelsDom,
       owaservices = [], // A list of OWA service objects
       owaservicesbyid = {}; // A map version of the above
@@ -128,8 +127,8 @@ function (require,   $,        object,         fn,
 
   function showStatusShared() {
     var svcRec = owaservicesbyid[sendData.appid],
-        siteName = options.siteName,
-        url = options.url || "",
+        siteName = activity.data.siteName,
+        url = activity.data.url || "",
         doubleSlashIndex = url.indexOf("//") + 2;
     $('#statusShared').empty().append(jig('#sharedTemplate', {
       domain: siteName || url.slice(doubleSlashIndex, url.indexOf("/", doubleSlashIndex)),
@@ -300,7 +299,7 @@ function (require,   $,        object,         fn,
       tabButtonsDom = $('.widgets-TabButton');
       servicePanelsDom = $('.servicePanel');
 
-      mediator.checkBase64Preview(options);
+      mediator.checkBase64Preview(activity.data);
 
       //If no matching accounts match the last selection clear it.
       if (lastSelectionMatch < 0 && lastSelection) {
@@ -337,18 +336,19 @@ function (require,   $,        object,         fn,
         /// XXX - need the OWA icon helper!!
         var icon = thisSvc.getIconForSize(48); // XXX - what size should really be used???
         // Add a tab button for the service.
-        tabsDom.append(new TabButton({
+        var tabButton = new TabButton({
           target: tabId,
           type: appid,
           title: thisSvc.app.manifest.name,
           serviceIcon: icon
-        }, tabFragment));
+        }, tabFragment);
+        tabButton.node.setAttribute("appid", appid);
+        tabsDom.append(tabButton);
 
         // Get the contructor function for the panel.
         accountPanel = new ServicePanel({
-          options: options,
-          owaservice: thisSvc,
-          savedState: accountPanelsRestoreState[appid]
+          activity: activity,
+          owaservice: thisSvc
         }, fragment);
 
         accountPanel.node.setAttribute("id", tabId);
@@ -357,7 +357,6 @@ function (require,   $,        object,         fn,
       }
     });
     finishCreate();
-    accountPanelsRestoreState = {};
   }
 
   // Set up initialization work for the first share state passing.
@@ -499,7 +498,6 @@ function (require,   $,        object,         fn,
     $("#tabContent").empty();
     for (var appid in accountPanels) {
       var panel = accountPanels[appid];
-      accountPanelsRestoreState[appid] = panel.getRestoreState();
       panel.destroy();
     }
     accountPanels = {};
@@ -510,6 +508,7 @@ function (require,   $,        object,         fn,
   // since the this call could happen before AccountPanels are ready, which
   // also listen for base64Preview.
   function onBase64Preview(img) {
+    var options = activity.data;
     if (options) {
       var preview = options.previews && options.previews[0];
       if (preview && preview.http_url == img.url) {
@@ -523,9 +522,9 @@ function (require,   $,        object,         fn,
 
   // tell OWA we are ready...
   window.navigator.mozActivities.mediation.ready(
-    function configureServices(activity, services) {
+    function configureServices(_activity, services) {
       _deleteOldServices();
-      options = activity.data;
+      activity = _activity;
       owaservices = services;
       onFirstShareState();
       displayAccounts();
@@ -553,11 +552,24 @@ function (require,   $,        object,         fn,
         }.bind(svc));
       }
     },
-    function updateActivity(activity) {
-      options = activity.data;
-      // force a refresh of the options....
-      dispatch.pub('optionsChanged', options);
-      mediator.checkBase64Preview(options);
+    function updateActivity(_activity) {
+      activity = _activity;
+      // reselect whatever app was in use.
+      if (activity.mediatorState && activity.mediatorState.selectedApp) {
+        $('#tabs').find('[appid="' + activity.mediatorState.selectedApp + '"]').click();
+      }
+      // force a refresh of the activity data....
+      dispatch.pub('activityChanged', activity);
+      mediator.checkBase64Preview(activity.data);
+    },
+    function fetchState() {
+      var appstate = {};
+      for (var appid in accountPanels) {
+        var panel = accountPanels[appid];
+        appstate[appid] = panel.getRestoreState();
+      }
+      var selectedApp = $('.servicePanel').not('.hidden').attr('appid');
+      return {apps: appstate, selectedApp: selectedApp};
     }
   );
 });
