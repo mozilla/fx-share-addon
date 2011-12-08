@@ -450,7 +450,7 @@ function (require,   $,        object,         fn,
         // apparently must create the window here, before we call the service
         // to avoid it being blocked.
         var win = window.open("",
-          "ffshareOAuth",
+          "fxshareOAuth",
           "dialog=yes, modal=yes, width=900, height=500, scrollbars=yes");
         svcRec.call('logout', {},
           function() {
