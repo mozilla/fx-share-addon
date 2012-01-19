@@ -3,18 +3,7 @@ const {getMediator, getTestUrl, createTab, removeCurrentTab, finalize} = require
 const windowUtils = require("window-utils");
 
 
-// Return the "openwebapps" object.
-exports.getOWA = function() {
-  require("activities/main"); // for the side effect of injecting window.apps.
-  require("openwebapps/main"); // for the side effect of injecting window.apps.
-  let repo = require("openwebapps/api").FFRepoImplService;
-  let wm = Cc["@mozilla.org/appshell/window-mediator;1"]
-            .getService(Ci.nsIWindowMediator);
-  let window = wm.getMostRecentWindow("navigator:browser");
-  return window.serviceInvocationHandler;
-}
-
-function getTestAppOptions(appRelPath) {
+function getTestAppOptions(activityName, appRelPath) {
   // first find the URL of the app.
   let lastSlash = module.uri.lastIndexOf("/");
   let manifest = module.uri.substr(0, lastSlash+1) + appRelPath;
@@ -23,65 +12,38 @@ function getTestAppOptions(appRelPath) {
   return {
     url: manifest,
     origin: origin,
-    skipPostInstallDashboard: true // don't want the app panel to appear.
+    launch_url: origin,
+    manifest: {
+      name: activityName
+    }
   };
 };
 
 // Ensure one of our test apps is installed and ready to go.
-exports.installTestApp = function(test, appPath, callback, errback) {
-  let repo = require("openwebapps/api").FFRepoImplService;
-  let options = getTestAppOptions(appPath);
-  options.onerror = function(errob) {
-    if (errback) {
-      errback(errob);
-    } else {
-      // no errback so they expect success!
-      test.fail("failed to install the test app: " + errob.code + "/" + errob.message);
-      test.done();
-    }
-  };
-  options.onsuccess = function() {
-      callback(options.origin);
-  };
-  repo.install('http://localhost:8420',
-               options,
-               undefined); // the window is only used if a prompt is shown.
+exports.installTestApp = function(activityName, appPath) {
+  let { activityRegistry } = require("activities/services");
+  let options = getTestAppOptions(activityName, appPath);
+  activityRegistry.registerActivityHandler(activityName, options.url, activityName,
+                                           options);
+  return options;
 };
 
 // Uninstall our test app - by default (ie, with no errback passed), errors
 // are "fatal".
-exports.uninstallTestApp = function(test, appPath, callback, errback) {
-  let repo = require("openwebapps/api").FFRepoImplService;
-  let options = getTestAppOptions(appPath);
-
-  repo.uninstall(options.origin,
-    function() { // success CB
-      callback();
-    },
-    function(errob) { //errback
-      if (errback) {
-        errback(errob);
-      } else {
-        test.fail("failed to uninstall test app: " + errob.code + "/" + errob.message);
-        test.done();
-      }
-    }
-  );
+exports.uninstallTestApp = function(activityName, appPath) {
+  let { activityRegistry } = require("activities/services");
+  let options = getTestAppOptions(activityName, appPath);
+  activityRegistry.unregisterActivityHandler(activityName, options.url);
 };
 
-// Ensure the test app is not installed.
-exports.ensureNoTestApp = function(test, appPath, callback) {
-  exports.uninstallTestApp(test, appPath,
-                           function() {callback()}, function() {callback()});
-}
-
-function maybeInstallTestApp(test, appPath, skipInstall, callback) {
+function maybeInstallTestApp(activityName, appPath, skipInstall, callback) {
+  let options;
   if (skipInstall) {
-    let options = getTestAppOptions(appPath);
-    callback(options.origin);
+    options = getTestAppOptions(activityName, appPath);
   } else {
-    exports.installTestApp(test, appPath, callback);
+    options = exports.installTestApp(activityName, appPath);
   }
+  callback(options.origin);
 }
 
 // Helpers for working with our "test app".
@@ -92,17 +54,16 @@ function maybeInstallTestApp(test, appPath, skipInstall, callback) {
 // Automatically arranges for finalizers to be called to remove the app and
 // remove the tab.
 exports.getMediatorWithApp = function(test, args, cb) {
-  let appPath = args.appPath || "apps/basic/basic.webapp";
+  let appPath = args.appPath || "apps/basic/basic.html";
   let pageUrl = args.pageUrl || getTestUrl("page.html");
   let shareArgs = args.shareArgs;
   let skipAppInstall = args.skipAppInstall;
   let tabTitle = args.tabTitle;
-  maybeInstallTestApp(test, appPath, skipAppInstall, function(appOrigin) {
+  maybeInstallTestApp("link.send", appPath, skipAppInstall, function(appOrigin) {
     // ensure a teardown method to unregister it!
     finalize(test, function(finish) {
-      exports.ensureNoTestApp(test, appPath, function() {
-        finish();
-      })
+      exports.uninstallTestApp("link.send", appPath);
+      finish();
     });
 
     createTab(pageUrl, function(tab) {
