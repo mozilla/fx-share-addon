@@ -24,7 +24,7 @@ oauthorizer := $(deps)/oauthorizer
 activities := $(deps)/openwebapps/addons/activities
 openwebapps := $(deps)/openwebapps/addons/jetpack
 
-cfx_args :=  --pkgdir=$(TOPSRCDIR) $(binary) $(profile) --package-path=$(oauthorizer) --package-path=$(activities) --package-path=$(openwebapps) --binary-args="-console -purgecaches"
+cfx_args :=  --pkgdir=$(TOPSRCDIR) $(binary) $(profile) --package-path=$(oauthorizer) --package-path=$(activities) --binary-args="-console -purgecaches"
 
 test_args :=
 ifneq ($(TEST),)
@@ -47,7 +47,7 @@ pull:
 	$(PYTHON) build.py
 
 test:
-	$(addon_sdk)/cfx test $(cfx_args) $(test_args)
+	$(addon_sdk)/cfx test -v $(cfx_args) $(test_args)
 
 run:
 	$(addon_sdk)/cfx run $(cfx_args)	
