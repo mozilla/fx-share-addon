@@ -46,7 +46,6 @@ exports.removeCurrentTab = function(callback) {
 
 function getMediator(args, readyCallback) {
   require("activities/main"); // for the side effect of injecting window.apps.
-  require("openwebapps/main"); // for the side effect of injecting window.apps.
   let wm = Cc["@mozilla.org/appshell/window-mediator;1"]
                 .getService(Ci.nsIWindowMediator);
 
