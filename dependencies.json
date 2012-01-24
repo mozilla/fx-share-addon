@@ -21,7 +21,7 @@
     ], 
     [
       "git", 
-      "https://github.com/mozilla/openwebapps.git", 
+      "https://github.com/mozilla/activities.git", 
       "develop", 
       ""
     ]

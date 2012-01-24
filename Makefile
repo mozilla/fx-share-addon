@@ -5,8 +5,8 @@ ifeq ($(TOPSRCDIR),)
   export TOPSRCDIR = $(shell pwd)
 endif
 profile :=
-ifneq ($(OWA_PROFILE),)
-  profile := --profiledir="$(OWA_PROFILE)"
+ifneq ($(FX_PROFILE),)
+  profile := --profiledir="$(FX_PROFILE)"
 endif
 
 deps  := $(TOPSRCDIR)/deps
@@ -21,8 +21,7 @@ endif
 
 addon_sdk := $(deps)/addon-sdk/bin
 oauthorizer := $(deps)/oauthorizer
-activities := $(deps)/openwebapps/addons/activities
-openwebapps := $(deps)/openwebapps/addons/jetpack
+activities := $(deps)/activities
 
 cfx_args :=  --pkgdir=$(TOPSRCDIR) $(binary) $(profile) --package-path=$(oauthorizer) --package-path=$(activities) --binary-args="-console -purgecaches"
 
