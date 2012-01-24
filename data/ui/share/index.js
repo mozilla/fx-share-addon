@@ -278,7 +278,7 @@ function (require,   $,        object,         fn,
     // below this function.
     function finishCreate() {
       var addButton, addAccountWidget;
-
+/* disable the add panel for now
       // Add tab button for add account
       addButton = new TabButton({
         target: 'addAccount',
@@ -290,7 +290,7 @@ function (require,   $,        object,         fn,
       addAccountWidget = new AddAccount({
         id: 'addAccount', owaservices: owaservices
       }, fragment);
-
+*/
       // add the tabs and tab contents now
       tabsDom.append(tabFragment);
       tabContentDom.append(fragment);

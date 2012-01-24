@@ -6,7 +6,7 @@
   },
   "description":"Connects your browser's Firefox Share to GMail",
   "icons":{
-    "32":"/feature_gmail_icon.gif"
+    "32":"/google.png"
   },
   "services": {
     "link.send": {

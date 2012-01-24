@@ -185,6 +185,11 @@ function (require,  common) {
         parameters: {}
       },function(json) {
         //dump("got facebook profile "+JSON.stringify(json)+"\n");
+        if (json.error) {
+            activity.postException({code: "get.profile", message: json.error.message, data: json.error})
+            window.localStorage.removeItem(api.key);
+            return;
+        }
         try {
         var me = api.profileToPoco(json);
         var user = {
