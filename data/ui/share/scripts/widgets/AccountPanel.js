@@ -476,6 +476,11 @@ function (object,         Widget,         $,        template,
         var sendData = this.getFormData();
         // put the appid in the data so the caller can find us.
         sendData.appid = this.owaservice.app.origin;
+        // and any other import things from the initial params which don't
+        // currently appear on the form.
+        if (!sendData.title)
+          sendData.title = this.options.title;
+
         if (!this.validate(sendData)) {
           return;
         }
