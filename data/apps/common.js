@@ -56,8 +56,8 @@ function (require,   $) {
       } catch(e) {
         dump("common.getLogin error "+e+"\n");
         // some error, logout
+        activity.postException({code: "get.login", message: e.toString(), data: { key: key, value: strval}});
         window.localStorage.removeItem(key);
-        cberr(e);
         return;
       }
       activity.postResult(result);
