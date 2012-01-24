@@ -25,6 +25,10 @@
       {]}
       <textarea class="message compose" placeholder="Type your message here, and we'll attach the link when you send." name="message">{options.message}</textarea>
 
+      {svc.constraints.shortURLLength [}
+        <div>Links will appear shortened.</div>
+      {]}
+
       <div id="pageInfo">
         <div class="hbox">
             {svc.features.picture [}
@@ -36,9 +40,12 @@
             {svc.features.title [}
               <input class="pageTitle" type="text" name="title" value="{options.title}" />
             {]}
-            <div class="nofollow url overflow">{cleanLink(options.url)}</div>
+            {/ We only show the URL in the page-info box if we haven't put it in the message}
+            {!svc.constraints.editableURLInMessage [}
+              <div id="pageUrl"  class="nofollow url overflow">{cleanLink(options.url)}</div>
+            {]}
             {svc.features.description [}
-              <textarea class="pageDescription" name="description">{options.description}</textarea>
+              <textarea class="pageDescription" name="description" placeholder="Page description">{options.description}</textarea>
             {]}
       <!--      <a href="#" class="nofollow url overflow selected">{cleanLink(options.url)}</a>
             <a href="#" class="nofollow shorturl overflow surl">{cleanLink(options.shortUrl)}</a>-->

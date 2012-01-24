@@ -79,8 +79,7 @@ function (require,  common,      $) {
     //This takes care of api.key localStorage
     common.logout(domain, activity, credentials);
 
-    storage.removeItem(api.key + '.followers');
-    storage.removeItem(api.key + '.following');
+    storage.removeItem(api.key + '.email');
   }
 
   var api = {
@@ -148,33 +147,9 @@ function (require,  common,      $) {
       return result;
     },
 
-    // Given a recipient name string, find a matching PoCo record guaranteed
-    // to have an account identitifier for our domain.
-    // Throws on error.
-    resolveRecipient: function(recipstr, type) {
-      var ckey = api.key+'.'+type;
-      var strval = window.localStorage.getItem(ckey);
-      var allCollection = strval ? JSON.parse(strval) : {};
-
-      // first check if it is a screen name already a key into the collection.
-      if (recipstr.indexOf('@') === 0) {
-        var sn = recipstr.substr(1);
-        if (allCollection[sn]) {
-          return allCollection[sn];
-        }
-      }
-      // not there - see if a displayName
-      for each (var check in allCollection) {
-        if (check.displayName === recipstr) {
-          return check;
-        }
-      }
-      throw "invalid recipient '" + recipstr + "'";
-    },
-
     getProfile: function(activity, credentials) {
       var oauthConfig = activity.data;
-      navigator.mozApps.services.oauth.call(oauthConfig, {
+      navigator.mozActivities.services.oauth.call(oauthConfig, {
         method: "GET",
         action: "https://www.google.com/m8/feeds/contacts/default/full",
         parameters: {alt:'json'}
@@ -188,8 +163,9 @@ function (require,  common,      $) {
         // nuke the existing contacts before returning so we don't have a race
         // which allows a different user's contacts to be returned.
         // XXX - this whole "what user are the contacts for" needs thought...
-        window.localStorage.removeItem(api.key+'.followers');
-        window.localStorage.removeItem(api.key+'.following');
+        try {
+          window.localStorage.removeItem(api.key+'.email');
+        } catch(e) {}
         activity.postResult(user);
 
         // handle the first page of contacts now
@@ -203,7 +179,7 @@ function (require,  common,      $) {
       var strval = window.localStorage.getItem(ckey);
       var users = strval && JSON.parse(strval) || {};
       // We store in a keyed object so we can easily re-fetch contacts and
-      // not wind up with duplicates.  Keyed by screen_name.
+      // not wind up with duplicates.  Keyed by email adfress.
       data.entry.forEach(function(entry) {
         var poco = api.contactToPoco(entry, prefix);
         poco.emails.forEach(function (email) {
@@ -227,7 +203,7 @@ function (require,  common,      $) {
     },
 
     _pagedContacts: function(url, params, oauthConfig) {
-      navigator.mozApps.services.oauth.call(oauthConfig, {
+      navigator.mozActivities.services.oauth.call(oauthConfig, {
         method: "GET",
         action: url,
         parameters: params
@@ -259,7 +235,7 @@ function (require,  common,      $) {
         username: activity.data.username,
         senderName: activity.data.username
       };
-      navigator.mozApps.services.sendEmail.call(smtpArgs,
+      navigator.mozActivities.services.sendEmail.call(smtpArgs,
         {
           to: activity.data.to,
           subject: activity.data.subject,
@@ -276,23 +252,34 @@ function (require,  common,      $) {
               activity.postResult(json)
           }
         });
+    },
+
+    resolveRecipients: function(activity, credentials) {
+      navigator.mozActivities.services.resolveEmailAddresses.call(activity.data.names, function(result) {
+        if ('error' in result) {
+          activity.postException(result.error);
+        } else {
+          // result.result is already in the format we need.
+          activity.postResult(result.result);
+        }
+      });
     }
-  }
+  };
 
   // Bind the OWA messages
-  navigator.mozApps.services.registerHandler('link.send', 'confirm', function(activity, credentials) {
+  navigator.mozActivities.services.registerHandler('link.send', 'confirm', function(activity, credentials) {
     api.send(activity, credentials);
   });
 
-  navigator.mozApps.services.registerHandler('link.send', 'getLogin', function(activity, credentials) {
+  navigator.mozActivities.services.registerHandler('link.send', 'getLogin', function(activity, credentials) {
     common.getLogin(domain, activity, credentials);
   });
 
-  navigator.mozApps.services.registerHandler('link.send', 'setAuthorization', function(activity, credentials) {
+  navigator.mozActivities.services.registerHandler('link.send', 'setAuthorization', function(activity, credentials) {
     api.getProfile(activity, credentials);
   });
 
-  navigator.mozApps.services.registerHandler('link.send', 'logout', function(activity, credentials) {
+  navigator.mozActivities.services.registerHandler('link.send', 'logout', function(activity, credentials) {
     clearStorage(activity, credentials);
   });
 
@@ -303,40 +290,39 @@ function (require,  common,      $) {
   // return an empty list.
   // This means the onus then falls back on us to match these names back up
   // with our PoCo records so we can extract the userid.
-  navigator.mozApps.services.registerHandler('link.send', 'getShareTypeRecipients', function(activity, credentials) {
+  navigator.mozActivities.services.registerHandler('link.send', 'getShareTypeRecipients', function(activity, credentials) {
     var type;
     var args = activity.data;
     var ckey = api.key+'.email';
     var strval = window.localStorage.getItem(ckey);
-    var byName = JSON.parse(strval);
+    var byEmail = JSON.parse(strval);
     // convert back to a simple array of names to use for auto-complete.
+    var toFormat = [];
     var result = [];
-    for (var name in byName) { // name is the screen_name
-      var poco = byName[name];
-      result.push(name);
+    for (var email in byEmail) {
+      var poco = byEmail[email];
+      toFormat.push([poco.displayName, email])
     }
-    activity.postResult(result);
+    // Now format the addresses into something we can later parse.
+    navigator.mozActivities.services.formatEmailAddresses.call(toFormat, function(result) {
+      if ('error' in result) {
+        activity.postException(result.error);
+      } else {
+        // result.result is already in the format we need.
+        activity.postResult(result.result);
+      }
+    });
   });
 
-  // TODO validate the names passed in are valid email addresses
-  navigator.mozApps.services.registerHandler('link.send', 'resolveRecipients', function(activity, credentials) {
-    var type;
-    var args = activity.data;
-    var results = [];
-    args.names.forEach(
-      function(recipstr) {
-        results.push({result: recipstr});
-      }, this
-    );
-    activity.postResult(results);
+  navigator.mozActivities.services.registerHandler('link.send', 'resolveRecipients', function(activity, credentials) {
+    api.resolveRecipients(activity, credentials);
   });
 
-
-  navigator.mozApps.services.registerHandler('link.send', 'getParameters', function(activity, credentials) {
+  navigator.mozActivities.services.registerHandler('link.send', 'getParameters', function(activity, credentials) {
     // This is currently slightly confused - it is both link.send parameters and auth parameters.
     activity.postResult(parameters);
   });
 
   // Tell OWA we are now ready to be invoked.
-  navigator.mozApps.services.ready();
+  navigator.mozActivities.services.ready();
 });

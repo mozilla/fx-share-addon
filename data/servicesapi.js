@@ -1,6 +1,6 @@
 
 var callid = 0;
-window.navigator.mozApps.services.sendEmail = {
+unsafeWindow.navigator.wrappedJSObject.mozActivities.services.sendEmail = {
   call: function(svc, data, callback) {
     callid++;
     let resultName = "owa.service.sendEmail.call.result."+callid;
@@ -9,6 +9,34 @@ window.navigator.mozApps.services.sendEmail = {
     });
     self.port.emit('owa.service.sendEmail.call', {
       svc: svc,
+      data: data,
+      result: resultName
+    });
+  }
+};
+
+unsafeWindow.navigator.wrappedJSObject.mozActivities.services.resolveEmailAddresses = {
+  call: function(data, callback) {
+    callid++;
+    let resultName = "owa.service.resolveEmailAddresses.call.result."+callid;
+    self.port.once(resultName, function(result) {
+      callback(result);
+    });
+    self.port.emit('owa.service.resolveEmailAddresses.call', {
+      data: data,
+      result: resultName
+    });
+  }
+};
+
+unsafeWindow.navigator.wrappedJSObject.mozActivities.services.formatEmailAddresses = {
+  call: function(data, callback) {
+    callid++;
+    let resultName = "owa.service.formatEmailAddresses.call.result."+callid;
+    self.port.once(resultName, function(result) {
+      callback(result);
+    });
+    self.port.emit('owa.service.formatEmailAddresses.call', {
       data: data,
       result: resultName
     });

@@ -106,21 +106,27 @@ function (object,         Widget,         $,        template,
         }
         // If either 'parameters' or 'login' are null, we are waiting
         // for those methods to return.
-        $(".accountLoading", this.node).hide();
-        $(".accountLogin", this.node).show();
         var showPanel = false;
-        if (!this.owaservice.parameters) {
+        if (this.owaservice.error) {
+          $(".accountLoading", this.node).hide();
+          $(".accountLogin", this.node).hide();
+          $(".accountError", this.node).show();
+          $(this.node).find('[name="error"]').text(this.owaservice.error);
+        } else if (!this.owaservice.parameters) {
           // waiting for the app to load and respond.
           $(".accountLoading", this.node).show();
           $(".accountLogin", this.node).hide();
+          $(".accountError", this.node).hide();
         } else if (!this.owaservice.user) {
           // getLogin call has returned but no user logged in.
           $(".accountLoading", this.node).hide();
           $(".accountLogin", this.node).show();
+          $(".accountError", this.node).hide();
         } else {
           // logged in so can show the account panel.
           $(".accountLoading", this.node).hide();
           $(".accountLogin", this.node).hide();
+          $(".accountError", this.node).hide();
           showPanel = true;
         }
         var thisPanelDiv = $(".accountPanel", this.node);
@@ -130,9 +136,8 @@ function (object,         Widget,         $,        template,
             // XXX - overlay??
             var PanelCtor = require('widgets/AccountPanel');
             this.accountPanel = new PanelCtor({
-                options: this.options,
-                owaservice: this.owaservice,
-                savedState: this.savedState
+                activity: this.activity,
+                owaservice: this.owaservice
                 }, thisPanelDiv[0]);
           }
           thisPanelDiv.show();
@@ -163,7 +168,7 @@ function (object,         Widget,         $,        template,
         // the popup was blocked.
         try {
           var app = this.owaservice.app;
-          navigator.mozApps.mediation.startLogin(app.origin);
+          navigator.mozActivities.mediation.startLogin(app.origin);
         } catch (e) {
           dump("ex "+e.toString()+"\n");
         }

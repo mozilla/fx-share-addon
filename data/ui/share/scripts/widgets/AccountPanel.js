@@ -71,10 +71,10 @@ function (object,         Widget,         $,        template,
       onCreate: function (onAsynCreateDone) {
         var profile = this.owaservice.user;
 
-        this.hadFocusRequest = false;
         this.profile = profile;
         this.parameters = this.owaservice.parameters;
         this.svc = this.parameters; // just for the jig template...
+        this.options = this.activity.data; // just for the jig template...
 
         //Set up the photo property
         this.photo = profile.photos && profile.photos[0] && profile.photos[0].value;
@@ -85,19 +85,26 @@ function (object,         Widget,         $,        template,
         this.displayName = profile.displayName || profile.username;
 
         //Listen for updates to base64Preview
-        this.base64PreviewSub = fn.bind(this, function (dataUrl) {
-          $('[name="picture_base64"]', this.node).val(jigFuncs.rawBase64(dataUrl));
+        this.base64PreviewSub = fn.bind(this, function (img) {
+          $('[name="picture_base64"]', this.node).val(jigFuncs.rawBase64(img.data));
+          $('img.thumb', this.node).attr('src', img.url);
         });
         mediator.on('base64Preview', this.base64PreviewSub);
+
+        //Listen for options changes and update the account.
+        this.activityChangedSub = dispatch.sub('activityChanged', this.activityChanged.bind(this));
       },
 
       destroy: function () {
         mediator.removeListener('base64Preview', this.base64PreviewSub);
         dispatch.unsub(this.sendCompleteSub);
-        this.select.dom.unbind('change', this.selectChangeFunc);
-        delete this.selectChangeFunc;
-        this.select.destroy();
-        this.select = null;
+        dispatch.unsub(this.activityChangedSub);
+        if (this.select) {
+          this.select.dom.unbind('change', this.selectChangeFunc);
+          delete this.selectChangeFunc;
+          this.select.destroy();
+          this.select = null;
+        }
         parent(this, 'destroy');
       },
 
@@ -127,6 +134,29 @@ function (object,         Widget,         $,        template,
         }
       },
 
+      activityChanged: function(activity) {
+        var appid = this.owaservice.app.origin;
+        var opts = activity.data;
+        var savedState = activity.mediatorState && activity.mediatorState.apps ?
+                         activity.mediatorState.apps[appid] : null;
+
+        this.hadFocusRequest = false;
+        this.doneFirstRender = false;
+        if (savedState) {
+          this.doneFirstRender = savedState.doneFirstRender;
+          this.hadFocusRequest = savedState.hadFocusRequest;
+
+          // Mix in any saved UI data from the last time we were invoked.
+          var tomixin =['to', 'subject', 'message', 'shareType', 'description', 'title'];
+          for each (var prop in tomixin) {
+            opts[prop] = savedState.ui[prop];
+          }
+        }
+        this.activity = activity;
+        this.options = opts;
+        this.renderData();
+      },
+
       onRender: function () {
         // Note an exception in _onRender will cause the widget creation
         // process to hang and never return - so catch and log exceptions.
@@ -139,69 +169,17 @@ function (object,         Widget,         $,        template,
       },
 
       _onRender: function () {
-        var root = $(this.node),
-            opts = this.options,
+        var opts = this.options,
             formLink = opts.url;
 
         // Hold onto nodes that are used frequently
         this.toDom = $('[name="to"]', this.node);
         this.shareButtonNode = $('button.share', this.node)[0];
 
-        //Mix in any saved data for the new URL if it was in storage.
-        if (this.savedState) {
-          //Create a temp object so we do not mess with pristine options.
-          opts = object.create(opts, [{
-            to: this.savedState.to,
-            subject: this.savedState.subject,
-            message: this.savedState.message,
-            shareType: this.savedState.shareType
-          }]);
-        }
-
-        //Update the DOM.
-        root.find('[name="picture"]').val(jigFuncs.preview(opts));
-        root.find('[name="picture_base64"]').val(jigFuncs.preview_base64(opts));
-        root.find('[name="link"]').val(formLink);
-        // If the service has a specific field for the title, use that.
-        // otherwise if it has a field for the subject and no 'subject' is
-        // specified, stick the title in the subject.
-        if (this.parameters.features) {
-          if (this.parameters.features.title) {
-            root.find('[name="title"]').val(opts.title);
-          } else if (this.parameters.features.subjectLabel) {
-            if (opts.subject) {
-              root.find('[name="subject"]').val(opts.subject);
-            } else if (opts.title) {
-              root.find('[name="subject"]').val(opts.title);
-            }
-          }
-        }
-        root.find('[name="caption"]').val(opts.caption);
-        root.find('[name="description"]').val(opts.description);
-        root.find('[name="medium"]').val(opts.medium);
-        root.find('[name="source"]').val(opts.source);
-        this.toDom.val(opts.to);
-        var message = opts.message || '';
-        var constraints = this.parameters.constraints || {};
-        if (constraints.editableURLInMessage) {
-          // so we need some URL in the message itself - if the service doesn't
-          // do its own shortening we prefer a short url if we already have one.
-          var url;
-          if (constraints.shortURLLength) {
-            url = formLink;
-          } else {
-            url = opts.shortUrl || formLink;
-          }
-          if (url) {
-            // just use a single space to separate them - that is what
-            // twitter's intents does and it sounds reasonable...
-            message += " " + url;
-          }
-        }
-        root.find('[name="message"]').val(message);
+        this.activityChanged(this.activity);
 
         var shareTypes = this.parameters.shareTypes;
-        if (shareTypes && shareTypes.length > 1) {
+        if (shareTypes.length > 1) {
           var initialShareType = opts.shareType || this.options.shareType ||
                                  shareTypes[0].type;
           //Insert a Select widget if it is desired.
@@ -224,6 +202,8 @@ function (object,         Widget,         $,        template,
           });
           this.select.dom.bind('change', this.selectChangeFunc);
           this.changeShareType(this.getShareType(initialShareType));
+        } else {
+          this.changeShareType(this.getShareType(shareTypes[0].type));
         }
 
         if (this.parameters.constraints && this.parameters.constraints.textLimit) {
@@ -243,6 +223,61 @@ function (object,         Widget,         $,        template,
           mediator.sizeToContent();
         });
 
+      },
+
+      renderData: function() {
+        var root = $(this.node),
+            opts = this.options,
+            formLink = opts.url,
+            pageUrl = jigFuncs.cleanLink(opts.url);
+
+        //Update the DOM.
+        root.find('[name="picture"]').val(jigFuncs.preview(opts));
+        root.find('[name="picture_base64"]').val(jigFuncs.preview_base64(opts));
+        root.find('[name="link"]').val(formLink);
+        root.find('#pageUrl').text(pageUrl);
+        // If the service has a specific field for the title, use that.
+        // otherwise if it has a field for the subject and no 'subject' is
+        // specified, stick the title in the subject.
+        if (this.parameters.features) {
+          if (this.parameters.features.title) {
+            root.find('[name="title"]').val(opts.title);
+            root.find('[name="subject"]').val(opts.subject);
+          } else if (this.parameters.features.subjectLabel) {
+            if (opts.subject) {
+              root.find('[name="subject"]').val(opts.subject);
+            } else if (opts.title) {
+              root.find('[name="subject"]').val(opts.title);
+            }
+          }
+        }
+        root.find('[name="caption"]').val(opts.caption);
+        root.find('[name="description"]').val(opts.description);
+        root.find('[name="medium"]').val(opts.medium);
+        root.find('[name="source"]').val(opts.source);
+        this.toDom.val(opts.to);
+        var message = opts.message || '';
+        var constraints = this.parameters.constraints || {};
+        if (!this.doneFirstRender && constraints.editableURLInMessage) {
+          // so we need some URL in the message itself - if the service doesn't
+          // do its own shortening we prefer a short url if we already have one.
+          var url;
+          if (constraints.shortURLLength) {
+            url = formLink; // prefers canonicalUrl over url.
+          } else {
+            url = opts.shortUrl || formLink;
+          }
+          if (url) {
+            // just use a single space to separate them - that is what
+            // twitter's intents does and it sounds reasonable...
+            message += " " + url;
+          }
+        }
+        root.find('[name="message"]').val(message);
+        if (this.counter) {
+          this.counter.checkCount();
+        }
+        this.doneFirstRender = true;
       },
 
       validate: function (sendData) {
@@ -290,19 +325,11 @@ function (object,         Widget,         $,        template,
       // Given a string direct from the UI, convert it to a list of PoCo
       // records suitable to pass back to the service.
       resolveRecipients: function(toText, cb) {
-        var names = [],
-            split = toText.split(',');
-        split.forEach(function (to) {
-          to = to.trim();
-          if (to) {
-            names.push(to)
-          }
-        });
         var shareType = this.parameters.shareTypes[0].type;
         if (this.select)
           shareType = this.getShareType(this.select.val()).type;
         this.owaservice.call('resolveRecipients',
-          {shareType: shareType, names: names},
+          {shareType: shareType, names: toText},
           function(results) {
             var good = [], bad = [];
             results.forEach(function (result) {
@@ -314,10 +341,10 @@ function (object,         Widget,         $,        template,
             });
             cb(good, bad);
           },
-          function(err, msg) {
-            dump("error resolving recipients: " + err + "/" + msg + "\n");
+          function(errob) {
+            dump("error resolving recipients: " + JSON.stringify(errob) + "\n");
             // and callback as if all are bad.
-            cb([], names);
+            cb([], [toText]);
           }
         );
       },
@@ -357,7 +384,11 @@ function (object,         Widget,         $,        template,
       },
 
       getRestoreState: function () {
-        return this.getFormData();
+        return {
+          doneFirstRender: this.doneFirstRender,
+          hadFocusRequest: this.hadFocusRequest,
+          ui: this.getFormData()
+        };
       },
 
       getFormData: function () {
@@ -445,10 +476,6 @@ function (object,         Widget,         $,        template,
         var sendData = this.getFormData();
         // put the appid in the data so the caller can find us.
         sendData.appid = this.owaservice.app.origin;
-        // and any other import things from the initial params which don't
-        // currently appear on the form.
-        sendData.title = this.options.title;
-
         if (!this.validate(sendData)) {
           return;
         }

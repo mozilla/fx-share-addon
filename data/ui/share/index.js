@@ -37,18 +37,16 @@
 
 define([ "require", "jquery", "blade/object", "blade/fn",
         "blade/jig", "blade/url", "dispatch",
-         "storage",  "widgets/ServicePanel", "widgets/TabButton",
+         "widgets/ServicePanel", "widgets/TabButton",
          "widgets/AddAccount", "less", "osTheme", "mediator",
          "jquery-ui-1.8.7.min", "jquery.textOverflow"
          ],
 function (require,   $,        object,         fn,
           jig,         url,        dispatch,
-          storage,   ServicePanel,           TabButton,
+          ServicePanel,           TabButton,
           AddAccount,           less,   osTheme,   mediator) {
 
   var accountPanels = {},
-      accountPanelsRestoreState = {},
-      store = storage(),
       SHARE_DONE = 0,
       SHARE_START = 1,
       SHARE_ERROR = 2,
@@ -57,7 +55,7 @@ function (require,   $,        object,         fn,
         statusSharing: true,
         statusShared: true
       },
-      options, sendData, tabButtonsDom,
+      activity, sendData, tabButtonsDom,
       servicePanelsDom,
       owaservices = [], // A list of OWA service objects
       owaservicesbyid = {}; // A map version of the above
@@ -129,8 +127,8 @@ function (require,   $,        object,         fn,
 
   function showStatusShared() {
     var svcRec = owaservicesbyid[sendData.appid],
-        siteName = options.siteName,
-        url = options.url || "",
+        siteName = activity.data.siteName,
+        url = activity.data.url || "",
         doubleSlashIndex = url.indexOf("//") + 2;
     $('#statusShared').empty().append(jig('#sharedTemplate', {
       domain: siteName || url.slice(doubleSlashIndex, url.indexOf("/", doubleSlashIndex)),
@@ -225,54 +223,39 @@ function (require,   $,        object,         fn,
 
   function sendMessage(data) {
     showStatus('statusSharing');
+    // hide the panel now, but only if the extension can show status
+    // itself (0.7.7 or greater)
+    updateChromeStatus(SHARE_START);
+    mediator.hide();
 
     sendData = data;
-    var svcRec = owaservicesbyid[data.appid];
+    callSendApi();
+  }
 
-    // get any shortener prefs before trying to send.
-    store.get('shortenPrefs', function (shortenPrefs) {
-          var svcConfig = svcRec.parameters,
-              shortenData;
-
-          // hide the panel now, but only if the extension can show status
-          // itself (0.7.7 or greater)
-          updateChromeStatus(SHARE_START);
-          mediator.hide();
-
-          //First see if a bitly URL is needed.
-          if (svcConfig.shorten && shortenPrefs) {
-            shortenData = {
-              format: 'json',
-              longUrl: sendData.link
-            };
-
-            // Unpack the user prefs
-            shortenPrefs = JSON.parse(shortenPrefs);
-
-            if (shortenPrefs) {
-              object.mixin(shortenData, shortenPrefs, true);
-            }
-
-            // Make sure the server does not try to shorten.
-            delete sendData.shorten;
-
-            $.ajax({
-              url: 'http://api.bitly.com/v3/shorten',
-              type: 'GET',
-              data: shortenData,
-              dataType: 'json',
-              success: function (json) {
-                sendData.shorturl = json.data.url;
-                callSendApi();
-              },
-              error: function (xhr, textStatus, errorThrown) {
-                showStatus('statusShortenerError', errorThrown);
-              }
-            });
-          } else {
-            callSendApi();
-          }
-    });
+  /* Validates the parameters for an app.
+     Returns null if OK, otherwise an error string targetted at a developer
+     (ie, the message may be dumped to the console, but will not be shown to
+     the user)
+  */
+  function validateAppParameters(params) {
+    try {
+      // This is only partially implemented - more robust checks should be created.
+      var shareTypes = params.shareTypes;
+      // typeof [] -> "object", so not very useful!
+      if (!shareTypes || !shareTypes.length) {
+        return "shareTypes must be an array with length > 0";
+      }
+      for (var i = 0; i < shareTypes.length; i++) {
+        var st = shareTypes[i];
+        if (typeof st.type !== "string" || typeof st.name !== "string") {
+          return "shareTypes[" + i + "] is invalid - must have string properties 'type' and 'name'";
+        }
+      }
+      // 'constraints' is optional, so no check is made.
+      return null;
+    } catch (ex) {
+      return "failed to validate app parameters: " + ex.toString();
+    }
   }
 
   /**
@@ -287,7 +270,7 @@ function (require,   $,        object,         fn,
         asyncCount = 0,
         asyncConstructionDone = false,
         accountPanel,
-        lastSelection = localStorage['last-app-selected'];
+        lastSelection = localStorage.getItem('last-app-selected');
 
     $('#shareui').removeClass('hidden');
 
@@ -316,7 +299,7 @@ function (require,   $,        object,         fn,
       tabButtonsDom = $('.widgets-TabButton');
       servicePanelsDom = $('.servicePanel');
 
-      mediator.checkBase64Preview(options);
+      mediator.checkBase64Preview(activity.data);
 
       //If no matching accounts match the last selection clear it.
       if (lastSelectionMatch < 0 && lastSelection) {
@@ -353,18 +336,19 @@ function (require,   $,        object,         fn,
         /// XXX - need the OWA icon helper!!
         var icon = thisSvc.getIconForSize(48); // XXX - what size should really be used???
         // Add a tab button for the service.
-        tabsDom.append(new TabButton({
+        var tabButton = new TabButton({
           target: tabId,
           type: appid,
           title: thisSvc.app.manifest.name,
           serviceIcon: icon
-        }, tabFragment));
+        }, tabFragment);
+        tabButton.node.setAttribute("appid", appid);
+        tabsDom.append(tabButton);
 
         // Get the contructor function for the panel.
         accountPanel = new ServicePanel({
-          options: options,
-          owaservice: thisSvc,
-          savedState: accountPanelsRestoreState[appid]
+          activity: activity,
+          owaservice: thisSvc
         }, fragment);
 
         accountPanel.node.setAttribute("id", tabId);
@@ -373,7 +357,6 @@ function (require,   $,        object,         fn,
       }
     });
     finishCreate();
-    accountPanelsRestoreState = {};
   }
 
   // Set up initialization work for the first share state passing.
@@ -467,7 +450,7 @@ function (require,   $,        object,         fn,
         // apparently must create the window here, before we call the service
         // to avoid it being blocked.
         var win = window.open("",
-          "ffshareOAuth",
+          "fxshareOAuth",
           "dialog=yes, modal=yes, width=900, height=500, scrollbars=yes");
         svcRec.call('logout', {},
           function() {
@@ -499,13 +482,6 @@ function (require,   $,        object,         fn,
         sendData.HumanVerificationImage = $('#captchaImage').attr('src');
         sendMessage(sendData);
       });
-
-      //Only bother with localStorage enabled storage.
-      if (storage.type === 'memory') {
-        showStatus('statusEnableLocalStorage');
-        return;
-      }
-
     });
   };
 
@@ -521,7 +497,8 @@ function (require,   $,        object,         fn,
     $("#tabs").empty();
     $("#tabContent").empty();
     for (var appid in accountPanels) {
-      accountPanelsRestoreState[appid] = accountPanels[appid].getRestoreState();
+      var panel = accountPanels[appid];
+      panel.destroy();
     }
     accountPanels = {};
   };
@@ -530,21 +507,24 @@ function (require,   $,        object,         fn,
   // listen for changes in the base64Preview, and update options accordingly,
   // since the this call could happen before AccountPanels are ready, which
   // also listen for base64Preview.
-  function onBase64Preview(url) {
+  function onBase64Preview(img) {
+    var options = activity.data;
     if (options) {
       var preview = options.previews && options.previews[0];
-      if (preview) {
-        preview.base64 = url;
+      if (preview && preview.http_url == img.url) {
+        preview.base64 = img.data;
+      } else {
+        dump("base64Preview data does not match a preview!\n");
       }
     }
   }
   mediator.on('base64Preview', onBase64Preview);
 
   // tell OWA we are ready...
-  window.navigator.mozApps.mediation.ready(
-    function(activity, services) {
+  window.navigator.mozActivities.mediation.ready(
+    function configureServices(_activity, services) {
       _deleteOldServices();
-      options = activity.data;
+      activity = _activity;
       owaservices = services;
       onFirstShareState();
       displayAccounts();
@@ -555,7 +535,14 @@ function (require,   $,        object,         fn,
         svc.on("ready", function() {
           var readyService = this;
           readyService.call("getParameters", {}, function(prefs) {
-            readyService.parameters = prefs;
+            var problem = validateAppParameters(prefs);
+            if (problem === null) {
+              // all good.
+              readyService.parameters = prefs;
+            } else {
+              dump("Application " + readyService.app.origin + " has invalid parameters: " + problem + "\n");
+              readyService.error = "The application has invalid parameters";
+            }
             dispatch.pub('serviceChanged', readyService.app.origin);
           });
         }.bind(svc));
@@ -564,6 +551,25 @@ function (require,   $,        object,         fn,
           dispatch.pub('serviceChanged', this.app.origin);
         }.bind(svc));
       }
+    },
+    function updateActivity(_activity) {
+      activity = _activity;
+      // reselect whatever app was in use.
+      if (activity.mediatorState && activity.mediatorState.selectedApp) {
+        $('#tabs').find('[appid="' + activity.mediatorState.selectedApp + '"]').click();
+      }
+      // force a refresh of the activity data....
+      dispatch.pub('activityChanged', activity);
+      mediator.checkBase64Preview(activity.data);
+    },
+    function fetchState() {
+      var appstate = {};
+      for (var appid in accountPanels) {
+        var panel = accountPanels[appid];
+        appstate[appid] = panel.getRestoreState();
+      }
+      var selectedApp = $('.servicePanel').not('.hidden').attr('appid');
+      return {apps: appstate, selectedApp: selectedApp};
     }
   );
 });

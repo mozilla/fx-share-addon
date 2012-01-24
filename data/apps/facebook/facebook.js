@@ -179,7 +179,7 @@ function (require,  common) {
     getProfile: function(activity, credentials) {
       var oauthConfig = activity.data;
       //dump("calling https://graph.facebook.com/me\n");
-      navigator.mozApps.services.oauth.call(oauthConfig, {
+      navigator.mozActivities.services.oauth.call(oauthConfig, {
         method: "GET",
         action: "https://graph.facebook.com/me",
         parameters: {}
@@ -190,14 +190,16 @@ function (require,  common) {
         var user = {
           profile: me,
           oauth: oauthConfig
-        }
+        };
         window.localStorage.setItem(api.key, JSON.stringify(user));
         // nuke the existing contacts before returning so we don't have a race
         // which allows a different user's contacts to be returned.
         // XXX - this whole "what user are the contacts for" needs thought...
-        window.localStorage.removeItem(api.key+'.groups');
-        window.localStorage.removeItem(api.key+'.friends');
-
+        try {
+          window.localStorage.removeItem(api.key+'.groups');
+          window.localStorage.removeItem(api.key+'.friends');
+        } catch(e) {}
+        
         activity.postResult(user);
 
         // initiate contact retreival now
@@ -269,7 +271,7 @@ function (require,  common) {
       }
       //dump("send ["+url+"] args "+JSON.stringify(body)+"\n");
 
-      navigator.mozApps.services.oauth.call(oauthConfig, {
+      navigator.mozActivities.services.oauth.call(oauthConfig, {
         method: "POST",
         action: url,
         parameters: body
@@ -314,14 +316,19 @@ function (require,  common) {
       };
       var url = "https://graph.facebook.com/me/"+ params.type;
 
+      try {
       var strval = window.localStorage.getItem(api.key);
+      } catch(e) {
+        dump(e.toString()+"\n");
+        throw e;
+      }
       var urec = JSON.parse(strval);
       var oauthConfig = urec.oauth;
       this._pagedContacts(url, params, oauthConfig);
     },
 
     _pagedContacts: function(url, params, oauthConfig) {
-      navigator.mozApps.services.oauth.call(oauthConfig, {
+      navigator.mozActivities.services.oauth.call(oauthConfig, {
         method: "GET",
         action: url,
         parameters: params
@@ -336,19 +343,19 @@ function (require,  common) {
   };
 
   // Bind to OWA
-  navigator.mozApps.services.registerHandler('link.send', 'confirm', function(activity, credentials) {
+  navigator.mozActivities.services.registerHandler('link.send', 'confirm', function(activity, credentials) {
     api.send(activity, credentials);
   });
 
-  navigator.mozApps.services.registerHandler('link.send', 'getLogin', function(activity, credentials) {
+  navigator.mozActivities.services.registerHandler('link.send', 'getLogin', function(activity, credentials) {
     common.getLogin(domain, activity, credentials);
   });
 
-  navigator.mozApps.services.registerHandler('link.send', 'setAuthorization', function(activity, credentials) {
+  navigator.mozActivities.services.registerHandler('link.send', 'setAuthorization', function(activity, credentials) {
     api.getProfile(activity, credentials);
   });
 
-  navigator.mozApps.services.registerHandler('link.send', 'logout', function(activity, credentials) {
+  navigator.mozActivities.services.registerHandler('link.send', 'logout', function(activity, credentials) {
     clearStorage(activity, credentials);
   });
 
@@ -359,7 +366,7 @@ function (require,  common) {
   // return an empty list.
   // This means the onus then falls back on us to match these names back up
   // with our PoCo records so we can extract the userid.
-  navigator.mozApps.services.registerHandler('link.send', 'getShareTypeRecipients', function(activity, credentials) {
+  navigator.mozActivities.services.registerHandler('link.send', 'getShareTypeRecipients', function(activity, credentials) {
     var type;
     var args = activity.data;
     // XXX - todo - handle 'force'
@@ -387,15 +394,8 @@ function (require,  common) {
     activity.postResult(result);
   });
 
-  // Validate a list of strings which are intended to be recipient names.
-  // The names possibly came back from getShareTypeRecipients() or were typed.
-  // Returns a string (but that string would resolve to itself - ie, passing
-  // 'Display Name' would resolve to @username, while @username always
-  // resolves to @username.)
-  // A super-anal service who thinks any resolution at all is leaking too much
-  // into is free to return exactly the names which were passed in (then fail
-  // at send time if appropriate)
-  navigator.mozApps.services.registerHandler('link.send', 'resolveRecipients', function(activity, credentials) {
+  // Validate recipient names - see comments in twitter.js for more info.
+  navigator.mozActivities.services.registerHandler('link.send', 'resolveRecipients', function(activity, credentials) {
     var type;
     var args = activity.data;
     if (args.shareType === "groupWall") {
@@ -410,8 +410,13 @@ function (require,  common) {
       throw("invalid shareType " + args.shareType + "\n");
     }
     var results = []
-    args.names.forEach(
+    var names = args.names.split(",");
+    names.forEach(
       function(displayName) {
+        displayName = displayName.trim();
+        if (!displayName) {
+          return;
+        }
         try {
           api.resolveRecipient(displayName, type);
           results.push({result: displayName});
@@ -423,17 +428,17 @@ function (require,  common) {
     activity.postResult(results);
   });
 
-  navigator.mozApps.services.registerHandler('link.send', 'setAuthorization', function(activity, credentials) {
+  navigator.mozActivities.services.registerHandler('link.send', 'setAuthorization', function(activity, credentials) {
     api.getProfile(activity, credentials);
   });
 
 
   // LOGIN activity
-  navigator.mozApps.services.registerHandler('link.send', 'getParameters', function(activity, credentials) {
+  navigator.mozActivities.services.registerHandler('link.send', 'getParameters', function(activity, credentials) {
     // This is currently slightly confused - it is both link.send parameters and auth parameters.
     activity.postResult(parameters);
   });
 
   // Tell OWA we are now ready to be invoked.
-  navigator.mozApps.services.ready();
+  navigator.mozActivities.services.ready();
 });
