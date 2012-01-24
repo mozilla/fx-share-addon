@@ -26,8 +26,8 @@
   document: false, setTimeout: false, localStorage: false */
 "use strict";
 
-define([ "require", "jquery"],
-function (require,   $) {
+define([ "require"],
+function (require) {
 
   var common = function() {
     

@@ -632,15 +632,6 @@ body .toSection input[type="text"] {
   overflow: auto;
 }
 
-#pageInfo textarea, #pageInfo input[type="text"] {
-  background: transparent;
-  color: @color;
-  border: none;
-}
-#pageInfo textarea:focus, #pageInfo input[type="text"]:focus {
-  background-color: white; /* correct os theme color? */
-  color: @background; /* invert text color */
-}
 
 .widgets-AccountPanel button:focus {
   outline: 0;
