@@ -42,3 +42,20 @@ unsafeWindow.navigator.wrappedJSObject.mozActivities.services.formatEmailAddress
     });
   }
 };
+
+// the service is making an oauth call, setup a result callback mechanism then make the call.
+// the service will already have oauth credentials from an early login process initiated by
+// our mediator
+unsafeWindow.navigator.wrappedJSObject.mozActivities.services.oauth = {
+  call: function(svc, data, callback) {
+    callid++;
+    self.port.once("owa.service.oauth.call.result."+callid, function(result) {
+      callback(result);
+    });
+    self.port.emit('owa.service.oauth.call', {
+      svc: svc,
+      data: data,
+      result: "owa.service.oauth.call.result."+callid
+    });
+  }
+};
