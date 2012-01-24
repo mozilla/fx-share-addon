@@ -4,7 +4,7 @@
     "id": "fx-share-addon@mozilla.org",
     "description": "Share links fast",
     "author": "Mozilla",
-    "version": "0.2.2",
+    "version": "0.2.3",
     "dependencies": ["api-utils", "addon-kit", "activities", "oauthorizer"],
     "icon": "./share-icon.png",
     "main": "./main.js"
