@@ -2,7 +2,7 @@
   "project": [
     "git", 
     "https://github.com/mixedpuppy/fx-share-addon.git", 
-    "features/move-oauth", 
+    "develop", 
     ""
   ], 
   "location": "..", 
@@ -22,7 +22,7 @@
     [
       "git", 
       "https://github.com/mozilla/activities.git", 
-      "features/move-oauth", 
+      "develop", 
       ""
     ]
   ]
