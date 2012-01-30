@@ -5,11 +5,11 @@
     "develop", 
     ""
   ], 
-  "location": "..", 
+  "location": "deps", 
   "projects": [
     [
       "git", 
-      "https://github.com/mixedpuppy/addon-sdk.git", 
+      "https://github.com/mozilla/addon-sdk.git", 
       "master", 
       ""
     ], 
